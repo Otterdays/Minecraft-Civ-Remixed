@@ -1,4 +1,4 @@
-# FPS Mod — barebones Fabric template
+# Project OOGA — Minecraft Civ Remixed
 
 <!-- Badges: versions in gradle.properties; style=for-the-badge; logos use Shields + Simple Icons only -->
 <p align="center">
@@ -14,7 +14,7 @@
 </p>
 <p align="center">
   <img alt="Client only" src="https://img.shields.io/badge/Environment-client-5865F2?style=for-the-badge" />
-  <a href="https://github.com/Otterdays/Minecraft-Fabric-Sample-Mod/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/License-All%20Rights%20Reserved-555555?style=for-the-badge" /></a>
+  <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/License-All%20Rights%20Reserved-555555?style=for-the-badge" /></a>
   <a href="https://github.com/FabricMC/fabric-example-mod"><img alt="Template lineage" src="https://img.shields.io/badge/Template-fabric--example--mod-0E0E0E?style=for-the-badge&logo=github&logoColor=white" /></a>
 </p>
 
@@ -30,7 +30,7 @@
   <a href="readme-assets/icon_modrinth_cropped.png"><img src="readme-assets/icon_modrinth_cropped.png" width="120" height="120" alt="Cropped icon variant" /></a>
 </p>
 
-**FPS Mod** is a tiny [Fabric](https://fabricmc.net/) **client** mod: a top-left **FPS readout** (refreshed about once per second) and a **show/hide** control, with clear logs. This repository stays intentionally small: use it as a **template** to fork and extend, or drop the JAR in `mods` as-is.
+**Project OOGA** is a tiny [Fabric](https://fabricmc.net/) **client** mod scaffold, now repurposed for a Minecraft civ remix direction. This repository stays intentionally small: use it as a **template** to fork and extend, or drop the JAR in `mods` as-is.
 
 ## First check (before editing)
 
