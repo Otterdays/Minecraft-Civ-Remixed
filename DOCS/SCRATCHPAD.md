@@ -3,6 +3,7 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-07] Recentered README on Project OOGA civ-mod identity and `/money` bootstrap usage.
 - [2026-05-07] Implemented `/money` bootstrap command and wallet persistence; tracking in `DOCS/ROADMAP.md`.
 - [2026-05-07] Created dedicated execution roadmap in `DOCS/ROADMAP.md`.
 - [2026-05-07] Docs alignment pass for Project OOGA rule compliance.
@@ -16,11 +17,11 @@
 - Economy bootstrap is now active: `/money` and `/money set` compile and build successfully.
 
 ## Last 5 Actions
-1. Added server-safe command bootstrap by changing `fabric.mod.json` environment to `*`.
-2. Implemented `WalletStore`, `FileWalletStore`, and `WalletService`.
-3. Registered `/money` and `/money set <player> <amount>` command paths.
-4. Ran `./gradlew.bat build` successfully after API compatibility fixes.
-5. Updated `DOCS/ROADMAP.md` with ASAP sprint checklist progress.
+1. Rewrote `README.md` to center Project OOGA civ-mod scope and current command bootstrap.
+2. Marked README recentering progress in `DOCS/ROADMAP.md` ASAP tracker.
+3. Added server-safe command bootstrap by changing `fabric.mod.json` environment to `*`.
+4. Implemented `WalletStore`, `FileWalletStore`, and `WalletService`.
+5. Registered `/money` and `/money set <player> <amount>` command paths.
 
 ## Blockers
 - None currently.

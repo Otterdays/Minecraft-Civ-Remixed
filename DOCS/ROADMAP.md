@@ -21,6 +21,7 @@ primary tracker. Existing sections remain as detailed reference.
 - [x] Registered `/money` command for player balance read.
 - [x] Added `/money set <player> <amount>` for rapid server-side validation.
 - [x] Verified build success with `./gradlew.bat build`.
+- [x] Recentered `README.md` on Project OOGA civ-mod direction and current economy bootstrap.
 - [ ] Add permission gate to `/money set` (currently open during bootstrap).
 - [ ] Add `/pay` and `/ooga money set|add|take` to satisfy M1 deliverables.
 - [ ] Add immutable transaction log entries for every balance mutation.
