@@ -1,3 +1,11 @@
+<!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
+
+[AMENDED 2026-05-07]:
+- Repository moved to `https://github.com/Otterdays/Minecraft-Civ-Remixed`.
+- Project codename is now "Project OOGA".
+- Strategic product direction is documented in `whitepaper.md`.
+- Current codebase remains FPS-template-first and is pending civ-module implementation.
+
 # LOCATIONS.md — quick codebase map
 
 Use this as the first stop for quick discovery.

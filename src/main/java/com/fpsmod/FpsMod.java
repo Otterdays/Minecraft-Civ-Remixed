@@ -1,6 +1,9 @@
 package com.fpsmod;
 
+import com.fpsmod.command.MoneyCommand;
+import com.fpsmod.economy.WalletService;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +11,7 @@ import org.slf4j.LoggerFactory;
 public class FpsMod implements ModInitializer {
     public static final String MOD_ID = "fpsmod";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    private static WalletService walletService;
     private static final String EMOJI_DEBUG = "🔍";
     private static final String EMOJI_OK = "✅";
     private static final String EMOJI_WARN = "⚠️";
@@ -29,6 +33,11 @@ public class FpsMod implements ModInitializer {
             + ", minecraft=" + gameVersion
             + ", modVersion=" + modVersion);
 
+        walletService = WalletService.createDefault();
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+            MoneyCommand.register(dispatcher, walletService)
+        );
+
         // Keep this startup heartbeat obvious so template users can quickly confirm load order.
         LOGGER.info("{} {} loaded and ready.", EMOJI_OK, MOD_ID);
 
@@ -41,5 +50,9 @@ public class FpsMod implements ModInitializer {
 
     private static void logDebug(String message) {
         LOGGER.info("{} {}", EMOJI_DEBUG, message);
+    }
+
+    public static WalletService walletService() {
+        return walletService;
     }
 }

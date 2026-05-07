@@ -1,5 +1,11 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-07]:
+- Feature scope above documents the legacy FPS template module.
+- New target scope is the civ platform in `whitepaper.md`:
+  factions, jobs, professions, economy, and player shops.
+- Existing FPS module should be treated as bootstrap code, not final product scope.
+
 # FPS Mod — Feature doc
 
 Client-only Fabric mod (`fpsmod`): **FPS HUD** + **persisted toggle**, minimal CPU use.

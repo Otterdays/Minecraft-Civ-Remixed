@@ -14,7 +14,7 @@
   },
   "license": "LicenseRef-All-Rights-Reserved",
   "icon": "assets/fpsmod/icon.png",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "com.fpsmod.FpsMod"
