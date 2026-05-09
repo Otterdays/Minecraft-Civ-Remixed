@@ -3,8 +3,11 @@
 Project OOGA is an all-in-one civ mod for Fabric focused on classic server loops:
 factions, jobs, professions, economy, and player shops.
 
-The project is in active bootstrap. Right now, the economy foundation has started with a working
-`/money` command path while the broader civ systems are being built from the roadmap.
+**Player-facing name:** Otters Civ. Revived (JAR/mod id is still `fpsmod` until a rename pass.)
+
+The project is in active bootstrap. The economy foundation is live (`/money`, wallet file) plus
+**Otters Civ.** mining/combat payouts driven by `config/otters_civ_revived/rewards.json`.
+Use **`/otter`** in-game for a command summary.
 
 ## Current State
 
@@ -14,11 +17,13 @@ The project is in active bootstrap. Right now, the economy foundation has starte
 
 ### Implemented Right Now
 
-- Server-side command bootstrap for economy
+- Server-side commands: **`/otter`** (help list), **`/money`**, **`/money set <player> <amount>`**
 - Persistent wallet storage via `config/fpsmod/wallet.properties`
-- `/money` command to view your balance
-- `/money set <player> <amount>` command for fast admin/bootstrap testing
-- Existing FPS HUD module still present as legacy scaffold code
+- **Otters Civ. Revived** payouts: break blocks in `otters_civ_revived:currency_blocks`,
+  kill `#minecraft:hostile` mobs by default (direct player hit only in v1); config
+  `config/otters_civ_revived/rewards.json`, datapack tags under `data/otters_civ_revived/`
+- `JobsHooks` no-op stub for future jobs/professions
+- Existing FPS HUD module still present as legacy client extra
 
 ## Quick Start
 
@@ -51,10 +56,14 @@ gradlew.bat test
 
 - `BUILT/libs/project-ooga-1.0.0.jar`
 
-## Economy Bootstrap Commands
+## Commands (server)
 
-- `/money` -> shows your current balance
-- `/money set <player> <amount>` -> sets balance directly (bootstrap/admin use)
+- `/otter` — list Otters Civ. / fpsmod commands and pointers to reward config
+- `/money` — show your balance
+- `/money set <player> <amount>` — set balance (bootstrap/admin; permission gate planned)
+
+Passive rewards are configured separately (tags, cooldowns, amounts): see
+`config/otters_civ_revived/rewards.json`.
 
 NOTE: Permission gating and full admin command tree are next roadmap items.
 
@@ -84,4 +93,6 @@ Track checklist progress in `DOCS/ROADMAP.md`.
 
 ## License
 
-All rights reserved. See `LICENSE`.
+All rights reserved (ARR) with **explicit carve-outs** in `LICENSE` for gameplay/video/montage
+use and for including the **official unmodified JAR** in mod packs—no redistribution of
+forks or substantial source reproduction without permission. Details: [`LICENSE`](LICENSE).

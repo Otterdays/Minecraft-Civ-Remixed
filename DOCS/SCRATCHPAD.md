@@ -3,6 +3,8 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-09] **`/otter`** help command (`OtterCommand`); **`LICENSE`** rewritten (ARR + carve-outs: video/montage, official JAR in mod packs, no source/fork reproduction without permission); README + `fabric.mod.json` description + `modrinth-description` + `CHANGELOG` synced.
+- [2026-05-09] **Otters Civ. Revived** block-break + hostile-kill payouts shipped: `RewardOrchestrator`, `config/otters_civ_revived/rewards.json`, datapack tags `otters_civ_revived:*`, `WalletService.addBalance`, `JobsHooks` NO_OP; wired in `FpsMod`; docs `CHANGELOG` + `modrinth-description`.
 - [2026-05-08] Imagery Optimizery GUI: optional per-file list (Add files / Add folder / Remove / Clear), table with input px+KB, output px, estimated PNG/JPG KB (in-memory encode); Optimize uses list if non-empty else full input folder; debounced estimates + generation guard for stale threads.
 - [2026-05-08] [NOTE] Imagery Optimizery (`images/optimize-here/`): maintainer likes current GUI look/feel. Do **not** restyle, “simplify,” or re-theme the tkinter UI unless asked explicitly — prefer docs/behavior-only changes.
 - [2026-05-08] Imagery Optimizery GUI: expanded “About” copy, grid layout for paths + browse, run bar (Clear log + hint + Optimize), output log section, footer path; primary action bottom-right of run strip above log.
@@ -17,17 +19,20 @@
 - [2026-05-07] Repo branding/remote migration to `Minecraft-Civ-Remixed`.
 
 ## Current Status
-- Codebase runtime is still FPS-template-first.
-- Product direction is now civ-suite-first (factions/jobs/professions/economy/player shops).
+- Codebase still uses **fpsmod** mod id/package; branding for new civ gameplay is **Otters Civ. Revived** (`otters_civ_revived` config/datapack namespace).
+- Server rewards: mined tagged blocks + direct-kill hostile mobs credit wallet (`addBalance`).
+- Legacy FPS HUD remains an optional client-side extra.
 - Core DOCS baseline files created for stable multi-agent handoff.
-- Economy bootstrap is now active: `/money` and `/money set` compile and build successfully.
+- Economy + help bootstrap: **`/otter`**, **`/money`**, **`/money set`** compile and build successfully.
 
 ## Last 5 Actions
-1. Documented Imagery Optimizery in `SUMMARY` + `CHANGELOG`; SCRATCHPAD note to leave GUI as-is unless explicitly requested.
-2. Imagery Optimizery tkinter GUI + `--gui`; batch opens GUI by default; shared `run_batch()` for CLI/UI.
-3. Patched promo image optimizer batch + Python under `images/optimize-here/` for cwd-safe runs and smaller web outputs.
-4. Rewrote `README.md` to center Project OOGA civ-mod scope and current command bootstrap.
-5. Marked README recentering progress in `DOCS/ROADMAP.md` ASAP tracker.
+1. Shipped `/otter` help, LICENSE carve-outs, README/modrinth/`fabric.mod.json` doc pass.
+2. Implemented Otters Civ. mining/combat payouts, reward config + tags, changelog/modrinth copy.
+3. Documented Imagery Optimizery in `SUMMARY` + `CHANGELOG`; SCRATCHPAD note to leave GUI as-is unless explicitly requested.
+4. Imagery Optimizery tkinter GUI + `--gui`; batch opens GUI by default; shared `run_batch()` for CLI/UI.
+5. Patched promo image optimizer batch + Python under `images/optimize-here/` for cwd-safe runs and smaller web outputs.
+6. Rewrote `README.md` to center Project OOGA civ-mod scope and current command bootstrap.
+7. Marked README recentering progress in `DOCS/ROADMAP.md` ASAP tracker.
 - [AMENDED 2026-05-08]: Prior “last actions” still valid: server-safe `fabric.mod.json` environment `*`; implemented `WalletStore` / `FileWalletStore` / `WalletService`; registered `/money` and `/money set <player> <amount>` paths.
 
 ## Blockers

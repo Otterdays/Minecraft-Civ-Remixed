@@ -27,4 +27,22 @@ public class WalletService {
         walletStore.save(balances);
         return sanitized;
     }
+
+    /**
+     * Adds delta to the player's balance (negative subtracts). Result is clamped to >= 0.
+     * Overflow toward positive infinity caps at {@link Long#MAX_VALUE}.
+     */
+    public long addBalance(UUID playerId, long delta) {
+        long current = balances.getOrDefault(playerId, 0L);
+        long next;
+        try {
+            next = Math.addExact(current, delta);
+        } catch (ArithmeticException e) {
+            next = delta > 0L ? Long.MAX_VALUE : Long.MIN_VALUE;
+        }
+        next = Math.max(0L, next);
+        balances.put(playerId, next);
+        walletStore.save(balances);
+        return next;
+    }
 }

@@ -1,7 +1,10 @@
 package com.fpsmod;
 
 import com.fpsmod.command.MoneyCommand;
+import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.ottersciv.OttersCivGameplay;
+import com.fpsmod.ottersciv.config.RewardRulesLoader;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -34,9 +37,12 @@ public class FpsMod implements ModInitializer {
             + ", modVersion=" + modVersion);
 
         walletService = WalletService.createDefault();
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
-            MoneyCommand.register(dispatcher, walletService)
-        );
+        OttersCivGameplay.register(walletService, RewardRulesLoader.loadOrCreate());
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            OtterCommand.register(dispatcher);
+            MoneyCommand.register(dispatcher, walletService);
+        });
 
         // Keep this startup heartbeat obvious so template users can quickly confirm load order.
         LOGGER.info("{} {} loaded and ready.", EMOJI_OK, MOD_ID);

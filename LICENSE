@@ -1,12 +1,43 @@
 Copyright (c) 2026 otterdays. All Rights Reserved.
 
-No license is granted to use, reproduce, modify, distribute, or create
-derivative works of this software or its documentation, in whole or in part,
-except with prior written permission from the copyright holder.
+Otters Civ. Revived / Project OOGA (mod id fpsmod): all rights retained by the
+copyright holder unless expressly stated below.
 
-This software is provided for personal or internal reference only. It is not
-open source. Redistribution of the source or binary forms (including as part
-of a mod pack or launcher) without explicit permission is prohibited.
+## Not granted (without prior written permission)
+
+Unless a carve-out below applies, you may not reproduce, distribute, publicly
+display, publicly perform, modify, merge, sublicense, sell, reverse engineer,
+decompile, or otherwise use the source code, binaries, artwork, or other
+materials from this repository except as allowed by applicable law beyond the
+scope of copyright (e.g. fair dealing / fair use).
+
+Do not republish or mirror this project in a way that suggests it is an official
+distribution if it is not.
+
+## Carve-outs — no separate written permission required
+
+The following are allowed as long as you do not remove or alter proprietary
+notices where they are embedded in files you are permitted to redistribute:
+
+1. Gameplay capture  
+   You may record, stream, or include this mod in videos, highlights, reviews,
+   tutorials, montages, and similar media, including monetized platforms, without
+   owing royalties. Attribution is appreciated but not required.
+
+2. Mod packs and curated bundles  
+   You may include the official, unmodified binary (JAR) from the copyright
+   holder or an authorized distributor (e.g. Modrinth) in mod packs, modpack
+   launchers, and server bundles, provided the JAR is not modified, repackaged
+   to obscure its origin, or combined with malware. Do not redistribute custom
+   forks or rebuilt JARs unless the license for that build says otherwise.
+
+3. Playing the game  
+   Installing and running the mod for personal or multiplayer servers is use of
+   the software as intended.
+
+Everything else — including copying substantial portions of source into another
+project, rebranding, or distributing modified builds — remains reserved; ask
+first.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

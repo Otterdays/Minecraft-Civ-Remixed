@@ -25,6 +25,10 @@
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
 
+[AMENDED 2026-05-09]:
+- Commands: **`/otter`** (mod command list / config pointers), **`/money`**, **`/money set`**. Licensing: **`LICENSE`** is ARR with explicit carve-outs (gameplay/video/montage; official unmodified JAR in mod packs); see file for boundaries.
+- **Otters Civ. Revived** (player-facing civ layer; mod id remains `fpsmod`): server rewards for blocks in `otters_civ_revived:currency_blocks` and kills in `#minecraft:hostile` by default; settings in `config/otters_civ_revived/rewards.json`. `JobsHooks` stub for future professions. Ranged/indirect kills not credited in v1.
+
 [AMENDED 2026-05-08]:
 - **Imagery Optimizery** (desktop helper, not part of the Minecraft mod): `images/optimize-here/` — `optimize_pngs.py` (`--gui` or `optimize-pngs.bat`) batch-resizes and exports web-friendly PNG + JPEG; CLI mode runs without `--gui`. GUI styling is considered stable; change only on request.
 

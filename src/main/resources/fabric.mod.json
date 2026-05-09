@@ -3,7 +3,7 @@
   "id": "fpsmod",
   "version": "${version}",
   "name": "Project OOGA: Civ Remixed",
-  "description": "Codename Project OOGA - a Minecraft civ mod remix scaffold built on Fabric.",
+  "description": "Otters Civ. Revived (fpsmod): economy, mining/combat payouts, /money, /otter help. ARR + mod pack & video carve-outs—see LICENSE.",
   "authors": [
     "otterdays"
   ],
