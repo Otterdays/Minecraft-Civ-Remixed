@@ -25,6 +25,9 @@
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
 
+[AMENDED 2026-05-08]:
+- **Imagery Optimizery** (desktop helper, not part of the Minecraft mod): `images/optimize-here/` — `optimize_pngs.py` (`--gui` or `optimize-pngs.bat`) batch-resizes and exports web-friendly PNG + JPEG; CLI mode runs without `--gui`. GUI styling is considered stable; change only on request.
+
 [AMENDED 2026-05-07]:
 - Execution roadmap published at `DOCS/ROADMAP.md`.
 - Whitepaper remains strategic context; roadmap is the implementation driver.

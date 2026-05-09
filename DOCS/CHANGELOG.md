@@ -7,6 +7,7 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Added
+- Added **Imagery Optimizery** utility under `images/optimize-here/`: Pillow batch pipeline + optional tkinter GUI (`python optimize_pngs.py --gui`, or `optimize-pngs.bat`); shared logic with CLI (`optimize_pngs.py` without `--gui`). [2026-05-08]: GUI file list + per-row size estimates (in-memory), optional explicit files vs whole input folder.
 - Added Project OOGA whitepaper defining civ-platform vision and delivery roadmap.
 - Added DOCS core set: `SUMMARY`, `SCRATCHPAD`, `SBOM`, `STYLE_GUIDE`, `ARCHITECTURE`, `CHANGELOG`, and `My_Thoughts`.
 - Added economy bootstrap internals: `WalletStore`, `FileWalletStore`, and `WalletService`.
