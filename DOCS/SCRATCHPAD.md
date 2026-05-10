@@ -3,6 +3,8 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-11] **README** restyle for GitHub: badges row, structured sections, tables, install + docs index; jargon moved to `DOCS/` / `AGENTS.md`.
+
 - [2026-05-10] **`AGENTS.md` + `CLAUDE.md`**, `.gitattributes` (`*.html`, `*.mdc` LF), `.gitignore` (`.env*`, `.claude/cache/`); SUMMARY/LOCATIONS/README cross-links; CHANGELOG Added bullet.
 
 - [2026-05-10] **Rules for `index.html` upkeep:** STYLE_GUIDE § Website parity (when to edit, sidebar hygiene, housekeeping); Cursor rule `.cursor/rules/index-html-parity.mdc` (alwaysApply); README contributors + SUMMARY quick link.

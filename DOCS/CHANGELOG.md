@@ -25,6 +25,8 @@ All notable changes to this project are documented here.
 - **`DOCS/modrinth-description.md`** restored at canonical path (`STYLE_GUIDE`, `SUMMARY`, `index.html` reference); preservation header added. Parallel copy under `DOCS/Ryan-Made-Docs/` may remain for author drafts.
 
 ### Changed
+- **README**: GitHub-ready layout (shields badges, Highlights table, condensed install, Commands table, Documentation index pointing at `DOCS/`, roadmap/contributing stubs); deep technical/agent workflow delegated to **`AGENTS.md`** / **`DOCS/`**.
+
 - **Contributor rules:** **`DOCS/STYLE_GUIDE.md`** § Website parity (`index.html`); **Cursor** `.cursor/rules/index-html-parity.mdc` (`alwaysApply`) + README contributor note + **SUMMARY** quick link pointing at parity checklist.
 
 - **Docs + site:** README passive-rewards + **`index.html`** row; **SUMMARY**, **LOCATIONS** (Otters Civ file map + jar path), **FEATURES** (environment / HUD vs server amend), **ARCHITECTURE** (“Runtime today” bootstrap); `index.html` intro, infobox, commands join blurb, references, contents label for rewards.

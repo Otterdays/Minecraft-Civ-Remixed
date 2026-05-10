@@ -1,102 +1,101 @@
-# Project OOGA - Minecraft Civ Remixed
+# Otters Civ. Revived
 
-Project OOGA is an all-in-one civ mod for Fabric focused on classic server loops:
-factions, jobs, professions, economy, and player shops.
+**Fabric · Minecraft Java 26.1.2**
 
-**Player-facing name:** Otters Civ. Revived (JAR/mod id is still `fpsmod` until a rename pass.)
+<p align="center">
+  <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed"><img src="https://img.shields.io/badge/GitHub-Minecraft--Civ--Remixed-181717?style=flat-square&logo=github" alt="GitHub repository"/></a>
+  <a href="https://www.minecraft.net/"><img src="https://img.shields.io/badge/Minecraft-26.1.2-5a7f3f?style=flat-square" alt="Minecraft 26.1.2"/></a>
+  <a href="https://fabricmc.net/"><img src="https://img.shields.io/badge/Fabric%20Loader-0.19.2-blue?style=flat-square" alt="Fabric Loader"/></a>
+  <a href="https://fabricmc.net/develop"><img src="https://img.shields.io/badge/Fabric%20API-0.146.1%20%2826.1.2%29-1c84c6?style=flat-square" alt="Fabric API"/></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-25%2B-orange?style=flat-square&logo=openjdk&logoColor=white" alt="Java 25+"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-ARR%20%2B%20carve--outs-darkred?style=flat-square" alt="License"/></a>
+</p>
 
-The project is in active bootstrap. The economy foundation is live (`/money`, wallet file) plus
-**Otters Civ.** mining/combat payouts driven by `config/otters_civ_revived/rewards.json`.
-Use **`/otter`** in-game for a command summary.
+> **Otters Civ. Revived** is the player-facing name. Repository codename **Project OOGA**. Mod identifier on disk remains **`fpsmod`** until a planned rename pass.
 
-## Current State
+Otters Civ. Revived is a **Fabric** companion for Minecraft Java that adds a **persistent server wallet**, **slash commands**, **join-time tips**, and **configurable payouts** when players mine tagged blocks or defeat hostile mobs. Long-term horizon: factions-style territory, jobs, shops, and a fuller economy—tracked in **`DOCS/ROADMAP.md`**.
 
-- Vision and product direction: `whitepaper.md`
-- Execution tracker: `DOCS/ROADMAP.md`
-- Active implementation notes: `DOCS/SCRATCHPAD.md`
+---
 
-### Implemented Right Now
+## Highlights (current release)
 
-- Server-side commands: **`/otter`** (help list), **`/money`**, **`/money set <player> <amount>`**
-- Persistent wallet storage via `config/fpsmod/wallet.properties`
-- **Join message** (`ServerPlayConnectionEvents.JOIN`): short system-chat intro pointing players at **`/otter`** and **`/money`** and passive rewards
-- **Otters Civ. Revived** payouts: default tag rules — break blocks in `otters_civ_revived:currency_blocks`,
-  kill `#minecraft:hostile` mobs (direct player hit only in v1); **also** tune per-block and per-mob amounts in the same file via optional JSON objects **`blockRewards`** and **`entityRewards`** (registry id → amount; wins over flat `blockReward` / `entityReward` when listed)
-- Config + datapack tags: `config/otters_civ_revived/rewards.json`, `data/otters_civ_revived/` in the JAR
-- `JobsHooks` no-op stub for future jobs/professions
-- Existing FPS HUD module still present as legacy client extra
+| Area | What you get |
+|------|----------------|
+| **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/fpsmod/wallet.properties` |
+| **Payouts** | Tag-driven mining & combat rewards; optional **per-block** / **per-entity-type** amounts via `blockRewards` & `entityRewards` in **`config/otters_civ_revived/rewards.json`** |
+| **Onboarding** | Short system-chat message when joining (points to `/otter` & `/money`) |
+| **Client extra** | Optional legacy FPS HUD (cosmetic template carry-over) |
 
-## Quick Start
+For full mechanics, defaults, and operator notes, open **`index.html`** in the repo or see **`DOCS/`** below.
 
-### Requirements
+---
 
-- Java 25+
-- Minecraft 26.1.2
-- Fabric Loader 0.19.2+
-- Fabric API 0.146.1+26.1.2
+## Install
 
-### Build
+1. Install **Fabric Loader** for **Minecraft 26.1.2** ([Fabric installer](https://fabricmc.net/use/installer/)).
+2. Add **Fabric API** **0.146.1+26.1.2** (or matching line for your exact game build) from [Modrinth](https://modrinth.com/mod/fabric-api) or your launcher’s browser.
+3. Add this project’s artifact (e.g. **`project-ooga-1.0.0.jar`** after a local build; see **`mod_version`** in **`gradle.properties`**, output under **`BUILT/libs/`**) next to Fabric API in **`mods/`**.
+4. **Dedicated server:** same `mods/` setup on the server; clients only need the JAR if you want the HUD sidecar.
+
+Development stack (build / run from source): **Java 25+**. Runtime for the game follows Minecraft’s launcher requirements.
+
+<details>
+<summary><strong>Expand: build locally</strong></summary>
+
+Windows:
 
 ```bat
 gradlew.bat build
 ```
 
-### Run Dev Client
+Output file name is **`project-ooga-` + `mod_version` + `.jar`** under **`BUILT/libs/`** (pinned in **`gradle.properties`**).
 
-```bat
-gradlew.bat runClient
-```
+Tests: **`gradlew.bat test`** · Dev client: **`gradlew.bat runClient`**
 
-### Run Tests
+</details>
 
-```bat
-gradlew.bat test
-```
-
-### Output Jar
-
-- `BUILT/libs/project-ooga-1.0.0.jar`
+---
 
 ## Commands (server)
 
-- `/otter` — list Otters Civ. / fpsmod commands and pointers to reward config
-- `/money` — show your balance
-- `/money set <player> <amount>` — set balance (bootstrap/admin; permission gate planned)
+| Command | Purpose |
+|---------|---------|
+| `/otter` | Help listing and pointers to reward config paths |
+| `/money` | Show your wallet balance |
+| `/money set <player> <amount>` | Bootstrap / admin balance set (permissions still on the roadmap) |
 
-Passive rewards are configured in `config/otters_civ_revived/rewards.json`: tags, optional **`blockRewards`** / **`entityRewards`** per-id maps, flat fallbacks, cooldowns, dimensions, creative/spectator skips. **Restart** after edits (read once at startup).
+Reward tuning lives in **`config/otters_civ_revived/rewards.json`** (restart required after edits).
 
-**Offline reference page:** see repository root **`index.html`** (wiki-style command/config/roadmap sheet for browsers).
+---
 
-NOTE: Permission gating and full admin command tree are next roadmap items.
+## Documentation
 
-## Roadmap Focus (Near-Term)
+Detailed architecture, changelog, roadmap, SBOM, and contributor conventions live under **`DOCS/`**.
 
-1. Lock down `/money set` permissions
-2. Add `/pay` and `/ooga money set|add|take`
-3. Add immutable transaction logging
-4. Add transfer caps/cooldowns and anti-abuse controls
+| Topic | Entry |
+|--------|--------|
+| Project snapshot & links | **[`DOCS/SUMMARY.md`](DOCS/SUMMARY.md)** |
+| Roadmap & milestones | **[`DOCS/ROADMAP.md`](DOCS/ROADMAP.md)** |
+| Strategic direction | **[`DOCS/whitepaper.md`](DOCS/whitepaper.md)** |
+| Code map | **[`DOCS/LOCATIONS.md`](DOCS/LOCATIONS.md)** |
+| Architecture | **[`DOCS/ARCHITECTURE.md`](DOCS/ARCHITECTURE.md)** |
+| Contributor / agent workflow | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) |
+| Style & `index.html` parity | [`DOCS/STYLE_GUIDE.md`](DOCS/STYLE_GUIDE.md) |
 
-Track checklist progress in `DOCS/ROADMAP.md`.
+Browser-friendly reference (**commands, configs, defaults**): [`index.html`](index.html) · Modrinth-style listing copy: [`DOCS/modrinth-description.md`](DOCS/modrinth-description.md)
 
-## Tech Snapshot
+---
 
-- Minecraft: `26.1.2`
-- Fabric Loader: `0.19.2`
-- Fabric API: `0.146.1+26.1.2`
-- Loom: `1.16-SNAPSHOT` (resolved at build time)
-- Java: `25+`
-- Build outputs: `BUILT/`
+## Roadmap & contributing
 
-## Notes for Contributors
+Near-term priorities (summarized): hardened **`/money set`** permissions, **`/pay`**, ledger-style auditing, sinks and caps — see **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`** for the authoritative checklist.
 
-- This repo is no longer positioned as a generic FPS template.
-- README reflects the civ-mod target first, with current bootstrap status made explicit.
-- Preserve status docs under `DOCS/` and keep roadmap checklists current while shipping features.
-- **Agents:** automation handbooks **`AGENTS.md`** (canonical) and **`CLAUDE.md`** (Claude Code quick entry — details in **`AGENTS.md`**).
-- **Website:** civ- or rewards-related changes require updating repo root **`index.html`** alongside README/Modrinth copy; Cursor rule `.cursor/rules/index-html-parity.mdc` applies. Full checklist: **`DOCS/STYLE_GUIDE.md`** (Website parity §).
+For pull requests or automation-assisted work: read **`AGENTS.md`** first, then **`DOCS/STYLE_GUIDE.md`**.
+
+**Issues:** [github.com/Otterdays/Minecraft-Civ-Remixed/issues](https://github.com/Otterdays/Minecraft-Civ-Remixed/issues)
+
+---
 
 ## License
 
-All rights reserved (ARR) with **explicit carve-outs** in `LICENSE` for gameplay/video/montage
-use and for including the **official unmodified JAR** in mod packs—no redistribution of
-forks or substantial source reproduction without permission. Details: [`LICENSE`](LICENSE).
+All rights reserved. Narrow carve-outs appear in **`[LICENSE](LICENSE)`** (gameplay / video content, distributing the official unmodified JAR in mod packs, etc.). Forks or substantial redistribution of modified sources remain outside those carve-outs without permission.
