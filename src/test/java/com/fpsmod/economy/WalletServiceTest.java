@@ -50,4 +50,15 @@ class WalletServiceTest {
         assertEquals(99L, svc.getBalance(ID));
         assertEquals(1, store.saveCount);
     }
+
+    @Test
+    void addBalanceWithHintStoresDisplayLabel() {
+        FakeWalletStore store = new FakeWalletStore(new HashMap<>());
+        WalletService svc = new WalletService(store);
+
+        svc.addBalance(ID, 10L, "PlayerOne");
+        WalletLedger after = store.load();
+        assertEquals(10L, after.balances().get(ID).longValue());
+        assertEquals("PlayerOne", after.displayHints().get(ID));
+    }
 }

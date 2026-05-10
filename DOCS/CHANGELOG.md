@@ -25,6 +25,16 @@ All notable changes to this project are documented here.
 - **`DOCS/modrinth-description.md`** restored at canonical path (`STYLE_GUIDE`, `SUMMARY`, `index.html` reference); preservation header added. Parallel copy under `DOCS/Ryan-Made-Docs/` may remain for author drafts.
 
 ### Changed
+- **`index.html` `#limits`:** states join onboarding vs welcome-back is tracked **per world save** (`fpsmod:join_attendance` in overworld data, not global `config/`). **SUMMARY** docs-surface line: player-facing HTML is repo root **`index.html`** only (no **`website/`** mirror).
+
+- **`JoinWelcome` messaging:** First visit on **this save** still gets three onboarding system lines. Returning players see a concise **welcome back `~`** + display-name line (**`ChatFormatting`** gold / aqua) and a shorter `/otter` / `/money` refresher (`JoinWelcome` + **`JoinAttendanceSavedData`**, **`fpsmod:join_attendance`** via overworld **`SavedDataStorage`**).
+
+- **`/money set`** gated with **`Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS)`** (gamemaster / vanilla cheat band); **`/money`** read remains open. Docs: **`OtterCommand`**, **`README`**, **`index.html`** (`#command-permissions`), **`DOCS/ROADMAP.md`** (**Permissions apparatus (planned)**).
+
+- **`wallet.properties` operator hints:** optional UTF‑8 **`# Name: …`** lines above each **`uuid=balance`** (UUID line still authoritative); hints refresh on join, **`/money`**, **`/money set`**, mining, and kill payouts. **`WalletLedger`** + **`WalletStore.save(balances, displayHints)`**; **`JoinWelcome`** updates labels. **`FileWalletStore`** parses this layout and still loads legacy **`Properties`** files when no UUID lines parse.
+
+- **Wallet persistence:** **`config/otters_civ_revived/wallet.properties`** (beside **`rewards.json`**); **`config/fpsmod/`** is FPS HUD only (**`hud.properties`**). On first **`FileWalletStore.load()`**, if the new file is missing and **`config/fpsmod/wallet.properties`** exists, **`Files.move`** migrates it and logs. **`/otter`** help updated.
+
 - **README** + **`index.html`**: readability pass—**Words we use** glossary (player name, **Project OOGA**, `fpsmod`, world host / “server,” tags, per-id reward maps); short **lead** lines before dense sections; friendlier feature bullets and command `<dd>` text; `.glossary` / `.lead` styles on the site; sidebar/Contents anchor `#words-we-use-h` for scroll highlighting. **STYLE_GUIDE** § website parity + **`.cursor/rules/index-html-parity.mdc`** amended to require README/site glossary sync.
 
 - **README** + **`index.html`**: naming table (player name vs codename **Project OOGA** vs `fpsmod`); “commands” clarified as normal **slash chat** commands (single-player + multiplayer); “server” explained in plain language; features heading **World side**; **fabric.mod.json** description calls out codename.

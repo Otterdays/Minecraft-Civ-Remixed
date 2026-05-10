@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat tips, configurable mining and combat payouts (tags + per-id blockRewards/entityRewards in rewards.json), roadmap, offline reference.">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat (first-visit onboarding vs welcome-back for returning players per world save), configurable mining and combat payouts (tags + per-id blockRewards/entityRewards in rewards.json), roadmap, offline reference.">
   <title>Otters Civ. Revived (fpsmod) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -354,6 +354,7 @@
             <a href="#commands">Chat commands</a>
             <ul class="sub">
               <li><a href="#join-messages">Join messages</a></li>
+              <li><a href="#command-permissions">Who can run what</a></li>
             </ul>
           </li>
           <li><a href="#economy">Economy &amp; persistence</a></li>
@@ -394,8 +395,8 @@
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
-        <tr><th>Namespaces</th><td>Gameplay tags & config: <code>otters_civ_revived</code>; wallet & HUD: <code>fpsmod</code></td></tr>
-        <tr><th>Economy store</th><td><code>config/fpsmod/wallet.properties</code></td></tr>
+        <tr><th>Namespaces</th><td>Otters Civ. economy: <code>otters_civ_revived</code> (<code>rewards.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>)</td></tr>
+        <tr><th>Economy store</th><td><code>config/otters_civ_revived/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
         <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
         <tr><th>Source</th><td><a href="https://github.com/Otterdays/Minecraft-Civ-Remixed">GitHub repository</a> · <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/issues">Issues</a></td></tr>
@@ -403,7 +404,7 @@
       </tbody>
     </table>
 
-    <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows a short <strong>welcome tip</strong> when you join, and can pay you for mining or fighting mobs (see <code>rewards.json</code>). An optional legacy FPS overlay is unrelated to the civ features. Long-term design: guild-style land, social tools, transfers, ledger, jobs—see <a href="#design-goals">Target feature set</a>.</p>
+    <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows <strong>join system messages</strong> (full onboarding the first time you connect to <em>that</em> save, a shorter <q>welcome back ~</q> line when you’ve been there before), and can pay you for mining or fighting mobs (see <code>rewards.json</code>). An optional legacy FPS overlay is unrelated to the civ features. Long-term design: guild-style land, social tools, transfers, ledger, jobs—see <a href="#design-goals">Target feature set</a>.</p>
 
     <div class="glossary" id="words-we-use" role="region" aria-labelledby="words-we-use-h">
       <h2 id="words-we-use-h">Words we use</h2>
@@ -428,10 +429,10 @@
     <div class="feature-block">
       <h3 id="features-server">World side (money &amp; rules)</h3>
       <ul>
-        <li>Friendly lines in chat when you join—branding and where to type <code>/otter</code> and <code>/money</code>.</li>
+        <li>Friendly lines in chat when you join: <strong>first visit on this world save</strong> = three system lines (branding, <code>/otter</code>, <code>/money</code>, rewards pointer). <strong>Returning</strong> players see a styled <q>welcome back ~</q> display name plus a shorter refresher (persisted per save, not in <code>config/</code>).</li>
         <li><code>/otter</code> — prints command names and where reward settings live.</li>
-        <li><code>/money</code> checks your balance; <code>/money set &lt;player&gt; &lt;amount&gt;</code> sets someone’s total (admin/bootstrap for now; permissions later).</li>
-        <li>Wallets save under <code>config/fpsmod/wallet.properties</code>.</li>
+        <li><code>/money</code> checks your balance (everyone). <code>/money set &lt;player&gt; &lt;amount&gt;</code> changes someone’s total and requires vanilla <strong>gamemaster-style</strong> command permission (same band as cheat commands / OP)—see <a href="#command-permissions">permissions</a>.</li>
+        <li>Wallets save under <code>config/otters_civ_revived/wallet.properties</code> (same folder as rewards; legacy <code>config/fpsmod/wallet.properties</code> is moved here on first load).</li>
         <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
         <li>Combat: pay on kills that match <code>entityTag</code> (default: hostile mobs), with optional per-mob amounts in <code>entityRewards</code>; this build only credits direct melee—not bows or tridents yet.</li>
         <li>Tune everything in <code>config/otters_civ_revived/rewards.json</code> (cooldowns, gamemode skips, dimensions, chat announcements, tag ids, per-id maps).</li>
@@ -444,7 +445,7 @@
       <h3 id="features-not-in-release">Not in this release</h3>
       <ul>
         <li>Only wallet + command bootstrap + passive payouts are live—see <a href="#design-goals">Target feature set</a> for the full design (transfers, guilds, social, jobs).</li>
-        <li>Missing today: <code>/pay</code>, permissions on <code>/money set</code>, ledger, friends, PM, guild claims/protections, job trees, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
+        <li>Missing today: <code>/pay</code>, granular mod/plugin permission layers (beyond vanilla gamemaster for <code>/money set</code>), ledger, friends, PM, guild claims/protections, job trees, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
       </ul>
     </div>
 
@@ -485,7 +486,7 @@
         <li><a href="#features">Features (current)</a></li>
         <li><a href="#design-goals">Target feature set</a></li>
         <li><a href="#requirements">Requirements &amp; install stack</a></li>
-        <li><a href="#commands">Chat commands</a> · <a href="#join-messages">join messages</a></li>
+        <li><a href="#commands">Chat commands</a> · <a href="#join-messages">join messages</a> · <a href="#command-permissions">permissions</a></li>
         <li><a href="#economy">Economy &amp; persistence</a></li>
         <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tags &amp; per-id maps</a>, <a href="#bundled-tags">default tags</a>)</li>
         <li><a href="#config-reference">All config files (reference)</a></li>
@@ -520,7 +521,7 @@
     <h2 id="commands">Slash commands (in-game chat)</h2>
     <p><strong>Simple explanation:</strong> Press your <strong>chat</strong> key (often <strong>T</strong>), type a line that starts with <strong><code>/</code></strong> (for example <code>/money</code>), press <strong>Enter</strong>. That works while you are <strong>playing inside a world</strong>—single-player or multiplayer. You are not using a separate “server program” window; “server” in modding just means <q>the part of Minecraft that remembers money and runs the command.</q></p>
     <p>Try <code>/otter</code> first; it prints a short in-game help list.</p>
-    <p id="join-messages">Players also see a few <strong>automatic system messages when they connect</strong> (not a slash command): Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a one-line pointer to passive rewards / <code>rewards.json</code>.</p>
+    <p id="join-messages">Players also see <strong>automatic system messages when they connect</strong> (not a slash command). The <strong>first</strong> time your account is seen on <strong>this world save</strong>, you get three lines: Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a pointer to passive rewards / <code>rewards.json</code>. <strong>Later joins</strong> get a gold/aqua <q>welcome back ~</q><em>name</em> line and a condensed command reminder—stored per save as <code>fpsmod:join_attendance</code> (overworld saved data), separate from <code>wallet.properties</code>.</p>
 
     <dl>
       <dt><span class="cmd">/otter</span></dt>
@@ -530,14 +531,19 @@
       <dd>You must be a player in the world (same as vanilla chat commands). Prints <em>your</em> balance.</dd>
 
       <dt><span class="cmd">/money set &lt;player&gt; &lt;amount&gt;</span></dt>
-      <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). For operators bootstrapping tests; stricter permission checks are on the roadmap.</dd>
+      <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). Requires Minecraft <strong>gamemaster</strong>-level command permission (OP-equivalent for cheat-style commands)—see <a href="#command-permissions">below</a>. Future builds may expose explicit mod nodes / LuckPerms-style checks.</dd>
     </dl>
+
+    <h3 id="command-permissions">Who can run which command (today)</h3>
+    <p><strong>Open to players:</strong> <code>/otter</code> (help only), <code>/money</code> with no arguments (read your balance in chat). Passive mining/kill payouts have no slash command—they follow <code>rewards.json</code>.</p>
+    <p><strong>Gamemaster / OP band only:</strong> <code>/money set &lt;player&gt; &lt;amount&gt;</code> checks <code>CommandSourceStack.permissions()</code> for <code class="cmd">Permission.HasCommandLevel(GAMEMASTERS)</code>—same tier vanilla uses for many built-in cheats. Dedicated console and suitably permissioned integrations still work as the server configures them.</p>
+    <p class="lead"><strong>Future:</strong> a dedicated Otters Civ. permission apparatus (explicit string ids, optional Fabric Permissions API / server plugins, non-OP econ moderators). Sketched under <strong>Permissions apparatus (planned)</strong> in <code>DOCS/ROADMAP.md</code> and M1’s admin-permission backlog.</p>
 
     <h2 id="economy">Economy &amp; persistence</h2>
     <p class="lead">Think “bank file on disk”: one number per player UUID, updated when you earn or an admin sets your balance.</p>
-    <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/fpsmod/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
-    <p>The wallet file is a Java <code>.properties</code> map: each key is a player UUID string, each value is a non‑negative decimal integer balance. The store comments the file as <q>Project OOGA wallet balances</q> on write. Invalid lines are skipped with a logged warning.</p>
-    <div class="note">The rewards file (<code>rewards.json</code>) configures tags and payout sizes; wallet storage remains under <code>config/fpsmod/</code>.</div>
+    <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/otters_civ_revived/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
+    <p>On disk the wallet is UTF‑8 text: optional <code># Name: …</code> hint lines precede each <code>uuid=balance</code> line (same semantics as Java <code>.properties</code> for the key=value part). Loader accepts older files without name lines. Comments on write explain the format; malformed balance lines log a warning and are skipped when possible.</p>
+    <div class="note"><code>rewards.json</code> and <code>wallet.properties</code> both live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay still uses only <code>config/fpsmod/hud.properties</code>.</div>
 
     <h2 id="rewards">Passive rewards</h2>
     <p class="lead">Breaking the right blocks and killing the right mobs silently adds coins. What “right” means is editable JSON—often via tags Datapacks already understand—with optional exceptions per exact block/mob ID.</p>
@@ -595,14 +601,15 @@
         <tr><td><code>entityRewards</code></td><td>Optional object <code>{ "minecraft:entity_type": &lt;amount&gt;, … }</code>; per-kill payout (wins over entity tag).</td><td><code>{}</code></td></tr>
       </tbody>
     </table>
-    <h3 id="config-wallet"><code>config/fpsmod/wallet.properties</code></h3>
-    <p>UUID keys and long balances; created automatically when balances exist. Prefer using <code>/money set</code> for edits rather than hand-editing unless you maintain backups.</p>
+    <h3 id="config-wallet"><code>config/otters_civ_revived/wallet.properties</code></h3>
+    <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
+    <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>
     <h3 id="config-hud"><code>config/fpsmod/hud.properties</code></h3>
     <p>Client-only: <code>showFpsHud=true|false</code> for the legacy FPS overlay. Read failures default to visible HUD for the session.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
     <p class="lead">Rough delivery spine (M0–M6)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
-    <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include permission gating for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, faction commands (<code>/f …</code>), player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
+    <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include the richer permission <strong>apparatus</strong> beyond vanilla gamemaster for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, faction commands (<code>/f …</code>), player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
     <table class="data-table" aria-label="Milestone overview">
       <thead>
         <tr><th>Milestone</th><th>Theme</th></tr>
@@ -625,6 +632,8 @@
     <h2 id="limits">Operational limits</h2>
     <ul>
       <li>One rewards config directory per launcher instance applies to integrated server usage; wallet file scope follows the same Fabric config root.</li>
+      <li><strong>Join onboarding vs welcome-back</strong> is tracked <strong>per world save</strong> (overworld saved data <code>fpsmod:join_attendance</code>), not in global <code>config/</code>—a <strong>new single-player world</strong> or <strong>new server map</strong> always gets the full first-join messages again for each player UUID.</li>
+      <li><code>/money set</code> is intentionally narrow: vanilla gamemaster permission only until a plugin-friendly permission layer ships (see <a href="#command-permissions">command permissions</a>).</li>
       <li>Tag-based payouts do not imply “worldgen-only” blocks; duplication farming is deferred to roadmap hardening.</li>
       <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
     </ul>
@@ -672,7 +681,7 @@
       <li>Install <strong>Fabric Loader <code>&gt;= 0.19.2</code></strong> for Minecraft <code>26.1.2</code>. The <a href="https://fabricmc.net/use/installer/">Fabric installer</a> handles this.</li>
       <li>Drop <strong>Fabric API</strong> (<code>0.146.1+26.1.2</code> or compatible) into your <code>mods/</code> folder.</li>
       <li>Drop the mod JAR (<code>project-ooga-1.0.0.jar</code>) into <code>mods/</code>.</li>
-      <li>Start the server (or client). Config files are created automatically on first launch under <code>config/fpsmod/</code> and <code>config/otters_civ_revived/</code>.</li>
+      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>wallet.properties</code>); the FPS HUD alone uses <code>config/fpsmod/hud.properties</code> when toggled.</li>
       <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, then restart.</li>
     </ol>
     <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets and payouts. Other players only need the JAR on their PC if they want the optional FPS HUD.</div>
@@ -701,6 +710,9 @@
     </dl>
     <dl>
       <dt>Changed</dt>
+      <dd><code>JoinWelcome</code>: first join per world save keeps the three-line onboarding; returning players get a styled welcome-back line plus a short <code>/otter</code> / <code>/money</code> tip (<code>JoinAttendanceSavedData</code>, id <code>fpsmod:join_attendance</code>).</dd>
+      <dd><code>/money set</code> requires <code>Permission.HasCommandLevel(GAMEMASTERS)</code> (vanilla gamemaster / OP band); <code>/money</code> read stays open. Planned: mod-specific permission apparatus—see <code>DOCS/ROADMAP.md</code>.</dd>
+      <dd>Wallet file path: <code>config/otters_civ_revived/wallet.properties</code> (Otters Civ. config); legacy <code>config/fpsmod/wallet.properties</code> auto-migrates on first load. <code>config/fpsmod/</code> is FPS HUD only (<code>hud.properties</code>). File may include optional <code># Name:</code> lines above each <code>uuid=balance</code>.</dd>
       <dd><code>fabric.mod.json</code> environment changed from <code>client</code> to <code>*</code> to enable server command registration.</dd>
       <dd>LICENSE clarified: ARR with carve-outs for gameplay/video use and including the official unmodified JAR in mod packs.</dd>
       <dd>Repository rebranded to <code>Minecraft-Civ-Remixed</code> / Project OOGA.</dd>

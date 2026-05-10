@@ -19,7 +19,7 @@
 
 **Project OOGA** is the nickname we use in docs and Discord-style talk; players still see **Otters Civ. Revived**.
 
-Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends a **welcome tip** when you join, and can **pay you** when you mine certain blocks or defeat certain mobs. Long-term: land claims, jobs, shops—see **`DOCS/ROADMAP.md`**.
+Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends **join system messages** (full onboarding the first time you connect to that save; a shorter **welcome back ~**name line when you’ve played there before), and can **pay you** when you mine certain blocks or defeat certain mobs. Long-term: land claims, jobs, shops—see **`DOCS/ROADMAP.md`**.
 
 ### Words we use
 
@@ -36,13 +36,13 @@ Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows
 
 ## Highlights (current release)
 
-One-line version: **wallet + chat commands + optional mining/kill payouts + join tip**; details in the table.
+One-line version: **wallet + chat commands + optional mining/kill payouts + join onboarding / welcome-back**; details in the table.
 
 | Area | What you get |
 |------|----------------|
-| **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/fpsmod/wallet.properties` |
+| **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/otters_civ_revived/wallet.properties` (legacy `config/fpsmod/wallet.properties` migrates once on load) |
 | **Payouts** | Tag-driven mining & combat rewards; optional **per-block** / **per-entity-type** amounts via `blockRewards` & `entityRewards` in **`config/otters_civ_revived/rewards.json`** |
-| **Onboarding** | Short system-chat message when joining (points to `/otter` & `/money`) |
+| **Onboarding** | System chat on join: **first visit per save** — three lines; **returning** — short **welcome back ~**name + `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
 | **Client extra** | Optional legacy FPS HUD (cosmetic template carry-over) |
 
 For full mechanics, defaults, and operator notes, open **`index.html`** in the repo or see **`DOCS/`** below.
@@ -85,9 +85,17 @@ When docs say **“server,”** they mean **“the game side that stores your ba
 |---------|----------------|
 | `/otter` | Shows a short help list and where reward settings live |
 | `/money` | Shows **your** money |
-| `/money set <player> <amount>` | Sets someone’s balance (bootstrap / admin; proper permissions later) |
+| `/money set <player> <amount>` | Sets someone’s balance (**gamemaster / OP-equivalent** only—same band as many vanilla cheat commands; see below) |
 
 Money rules and mining/combat payouts are edited in **`config/otters_civ_revived/rewards.json`** (restart the game after you change that file).
+
+### Command permissions (current)
+
+- **Everyone** who can open chat: **`/money`** (read-only balance).
+- **Gamemaster-tier** command sources (vanilla **operators** in the usual cheat band, console, etc.): **`/money set`**. Implemented with Minecraft 26.x `CommandSourceStack.permissions()` and `Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS)`.
+- **Future:** dedicated mod permission strings / Fabric Permissions API compatibility so you can grant econ admin without full OP — see **`DOCS/ROADMAP.md`** → **Permissions apparatus (planned)**.
+
+Balances on disk (**`config/otters_civ_revived/wallet.properties`**) use **`uuid=amount`** keys; when the server knows your name it also writes **`# Name: YourName`** on the line above as a readability hint (the UUID line stays the source of truth for money).
 
 ---
 
@@ -111,7 +119,7 @@ Browser-friendly reference (**commands, configs, defaults**): [`index.html`](ind
 
 ## Roadmap & contributing
 
-**Next up (short list):** safer **`/money set`** permissions, **`/pay`**, an audit trail, sinks and caps. The full checklist lives in **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`**.
+**Next up (short list):** richer econ **permission nodes** / plugin integration (beyond vanilla gamemaster for **`/money set`**), **`/pay`**, an audit trail, sinks and caps. The full checklist lives in **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`**.
 
 For pull requests or automation-assisted work: read **`AGENTS.md`** first, then **`DOCS/STYLE_GUIDE.md`**.
 

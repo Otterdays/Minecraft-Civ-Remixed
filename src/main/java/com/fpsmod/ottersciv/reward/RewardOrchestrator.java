@@ -76,7 +76,7 @@ public final class RewardOrchestrator {
             return;
         }
 
-        wallets.addBalance(player.getUUID(), payout);
+        wallets.addBalance(player.getUUID(), payout, player.getName().getString());
         jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
 
         if (rules.announceRewards) {
@@ -138,7 +138,7 @@ public final class RewardOrchestrator {
             return;
         }
 
-        wallets.addBalance(killer.getUUID(), payout);
+        wallets.addBalance(killer.getUUID(), payout, killer.getName().getString());
         jobsHooks.onEconomyReward(
             killer,
             new RewardContext(RewardReason.MOB_KILL, payout, null, type)

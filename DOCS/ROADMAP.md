@@ -22,7 +22,7 @@ primary tracker. Existing sections remain as detailed reference.
 - [x] Added `/money set <player> <amount>` for rapid server-side validation.
 - [x] Verified build success with `./gradlew.bat build`.
 - [x] Recentered `README.md` on Project OOGA civ-mod direction and current economy bootstrap.
-- [ ] Add permission gate to `/money set` (currently open during bootstrap).
+- [x] Add vanilla command-permission gate to `/money set` (gamemaster / `PermissionLevel.GAMEMASTERS`; see roadmap append for future mod-specific apparatus).
 - [ ] Add `/pay` and `/ooga money set|add|take` to satisfy M1 deliverables.
 - [ ] Add immutable transaction log entries for every balance mutation.
 
@@ -455,3 +455,9 @@ acceptance criteria, dependencies, risks, and release gates.
 - No blocker severity defects open.
 - Operator/config documentation updated.
 - Migration and rollback path validated where applicable.
+
+## Permissions apparatus (planned; separate from bootstrap OP gate)
+
+[AMENDED 2026-05-11]: **Shipped:** `/money` is available to ordinary players who can chat; **`/money set`** (and future admin **give**/adjust commands) requires Minecraft **gamemaster** command permission (`Permission.HasCommandLevel` + `PermissionLevel.GAMEMASTERS`—effectively vanilla **OP tier** / `ops.json` band for cheat-style commands on 26.x).  
+**Later (not scheduled in this sprint):** mod-specific **`Permission`** atoms / string ids, optional **Fabric Permissions API** or compat with common server permission plugins, per-command granularity for `/pay` and econ admin tooling, delegation without granting full OP — tracked under M1 “Admin permission-node map complete” once persistence/ledger milestones demand it.
+

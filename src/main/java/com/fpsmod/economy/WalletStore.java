@@ -4,7 +4,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface WalletStore {
-    Map<UUID, Long> load();
 
-    void save(Map<UUID, Long> balances);
+    /** Loads balances and optional display hints persisted as {@code # Name: ...} comment lines. */
+    WalletLedger load();
+
+    void save(Map<UUID, Long> balances, Map<UUID, String> displayHints);
 }

@@ -20,8 +20,9 @@ public final class OtterCommand {
         sendLine(source, "--- Commands ---");
         sendLine(source, "/otter — show this list");
         sendLine(source, "/money — show your wallet balance");
-        sendLine(source, "/money set <player> <amount> — set a player's balance (admin bootstrap; lock down soon)");
+        sendLine(source, "/money set <player> <amount> — set balance (gamemaster / OP-band only; roadmap: custom permission nodes)");
         sendLine(source, "--- Passive rewards ---");
+        sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
         sendLine(source, "Mining + combat payouts use config/otters_civ_revived/rewards.json");
         sendLine(source, "(tags, per-block/per-mob maps blockRewards/entityRewards, flat blockReward/entityReward fallback, cooldowns)");
         return 1;

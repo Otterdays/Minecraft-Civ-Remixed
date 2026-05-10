@@ -14,7 +14,7 @@ Economy bootstrap is live: **`/money`**, **`/otter`**, wallet file, **`rewards.j
 
 ## Mandatory site parity
 
-**`index.html`** (repo root) is the wiki-style offline reference.
+**`index.html`** (repo root) is the wiki-style offline reference. Do **not** maintain a second HTML copy under **`website/`** (or elsewhere); one file only.
 
 - Cursor rule **`.cursor/rules/index-html-parity.mdc`** is **`alwaysApply: true`**.
 - **`DOCS/STYLE_GUIDE.md`** § **Website parity (`index.html`)** defines the full checklist.

@@ -4,24 +4,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/** Test double: in-memory balances, tracks save call count. */
+/** Test double: in-memory balances + hints; tracks save call count. */
 public final class FakeWalletStore implements WalletStore {
-    private final Map<UUID, Long> backing;
+    private final Map<UUID, Long> backingBalances;
+    private final Map<UUID, String> backingHints;
     int saveCount;
 
     public FakeWalletStore(Map<UUID, Long> initial) {
-        this.backing = new HashMap<>(initial);
+        this.backingBalances = new HashMap<>(initial);
+        this.backingHints = new HashMap<>();
     }
 
     @Override
-    public Map<UUID, Long> load() {
-        return new HashMap<>(backing);
+    public WalletLedger load() {
+        return new WalletLedger(backingBalances, backingHints);
     }
 
     @Override
-    public void save(Map<UUID, Long> balances) {
+    public void save(Map<UUID, Long> balances, Map<UUID, String> displayHints) {
         saveCount++;
-        backing.clear();
-        backing.putAll(balances);
+        backingBalances.clear();
+        backingBalances.putAll(balances);
+        backingHints.clear();
+        backingHints.putAll(displayHints);
     }
 }

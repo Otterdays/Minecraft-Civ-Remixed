@@ -11,7 +11,7 @@ What’s new...? Civilization building gameplay on the server.
 - **`/otter`** — in-game list of this mod’s commands (economy + where reward config lives).
 - **`/money`** — show your wallet balance on the server.
 - **`/money set <player> <amount>`** — set a player’s balance (bootstrap / admin testing; permission gating is still on the todo list).
-- **Persistent wallets** — balances stored server-side (`config/fpsmod/wallet.properties`).
+- **Persistent wallets** — balances stored server-side (`config/otters_civ_revived/wallet.properties`; legacy `config/fpsmod/wallet.properties` migrates once).
 - **Mining & combat payouts (Otters Civ.)** — breaking blocks in tag `otters_civ_revived:currency_blocks` and killing entities in `#minecraft:hostile` (defaults) grant coins, **or** set per-block / per-mob payouts in the same file via **`blockRewards`** and **`entityRewards`** (registry id → amount); flat `blockReward` / `entityReward` still apply when an id is not listed. Tune `config/otters_civ_revived/rewards.json` (cooldowns, skip creative/spectator, dimensions). Ranged/indirect kills do not pay in this v1 (direct player hit only).
 - **Legacy client HUD** — optional FPS readout + screen toggle from the original template; grandfathered extra, not core product.
 
@@ -65,4 +65,7 @@ If in doubt, open an issue before redistributing anything beyond an unmodified p
 
 
 </details>
+
+[AMENDED 2026-05-11]: Parallel draft; **wallet path** kept in sync with canonical **`DOCS/modrinth-description.md`** (`config/otters_civ_revived/wallet.properties`; `fpsmod/` HUD-only).
+
 

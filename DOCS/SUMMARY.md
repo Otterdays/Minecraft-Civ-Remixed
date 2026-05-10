@@ -27,9 +27,14 @@
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
 
+[AMENDED 2026-05-11]:
+- **Commands:** **`/money`** for all chat users; **`/money set`** requires vanilla **gamemaster** (`PermissionLevel.GAMEMASTERS`). Roadmap **`Permissions apparatus (planned)`** describes future plugin-style nodes.
+- **Wallet path:** **`config/otters_civ_revived/wallet.properties`** (economy grouped with **`rewards.json`**). **`config/fpsmod/hud.properties`** stays FPS-overlay-only; legacy **`config/fpsmod/wallet.properties`** auto-migrates on first wallet read. Optional **`# Name:`** plaintext above each **`uuid=balance`** for operators; refreshed on join, **`/money`**, **`/money set`**, and reward events.
+- **Join UX:** first join per **world save** still gets three onboarding lines; **`JoinAttendanceSavedData`** (**`fpsmod:join_attendance`**, overworld **`SavedDataStorage`**) remembers returning UUIDs **for that save** so later joins get a concise **welcome back ~** _(display name)_ line (gold/aqua formatting) plus a shortened `/otter` / `/money` tip—not tied to wiping global **`config/`**.
+
 [AMENDED 2026-05-10]:
 - **Passive rewards tuning:** same `config/otters_civ_revived/rewards.json` supports optional **`blockRewards`** and **`entityRewards`** maps (validated block/entity ids → payouts; precedence over tag-wide `blockReward`/`entityReward` when an id is listed). Join UX: **`JoinWelcome`** broadcasts a few system-chat lines on player connect (`/otter`, `/money`, rewards pointer). Offline **reference site:** repo root **`index.html`** (sidebar TOC, configs, roadmap links).
-- **Docs surface:** README + `DOCS/modrinth-description.md` + `DOCS/CHANGELOG`; website copy tracks those features where listed.
+- **Docs surface:** README + `DOCS/modrinth-description.md` + `DOCS/CHANGELOG`; repo root **`index.html`** tracks player-facing feature copy where listed (no separate `website/` mirror).
 
 [AMENDED 2026-05-09]:
 - Commands: **`/otter`** (mod command list / config pointers), **`/money`**, **`/money set`**. Licensing: **`LICENSE`** is ARR with explicit carve-outs (gameplay/video/montage; official unmodified JAR in mod packs); see file for boundaries.

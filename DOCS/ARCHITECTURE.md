@@ -35,3 +35,9 @@ domains: economy, jobs/professions, factions, land claims, and player shops.
 ## Runtime Today (Bootstrap; 2026-05-10)
 
 Shipped subset before the planned data layer above: **`WalletService`** + file-backed **`wallet.properties`**; **`RewardOrchestrator`** applies **`RewardRules`** loaded once from **`config/otters_civ_revived/rewards.json`** (tags + optional per-id **`blockRewards`**/**`entityRewards`**, cooldowns); Fabric events bridge block breaks and melee kills. Welcome copy on **`ServerPlayConnectionEvents.JOIN`** (**`JoinWelcome`**). Commands **`/otter`**, **`/money`**. Player-facing prose + config tables: **`index.html`** (repo root).
+
+[AMENDED 2026-05-11]: **`wallet.properties`** path is **`config/otters_civ_revived/wallet.properties`** (alongside **`rewards.json`**). **`config/fpsmod/`** retains only grandfathered HUD settings (**`hud.properties`**). **`FileWalletStore`** migrates a legacy **`config/fpsmod/wallet.properties`** on first load if the new path is missing.
+
+[AMENDED 2026-05-11]: Wallet file may include optional **`# Name:`** hint lines (**`WalletLedger`** / **`WalletService`**); **`uuid=balance`** remains authoritative for balances.
+
+[AMENDED 2026-05-11]: **`JoinWelcome`** sends full onboarding on a player’s **first** join **per world save** and a shorter **welcome back ~** _(name)_ path afterward, backed by **`JoinAttendanceSavedData`** (**`fpsmod:join_attendance`**) in overworld **`SavedDataStorage`**.

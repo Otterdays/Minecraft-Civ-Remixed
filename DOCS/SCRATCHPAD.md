@@ -3,6 +3,16 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-11] **`index.html` + docs surface:** **`#limits`** states join onboarding vs welcome-back is **per world save** (`fpsmod:join_attendance`, not `config/`). **SUMMARY** amended: canonical reference is repo root **`index.html`** only (no **`website/`** mirror).
+
+- [2026-05-11] **`JoinWelcome` returning players:** **`JoinAttendanceSavedData`** (**`fpsmod:join_attendance`**, overworld **`SavedDataStorage`**); styled **welcome back ~name** + short refresher vs full three-line first join. CHANGELOG **`Changed`**, **LOCATIONS**, **FEATURES** / **SUMMARY** amended, **`index.html`** / README join copy.
+
+- [2026-05-11] **Command permissions:** `/money` open; **`/money set`** requires **`Permission.HasCommandLevel(GAMEMASTERS)`** (26.x APIs). **`#command-permissions`** on **`index.html`**, README subsection, roadmap **Permissions apparatus (planned)**; CHANGELOG.
+
+- [2026-05-11] **`wallet.properties` name hints:** optional `# Name:` lines before `uuid=balance`; `WalletLedger` + joined `WalletStore.save`; join + `/money` + rewards refresh labels; **`/otter`** note; **`index.html`** / README / CHANGELOG.
+
+- [2026-05-11] **Wallet file** moved from `config/fpsmod/wallet.properties` → **`config/otters_civ_revived/wallet.properties`** (`FileWalletStore` + one-time migrate from legacy path). Docs/README/`index.html`/modrinth/CHANGELOG updated; **`fpsmod/`** HUD-only remains.
+
 - [2026-05-11] Readability pass (tasteful): README **Words we use** table + Highlights one-liner + docs/roadmap soft leads; **`index.html`** same gloss (styled region), `.lead` captions, plain command/feature copy, `#words-we-use-h` for scroll spy; **`DOCS/modrinth-description.md`** annotated; **CHANGELOG** / **SCRATCHPAD** bumped.
 
 - [2026-05-11] Naming + clarity: README table (**Otters Civ. Revived** vs codename **Project OOGA**); slash-command explainer (“server” = game side that remembers money); `index.html` infobox codename row, World side heading, Chat commands section; installation note simplified; Mod Menu `fabric.mod.json` description.
@@ -13,7 +23,7 @@
 
 - [2026-05-10] **Rules for `index.html` upkeep:** STYLE_GUIDE § Website parity (when to edit, sidebar hygiene, housekeeping); Cursor rule `.cursor/rules/index-html-parity.mdc` (alwaysApply); README contributors + SUMMARY quick link.
 
-- [2026-05-10] **Docs + `index.html` sync:** README (join + per-id rewards + offline page), DOCS `SUMMARY`, `LOCATIONS`, `FEATURES`, `ARCHITECTURE`, `CHANGELOG`; website infobox/intro/commands note/see-also/contents rewards label.
+- [2026-05-10] **Docs + `index.html` sync:** README (join + per-id rewards + offline page), DOCS `SUMMARY`, `LOCATIONS`, `FEATURES`, `ARCHITECTURE`, `CHANGELOG`; repo root **`index.html`** infobox/intro/commands/see-also/contents rewards label.
 
 - [2026-05-10] **`rewards.json` per-id payouts**: `blockRewards` / `entityRewards` maps (normalized ids, invalid keys skipped + warn); precedence over tag flat amounts; `RewardOrchestrator`, loader, `OtterCommand` hint, `index.html`, Modrinth description, `RewardRulesLoaderTest`.
 
@@ -63,7 +73,7 @@
 - Existing feature docs describe FPS module behavior; civ module specs are in whitepaper only.
 
 ## Next Steps
-1. Add permission gate for `/money set` so only operators/admins can mutate balances.
+1. Add richer econ permission layer (explicit nodes / Fabric Permissions API)—beyond vanilla **`GAMEMASTERS`** gate now on **`/money set`**.
 2. Add `/pay` and `/ooga money set|add|take` command surface.
 3. Add immutable transaction log records for balance mutations.
 4. Add transfer caps/cooldowns config for abuse control.
