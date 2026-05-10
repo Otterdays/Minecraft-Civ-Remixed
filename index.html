@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, configurable mining and mob-kill payouts, default currency block and mob tags, roadmap, and config file reference.">
   <title>Otters Civ. Revived (fpsmod) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -27,15 +28,90 @@
     a { color: var(--link); text-decoration: none; }
     a:visited { color: var(--link-vis); }
     a:hover { text-decoration: underline; }
-    .shell {
-      max-width: 58rem;
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      z-index: 999;
+      padding: 0.5rem 1rem;
+      background: #000;
+      color: #fff;
+      font-size: 0.875rem;
+    }
+    .skip-link:focus {
+      left: 0.5rem;
+      top: 0.5rem;
+    }
+    .page-wrap {
+      max-width: 76rem;
       margin: 0 auto;
-      padding: 1rem 1.25rem 3rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(12.5rem, 15rem) minmax(0, 1fr);
+      gap: 0;
+      align-items: start;
+      min-height: 100vh;
+    }
+    .side-nav {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 1rem 0.85rem 2rem 1rem;
+      border-right: 1px solid #c8ccd1;
+      background: #f3f5f7;
+      font-size: 0.8125rem;
+      line-height: 1.35;
+    }
+    .side-nav strong {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .side-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .side-nav > ul > li {
+      margin: 0.35rem 0;
+    }
+    .side-nav a {
+      display: block;
+      padding: 0.15rem 0;
+      border-radius: 2px;
+      outline-offset: 2px;
+    }
+    .side-nav a:focus-visible {
+      outline: 2px solid var(--link);
+    }
+    .side-nav a[aria-current="page"] {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .side-nav .sub {
+      margin: 0.2rem 0 0.45rem 0.65rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid #c8ccd1;
+    }
+    .side-nav .sub li { margin: 0.2rem 0; }
+    .side-nav .sub a {
+      font-size: 0.78rem;
+      color: #405a80;
+    }
+    .shell {
+      max-width: none;
+      margin: 0;
+      padding: 1rem 1.35rem 3rem 1.5rem;
       background: #fff;
-      border-left: 1px solid var(--border);
       border-right: 1px solid var(--border);
       min-height: 100vh;
     }
+    h2, h3 { scroll-margin-top: 0.75rem; }
     h1 {
       font-family: "Linux Libertine", Georgia, Times, serif;
       font-weight: 400;
@@ -122,6 +198,19 @@
       margin: 0.75rem 0;
       background: #fef6e7;
     }
+    .feature-block { margin: 1rem 0 1.5rem; }
+    .feature-block h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0.85rem 0 0.35rem;
+      border: none;
+      padding: 0;
+    }
+    .feature-block ul {
+      margin: 0.25rem 0 0.5rem;
+      padding-left: 1.35rem;
+    }
+    .feature-block li { margin: 0.2rem 0; }
     .references {
       margin-top: 2rem;
       padding-top: 0.75rem;
@@ -129,43 +218,224 @@
       font-size: 0.875rem;
       color: var(--muted);
     }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin: 0.5rem 0 1rem;
+    }
+    .data-table th,
+    .data-table td {
+      border: 1px solid #d0d0d0;
+      padding: 0.35rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .data-table th {
+      background: #eaecf0;
+      width: 28%;
+    }
+    .tag-value-list {
+      margin: 0.25rem 0 0;
+      padding-left: 1.35rem;
+      font-size: 0.875rem;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .side-nav {
+        position: relative;
+        max-height: none;
+        overflow: visible;
+        border-right: none;
+        border-bottom: 1px solid #c8ccd1;
+        padding: 0.75rem 1rem 1rem;
+      }
+      .side-nav > ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        gap: 0.15rem 0.75rem;
+      }
+      .side-nav .sub {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        padding-top: 0.35rem;
+        margin-top: 0.25rem;
+        border-top: 1px dashed #c8ccd1;
+      }
+      .shell {
+        border-right: none;
+        padding: 1rem 1.15rem 2.5rem;
+      }
+    }
     @media (max-width: 640px) {
       .infobox { float: none; margin: 0 0 1rem; width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <h1>Otters Civ. Revived</h1>
+  <div class="page-wrap">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="layout">
+      <nav class="side-nav" id="section-nav" aria-label="On this page">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#top">Introduction</a></li>
+          <li>
+            <a href="#features">Features (current)</a>
+            <ul class="sub">
+              <li><a href="#features-server">Server</a></li>
+              <li><a href="#features-client">Client</a></li>
+              <li><a href="#features-not-in-release">Not in this release</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#design-goals">Target feature set</a>
+            <ul class="sub">
+              <li><a href="#design-goals-economy">Economy</a></li>
+              <li><a href="#design-goals-social">Social</a></li>
+              <li><a href="#design-goals-guilds">Guilds &amp; territory</a></li>
+              <li><a href="#design-goals-jobs">Jobs &amp; professions</a></li>
+            </ul>
+          </li>
+          <li><a href="#requirements">Requirements</a></li>
+          <li><a href="#commands">Commands</a></li>
+          <li><a href="#economy">Economy &amp; persistence</a></li>
+          <li>
+            <a href="#rewards">Passive rewards</a>
+            <ul class="sub">
+              <li><a href="#rewards-config">Tags &amp; datapacks</a></li>
+              <li><a href="#bundled-tags">Bundled tags (JAR)</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#config-reference">Config reference</a>
+            <ul class="sub">
+              <li><a href="#config-rewards-json"><code>rewards.json</code></a></li>
+              <li><a href="#config-wallet"><code>wallet.properties</code></a></li>
+              <li><a href="#config-hud"><code>hud.properties</code></a></li>
+            </ul>
+          </li>
+          <li><a href="#roadmap-milestones">Roadmap (M0–M6)</a></li>
+          <li><a href="#client">Client (FPS HUD)</a></li>
+          <li><a href="#limits">Operational limits</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#installation">Installation</a></li>
+          <li><a href="#building">Building from source</a></li>
+          <li><a href="#changelog">Changelog</a></li>
+          <li><a href="#see-also">See also</a></li>
+        </ul>
+      </nav>
+      <div class="shell">
+        <main id="main">
+    <h1 id="top">Otters Civ. Revived</h1>
     <p class="tagline">Unofficial reference page for the Fabric mod (technical id: <code>fpsmod</code>). Repository codename: Project OOGA / Minecraft Civ Remixed.</p>
 
     <table class="infobox">
       <caption>Mod summary</caption>
       <tbody>
         <tr><th>Platform</th><td>Minecraft: Java Edition (Fabric)</td></tr>
-        <tr><th>Stable target (repo)</th><td>Minecraft 26.1.x, Fabric Loader 0.19.2+, Fabric API, Java 25+</td></tr>
+        <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
+        <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Namespaces</th><td>Gameplay tags & config: <code>otters_civ_revived</code>; wallet & HUD: <code>fpsmod</code></td></tr>
         <tr><th>Economy store</th><td><code>config/fpsmod/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code></td></tr>
-        <tr><th>Source</th><td><a href="https://github.com/Otterdays/Minecraft-Civ-Remixed">GitHub</a></td></tr>
+        <tr><th>Source</th><td><a href="https://github.com/Otterdays/Minecraft-Civ-Remixed">GitHub repository</a> · <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/issues">Issues</a></td></tr>
         <tr><th>License</th><td>All rights reserved; see <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/LICENSE">LICENSE</a> (mod-pack & video carve-outs)</td></tr>
       </tbody>
     </table>
 
-    <p><strong>Otters Civ. Revived</strong> is a server-oriented Fabric mod that introduces a persistent wallet, chat commands for balances, configurable payouts for breaking certain blocks and killing tagged mobs, and a bundled legacy FPS overlay from an earlier template. It is positioned as early-stage infrastructure toward a broader civ-suite roadmap (jobs, factions, shops).</p>
+    <p><strong>Otters Civ. Revived</strong> is a server-oriented Fabric mod that introduces a persistent wallet, chat commands for balances, configurable payouts for breaking certain blocks and killing tagged mobs, and a bundled legacy FPS overlay from an earlier template. Long-term design targets include guild-based territory, social systems (friends, private messages), deeper economy (transfers, ledger), and jobs with leveled traits—see <a href="#design-goals">Target feature set</a>.</p>
+
+    <h2 id="features">Features (current build)</h2>
+    <div class="feature-block">
+      <h3 id="features-server">Server</h3>
+      <ul>
+        <li><code>/otter</code> — in-game command list + pointer to rewards config.</li>
+        <li><code>/money</code> and <code>/money set &lt;player&gt; &lt;amount&gt;</code> — read/set wallet (set is bootstrap; permissions TBD).</li>
+        <li>Persistent balances in <code>config/fpsmod/wallet.properties</code>.</li>
+        <li>Mining payouts for blocks in <code>otters_civ_revived:currency_blocks</code> (see datapack + <code>rewards.json</code>).</li>
+        <li>Combat payouts for mobs matching the configured entity tag (default <code>#minecraft:hostile</code>); direct player melee attribution only in this version (no bow/trident credit).</li>
+        <li>Tunable <code>config/otters_civ_revived/rewards.json</code> (amounts, cooldowns, creative/spectator skip, dimensions, announcements).</li>
+        <li><code>JobsHooks</code> seam present; no job systems wired yet.</li>
+      </ul>
+      <h3 id="features-client">Client</h3>
+      <ul>
+        <li>Optional legacy FPS HUD (readout + GUI toggle); <code>config/fpsmod/hud.properties</code>.</li>
+      </ul>
+      <h3 id="features-not-in-release">Not in this release</h3>
+      <ul>
+        <li>Only wallet + command bootstrap + passive payouts are live—see <a href="#design-goals">Target feature set</a> for the full design (transfers, guilds, social, jobs).</li>
+        <li>Missing today: <code>/pay</code>, permissions on <code>/money set</code>, ledger, friends, PM, guild claims/protections, job trees, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
+      </ul>
+    </div>
+
+    <h2 id="design-goals">Target feature set (design goals)</h2>
+    <p>Below is the <em>intended</em> scope of Otters Civ. Revived: a civ-style multiplayer layer on Fabric. Ship order and detail follow the repo roadmap; this is not a commitment timeline. Group territory is framed as <strong>guilds</strong> (faction-like mechanics without using “factions” as the product label).</p>
+    <div class="feature-block">
+      <h3 id="design-goals-economy">Economy</h3>
+      <ul>
+        <li><strong>Money</strong> — server-authoritative currency tied to rewards, trades, and sinks.</li>
+        <li><strong>Wallets</strong> — persistent per-player balances (prototype: properties file; later storage may migrate).</li>
+        <li><strong>Transfers</strong> — paying other players (<code>/pay</code>-style commands), limits, optional fees, and immutable ledger entries (planned).</li>
+      </ul>
+      <h3 id="design-goals-social">Social</h3>
+      <ul>
+        <li><strong>Friends lists</strong> — player-curated lists for social features (invites, trust, or soft permissions—exact UX TBD).</li>
+        <li><strong>Private messaging</strong> — direct messages between players separate from public chat (design target).</li>
+      </ul>
+      <h3 id="design-goals-guilds">Guilds &amp; territory</h3>
+      <ul>
+        <li><strong>Guilds</strong> — organized groups with membership, roles, and a treasury hook consistent with the economy layer.</li>
+        <li><strong>Chunk claims</strong> — assign chunks (or regions) to a guild; overlap and raid rules configurable.</li>
+        <li><strong>Protections</strong> — enforce build/break/container use inside claimed space; outsiders handled via diplomacy/war-style rules (design target).</li>
+      </ul>
+      <h3 id="design-goals-jobs">Jobs, professions &amp; traits</h3>
+      <ul>
+        <li><strong>Jobs / professions</strong> — player-picked roles that contextualize how you earn (mining, farming, crafting, etc.).</li>
+        <li><strong>Skill-based rewards</strong> — income and bonuses tied to job-related actions, not only global block/mob tags.</li>
+        <li><strong>Traits &amp; levels</strong> — per-job progression (levels, perks, or trait lines)—integrates with the mod’s planned <code>JobsHooks</code> pipeline for stacking modifiers on rewards.</li>
+      </ul>
+    </div>
+    <div class="note">Current releases implement only wallets, <code>/money</code>, tag-based mining/combat grants, and a no-op jobs hook. Guilds, messaging, friends, <code>/pay</code>, and profession trees are not yet in the JAR.</div>
 
     <nav class="contents" aria-label="Contents">
       <strong>Contents</strong>
       <ol>
+        <li><a href="#features">Features (current)</a></li>
+        <li><a href="#design-goals">Target feature set</a></li>
+        <li><a href="#requirements">Requirements &amp; install stack</a></li>
         <li><a href="#commands">Commands</a></li>
         <li><a href="#economy">Economy &amp; persistence</a></li>
-        <li><a href="#rewards">Passive rewards</a></li>
-        <li><a href="#client">Client features</a></li>
+        <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tag config</a>, <a href="#bundled-tags">default tags</a>)</li>
+        <li><a href="#config-reference">All config files (reference)</a></li>
+        <li><a href="#roadmap-milestones">Roadmap milestones (M0–M6)</a></li>
+        <li><a href="#client">Client (detail)</a></li>
         <li><a href="#limits">Operational limits</a></li>
       </ol>
     </nav>
 
     <div style="clear:right"></div>
+
+    <h2 id="requirements">Requirements &amp; install stack</h2>
+    <p>Align versions with the repository’s Gradle pins when building from source; for downloaded JARs, match the Modrinth or release notes for that build.</p>
+    <table class="data-table" aria-label="Required versions">
+      <thead>
+        <tr><th>Component</th><th>Repo baseline</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Minecraft: Java Edition</td><td><code>26.1.2</code></td></tr>
+        <tr><td>Fabric Loader</td><td><code>&gt;= 0.19.2</code></td></tr>
+        <tr><td>Fabric API</td><td><code>0.146.1+26.1.2</code> (or compatible for the same Minecraft minor)</td></tr>
+        <tr><td>Java runtime</td><td><code>25</code> or newer</td></tr>
+      </tbody>
+    </table>
+    <p>The mod declares environment <code>*</code> (client + server): install on the server for economy and payouts; clients only need the JAR if you want the optional FPS HUD overlay.</p>
 
     <h2 id="commands">Commands</h2>
     <p>Commands register on the <em>logical server</em> (including single-player integrated servers). The in-game analogue of this article is <code>/otter</code>, which prints a short synopsis.</p>
@@ -183,17 +453,83 @@
 
     <h2 id="economy">Economy &amp; persistence</h2>
     <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/fpsmod/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
+    <p>The wallet file is a Java <code>.properties</code> map: each key is a player UUID string, each value is a non‑negative decimal integer balance. The store comments the file as <q>Project OOGA wallet balances</q> on write. Invalid lines are skipped with a logged warning.</p>
     <div class="note">The rewards file (<code>rewards.json</code>) configures tags and payout sizes; wallet storage remains under <code>config/fpsmod/</code>.</div>
 
     <h2 id="rewards">Passive rewards</h2>
-    <p>Mining and combat payouts are controlled by JSON at <code>config/otters_civ_revived/rewards.json</code> (created with defaults when missing). Defaults include:</p>
-    <ul>
-      <li>Block payouts for states in tag <code>otters_civ_revived:currency_blocks</code> (shipped datapack merges stone, basic ores, etc.).</li>
-      <li>Mob payouts for entities in <code>#minecraft:hostile</code> unless changed via <code>entityTag</code>.</li>
-    </ul>
-    <p>Options include rewards per action, cooldowns per player, skipping creative/spectator, dimension blacklist strings, and whether to announce each grant in chat. As of current implementation, ranged or indirect kills (e.g., projectile without direct attribution in the examined damage hook) may not qualify; melee-style direct hits do.</p>
+    <p>Mining and combat payouts are controlled by JSON at <code>config/otters_civ_revived/rewards.json</code> (created with defaults when missing). <strong>Restart</strong> the client or server after editing; the file is read once at startup.</p>
 
-    <h2 id="client">Client features</h2>
+    <h3 id="rewards-config">What counts: tags and datapacks</h3>
+    <p>Which blocks and mobs pay is <em>not</em> hard-coded in that JSON as a block list. The config points at <strong>tag identifiers</strong>; the tag contents come from Minecraft’s tag system (vanilla + mod + user datapacks).</p>
+    <ul>
+      <li><code>blockTag</code> — block tag id (e.g. <code>otters_civ_revived:currency_blocks</code>). A broken block pays only if it matches this tag. Point it at any valid block tag, including vanilla (e.g. <code>minecraft:iron_ores</code>).</li>
+      <li><code>entityTag</code> — entity type tag id (default <code>minecraft:hostile</code>). A kill pays only if the mob’s type is in that tag. You may use the mod’s <code>otters_civ_revived:currency_mobs</code> or a custom tag from your own datapack.</li>
+      <li><strong>Membership</strong> — The mod ships tag JSON under <code>data/otters_civ_revived/tags/…</code> inside the JAR. Server owners can add world/server <strong>datapacks</strong> to merge extra entries into those tags or define new tags, then set <code>blockTag</code> / <code>entityTag</code> to those ids in <code>rewards.json</code>.</li>
+      <li><strong>Amounts</strong> — <code>blockReward</code> and <code>entityReward</code> are single flat values for all matches in the tag (no per-block or per-mob table in this version).</li>
+    </ul>
+
+    <p>Other keys in the same file: <code>enabled</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code use block tag <code>otters_civ_revived:currency_blocks</code> and hostile mobs via <code>minecraft:hostile</code>.</p>
+    <p>Kill credit in this build favors direct player hits; bows, tridents, and other indirect kills are not credited yet.</p>
+
+    <h3 id="bundled-tags">Bundled datapack tags (default JAR)</h3>
+    <p>These are the <strong>shipped</strong> entries merged into the mod’s namespaces. Operators can supersede or extend them with world/server datapacks; <code>rewards.json</code> decides which tag ids participate in payouts.</p>
+    <h4><code>otters_civ_revived:currency_blocks</code></h4>
+    <p class="note" style="margin-top:0.35rem">Block ids and nested tag references as in the repo JAR (<code>data/otters_civ_revived/tags/blocks/currency_blocks.json</code>). Ore lines expand every block in each vanilla ore tag.</p>
+    <ul class="tag-value-list">
+      <li><code>minecraft:stone</code>, <code>minecraft:granite</code>, <code>minecraft:diorite</code>, <code>minecraft:andesite</code></li>
+      <li><code>minecraft:deepslate</code>, <code>minecraft:tuff</code>, <code>minecraft:calcite</code>, <code>minecraft:dripstone_block</code></li>
+      <li><code>minecraft:netherrack</code>, <code>minecraft:blackstone</code>, <code>minecraft:basalt</code>, <code>minecraft:end_stone</code></li>
+      <li><code>#minecraft:coal_ores</code>, <code>#minecraft:iron_ores</code>, <code>#minecraft:copper_ores</code>, <code>#minecraft:gold_ores</code></li>
+      <li><code>#minecraft:redstone_ores</code>, <code>#minecraft:lapis_ores</code>, <code>#minecraft:diamond_ores</code>, <code>#minecraft:emerald_ores</code></li>
+    </ul>
+    <h4><code>otters_civ_revived:currency_mobs</code></h4>
+    <p>The shipped entity-type tag currently includes only <code>#minecraft:hostile</code>. The default config’s <code>entityTag</code> is still the literal id <code>minecraft:hostile</code>; you may point <code>entityTag</code> at <code>otters_civ_revived:currency_mobs</code> in <code>rewards.json</code> if you want a single customization surface that matches the datapack folder name.</p>
+
+    <h2 id="config-reference">All config files (quick reference)</h2>
+    <p>Exact defaults below match the Gson-backed defaults in code when a key is omitted from JSON or the file is first created.</p>
+    <h3 id="config-rewards-json"><code>config/otters_civ_revived/rewards.json</code></h3>
+    <table class="data-table" aria-label="rewards.json fields">
+      <thead>
+        <tr><th>Field</th><th>Role</th><th>Default</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>enabled</code></td><td>Master toggle for mining/kill payouts</td><td><code>true</code></td></tr>
+        <tr><td><code>blockTag</code></td><td>Block tag id for break rewards</td><td><code>otters_civ_revived:currency_blocks</code></td></tr>
+        <tr><td><code>blockReward</code></td><td>Amount added per qualifying break</td><td><code>1</code></td></tr>
+        <tr><td><code>entityTag</code></td><td>Entity-type tag id for kill rewards</td><td><code>minecraft:hostile</code></td></tr>
+        <tr><td><code>entityReward</code></td><td>Amount added per qualifying kill</td><td><code>5</code></td></tr>
+        <tr><td><code>blockCooldownMs</code></td><td>Per-player throttle after a block payout (ms)</td><td><code>50</code></td></tr>
+        <tr><td><code>entityCooldownMs</code></td><td>Per-player throttle after a mob payout (ms)</td><td><code>100</code></td></tr>
+        <tr><td><code>skipCreative</code></td><td>Skip rewards for creative-mode players</td><td><code>true</code></td></tr>
+        <tr><td><code>skipSpectator</code></td><td>Skip rewards for spectator-mode players</td><td><code>true</code></td></tr>
+        <tr><td><code>dimensionBlacklist</code></td><td>Array of dimension resource locations to disable rewards in</td><td><code>[]</code> (none)</td></tr>
+        <tr><td><code>announceRewards</code></td><td>If true, sends the earning player system messages such as <code>+1 (mining)</code> or <code>+5 (combat)</code></td><td><code>true</code></td></tr>
+      </tbody>
+    </table>
+    <h3 id="config-wallet"><code>config/fpsmod/wallet.properties</code></h3>
+    <p>UUID keys and long balances; created automatically when balances exist. Prefer using <code>/money set</code> for edits rather than hand-editing unless you maintain backups.</p>
+    <h3 id="config-hud"><code>config/fpsmod/hud.properties</code></h3>
+    <p>Client-only: <code>showFpsHud=true|false</code> for the legacy FPS overlay. Read failures default to visible HUD for the session.</p>
+
+    <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
+    <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include permission gating for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, faction commands (<code>/f …</code>), player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
+    <table class="data-table" aria-label="Milestone overview">
+      <thead>
+        <tr><th>Milestone</th><th>Theme</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>M0</td><td>Foundation and data integrity (persistence abstraction, SQLite baseline, migrations, audit framework)</td></tr>
+        <tr><td>M1</td><td>Economy MVP (transfers, admin money ops, fees/sinks, full transaction ledger)</td></tr>
+        <tr><td>M2</td><td>Jobs &amp; professions MVP (<code>/job …</code>, event rewards, progression)</td></tr>
+        <tr><td>M3</td><td>Factions &amp; claims MVP (chunk claims, protections, treasury)</td></tr>
+        <tr><td>M4</td><td>Player shops MVP (listings, escrow, Screen Handler UI, tax)</td></tr>
+        <tr><td>M5</td><td>Civ governance (diplomacy states, territory projects, regional bonuses)</td></tr>
+        <tr><td>M6</td><td>Stabilization, balance, PostgreSQL migration path, RC hardening</td></tr>
+      </tbody>
+    </table>
+    <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, and the FPS HUD stub.</div>
+
+    <h2 id="client">Client features (detail)</h2>
     <p>A legacy FPS counter and pause/inventory overlay toggle persists from the repository’s older template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). It is optional ornamentation for the owning client install and unrelated to civ economy semantics.</p>
 
     <h2 id="limits">Operational limits</h2>
@@ -203,10 +539,56 @@
       <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
     </ul>
 
-    <div class="references">
-      <p><strong>See also:</strong> project <code>README.md</code>, <code>DOCS/ROADMAP.md</code>, and repo <code>LICENSE</code> for redistribution terms.</p>
+    <div class="references" id="see-also">
+      <p><strong>See also:</strong> project <code>README.md</code>; <code>DOCS/ROADMAP.md</code>; product direction <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/DOCS/whitepaper.md"><code>DOCS/whitepaper.md</code></a>; <code>DOCS/ARCHITECTURE.md</code>; repository <code>LICENSE</code> for redistribution terms.</p>
       <p style="margin-top:0.5rem;font-style:italic">This page ships with the repository for offline browsing; not affiliated with Wikimedia Foundation.</p>
     </div>
+        </main>
+      </div>
+    </div>
   </div>
+  <script>
+    (function () {
+      var nav = document.getElementById("section-nav");
+      if (!nav || !("IntersectionObserver" in window)) return;
+      var links = nav.querySelectorAll('a[href^="#"]');
+      var headings = [];
+      links.forEach(function (a) {
+        var id = a.getAttribute("href").slice(1);
+        if (!id) return;
+        var el = document.getElementById(id);
+        if (el && (el.matches("h1, h2, h3, h4") || el.classList.contains("references"))) {
+          headings.push({ id: id, el: el, link: a });
+        }
+      });
+      var map = {};
+      headings.forEach(function (h) { map[h.id] = h.link; });
+      function clearCurrent() {
+        links.forEach(function (a) { a.removeAttribute("aria-current"); });
+      }
+      var observer = new IntersectionObserver(
+        function (entries) {
+          var visible = entries
+            .filter(function (e) { return e.isIntersecting && e.intersectionRatio > 0; })
+            .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; });
+          if (!visible.length) return;
+          var id = visible[0].target.id;
+          if (!map[id]) return;
+          clearCurrent();
+          map[id].setAttribute("aria-current", "page");
+        },
+        { rootMargin: "-20% 0px -65% 0px", threshold: [0, 0.1, 0.25, 0.5, 1] }
+      );
+      headings.forEach(function (h) { observer.observe(h.el); });
+      function syncHashToNav() {
+        var hash = (location.hash || "").slice(1);
+        if (!hash || !map[hash]) return;
+        clearCurrent();
+        map[hash].setAttribute("aria-current", "page");
+      }
+      window.addEventListener("hashchange", syncHashToNav);
+      syncHashToNav();
+    })();
+  </script>
 </body>
 </html>

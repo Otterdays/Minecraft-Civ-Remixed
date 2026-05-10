@@ -3,6 +3,8 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-10] **`index.html`**: sticky left **On this page** sidebar (nested anchors, narrow layout + responsive stack), `#main` landmark, skip link, subsection ids for Features/Design goals/config files/`#see-also`, `aria-current` via `IntersectionObserver` + hash.
+- [2026-05-10] **`index.html`** reference page: added requirements/stack table, wallet file format, bundled `currency_blocks` / `currency_mobs` defaults, full `rewards.json` field table (code defaults), config file quick reference, M0–M6 roadmap snapshot, meta description, infobox (artifact + pinned deps + issues), whitepaper/architecture links in references — no removal of prior copy.
 - [2026-05-09] **`/otter`** help command (`OtterCommand`); **`LICENSE`** rewritten (ARR + carve-outs: video/montage, official JAR in mod packs, no source/fork reproduction without permission); README + `fabric.mod.json` description + `modrinth-description` + `CHANGELOG` synced.
 - [2026-05-09] **Otters Civ. Revived** block-break + hostile-kill payouts shipped: `RewardOrchestrator`, `config/otters_civ_revived/rewards.json`, datapack tags `otters_civ_revived:*`, `WalletService.addBalance`, `JobsHooks` NO_OP; wired in `FpsMod`; docs `CHANGELOG` + `modrinth-description`.
 - [2026-05-08] Imagery Optimizery GUI: optional per-file list (Add files / Add folder / Remove / Clear), table with input px+KB, output px, estimated PNG/JPG KB (in-memory encode); Optimize uses list if non-empty else full input folder; debounced estimates + generation guard for stale threads.
@@ -26,13 +28,16 @@
 - Economy + help bootstrap: **`/otter`**, **`/money`**, **`/money set`** compile and build successfully.
 
 ## Last 5 Actions
-1. Shipped `/otter` help, LICENSE carve-outs, README/modrinth/`fabric.mod.json` doc pass.
-2. Implemented Otters Civ. mining/combat payouts, reward config + tags, changelog/modrinth copy.
-3. Documented Imagery Optimizery in `SUMMARY` + `CHANGELOG`; SCRATCHPAD note to leave GUI as-is unless explicitly requested.
-4. Imagery Optimizery tkinter GUI + `--gui`; batch opens GUI by default; shared `run_batch()` for CLI/UI.
-5. Patched promo image optimizer batch + Python under `images/optimize-here/` for cwd-safe runs and smaller web outputs.
-6. Rewrote `README.md` to center Project OOGA civ-mod scope and current command bootstrap.
-7. Marked README recentering progress in `DOCS/ROADMAP.md` ASAP tracker.
+1. Expanded repo `index.html` mod reference (configs, default tags, roadmap M0–M6, requirements).
+2. Shipped `/otter` help, LICENSE carve-outs, README/modrinth/`fabric.mod.json` doc pass.
+3. Implemented Otters Civ. mining/combat payouts, reward config + tags, changelog/modrinth copy.
+4. Documented Imagery Optimizery in `SUMMARY` + `CHANGELOG`; SCRATCHPAD note to leave GUI as-is unless explicitly requested.
+5. Imagery Optimizery tkinter GUI + `--gui`; batch opens GUI by default; shared `run_batch()` for CLI/UI.
+6. Patched promo image optimizer batch + Python under `images/optimize-here/` for cwd-safe runs and smaller web outputs.
+7. Rewrote `README.md` to center Project OOGA civ-mod scope and current command bootstrap.
+8. Marked README recentering progress in `DOCS/ROADMAP.md` ASAP tracker.
+
+[AMENDED 2026-05-10]: Renumbered backlog items after inserting the `index.html` line so the list stays ordered (section title unchanged).
 - [AMENDED 2026-05-08]: Prior “last actions” still valid: server-safe `fabric.mod.json` environment `*`; implemented `WalletStore` / `FileWalletStore` / `WalletService`; registered `/money` and `/money set <player> <amount>` paths.
 
 ## Blockers
