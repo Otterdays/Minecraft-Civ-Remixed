@@ -2,6 +2,8 @@
 
 [AMENDED 2026-05-11]: Canonical path restored under `DOCS/` (tooling & docs reference `DOCS/modrinth-description.md`). A parallel copy may exist under `DOCS/Ryan-Made-Docs/`; prefer this path for CI and automation.
 
+[AMENDED 2026-05-11]: README + `index.html` add a short **Words we use** gloss (player name vs **Project OOGA** vs `fpsmod`; “server” = whoever hosts the world; tags vs optional `blockRewards` / `entityRewards`). Modrinth listing content below is unchanged in behavior—see repo for the full glossary.
+
 # Otters Civ. Revived
 
 

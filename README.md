@@ -21,9 +21,22 @@
 
 Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends a **welcome tip** when you join, and can **pay you** when you mine certain blocks or defeat certain mobs. Long-term: land claims, jobs, shops—see **`DOCS/ROADMAP.md`**.
 
+### Words we use
+
+| Term | Meaning |
+|------|---------|
+| **Otters Civ. Revived** | Player-facing mod name |
+| **Project OOGA** | Internal codename (repo / team chat) |
+| **`fpsmod`** | Jar’s technical mod ID (rename planned) |
+| **Server / host** | The game instance that owns the save—your single-player session or multiplayer host |
+| **Tag** | A vanilla datapack grouping of blocks or mob types (`blockTag`, `entityTag` in **`rewards.json`**) |
+| **`blockRewards` / `entityRewards`** | Optional per-block or per–mob-type payout overrides in **`rewards.json`** |
+
 ---
 
 ## Highlights (current release)
+
+One-line version: **wallet + chat commands + optional mining/kill payouts + join tip**; details in the table.
 
 | Area | What you get |
 |------|----------------|
@@ -80,7 +93,7 @@ Money rules and mining/combat payouts are edited in **`config/otters_civ_revived
 
 ## Documentation
 
-Detailed architecture, changelog, roadmap, SBOM, and contributor conventions live under **`DOCS/`**.
+For **deep design and contributor workflow**, use **`DOCS/`** and the agent handbooks below. The table is an index only.
 
 | Topic | Entry |
 |--------|--------|
@@ -98,7 +111,7 @@ Browser-friendly reference (**commands, configs, defaults**): [`index.html`](ind
 
 ## Roadmap & contributing
 
-Near-term priorities (summarized): hardened **`/money set`** permissions, **`/pay`**, ledger-style auditing, sinks and caps — see **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`** for the authoritative checklist.
+**Next up (short list):** safer **`/money set`** permissions, **`/pay`**, an audit trail, sinks and caps. The full checklist lives in **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`**.
 
 For pull requests or automation-assisted work: read **`AGENTS.md`** first, then **`DOCS/STYLE_GUIDE.md`**.
 

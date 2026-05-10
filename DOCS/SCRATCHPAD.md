@@ -3,6 +3,8 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-11] Readability pass (tasteful): README **Words we use** table + Highlights one-liner + docs/roadmap soft leads; **`index.html`** same gloss (styled region), `.lead` captions, plain command/feature copy, `#words-we-use-h` for scroll spy; **`DOCS/modrinth-description.md`** annotated; **CHANGELOG** / **SCRATCHPAD** bumped.
+
 - [2026-05-11] Naming + clarity: README table (**Otters Civ. Revived** vs codename **Project OOGA**); slash-command explainer (“server” = game side that remembers money); `index.html` infobox codename row, World side heading, Chat commands section; installation note simplified; Mod Menu `fabric.mod.json` description.
 
 - [2026-05-11] **README** restyle for GitHub: badges row, structured sections, tables, install + docs index; jargon moved to `DOCS/` / `AGENTS.md`.

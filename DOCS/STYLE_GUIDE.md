@@ -32,6 +32,8 @@
 
 [2026-05-10]: Repo root **`index.html`** is the canonical **offline / browser-facing** Otters Civ. reference (commands, configs, roadmap, bundled tags). It must stay aligned with **`README.md`**, **`DOCS/modrinth-description.md`**, and the actual code/config surface.
 
+[AMENDED 2026-05-11]: **Words we use** glossaries — the README subsection and **`index.html`** `#words-we-use` region (linked from the sidebar as `#words-we-use-h`) must stay aligned when player-facing terminology shifts (Otters Civ. vs **Project OOGA**, `fpsmod`, world host / “server”, tags vs `blockRewards` / `entityRewards`).
+
 ### When to update `index.html` in the same PR / chat turn
 
 Finish an `index.html` pass before you consider civ-facing work **done**, if any of these changed:

@@ -198,6 +198,47 @@
       margin: 0.75rem 0;
       background: #fef6e7;
     }
+    .glossary {
+      clear: right;
+      font-size: 0.9rem;
+      border: 1px solid #c8ccd1;
+      background: linear-gradient(180deg, #f4f8fc 0%, #f3f5f7 100%);
+      padding: 0.65rem 1rem 0.85rem;
+      margin: 0 0 1.25rem;
+      border-radius: 2px;
+    }
+    .glossary h2 {
+      scroll-margin-top: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.45rem;
+      padding: 0;
+      border: none;
+    }
+    .glossary table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      margin: 0.25rem 0 0;
+    }
+    .glossary th,
+    .glossary td {
+      border: 1px solid #d8dee6;
+      padding: 0.3rem 0.45rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .glossary th {
+      background: #e8eef4;
+      width: 34%;
+      font-weight: 600;
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0.35rem 0 0.65rem;
+      max-width: 52rem;
+    }
     .feature-block { margin: 1rem 0 1.5rem; }
     .feature-block h3 {
       font-size: 1rem;
@@ -285,7 +326,12 @@
       <nav class="side-nav" id="section-nav" aria-label="On this page">
         <strong>On this page</strong>
         <ul>
-          <li><a href="#top">Introduction</a></li>
+          <li>
+            <a href="#top">Introduction</a>
+            <ul class="sub">
+              <li><a href="#words-we-use-h">Words we use</a></li>
+            </ul>
+          </li>
           <li>
             <a href="#features">Features (current)</a>
             <ul class="sub">
@@ -359,18 +405,37 @@
 
     <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows a short <strong>welcome tip</strong> when you join, and can pay you for mining or fighting mobs (see <code>rewards.json</code>). An optional legacy FPS overlay is unrelated to the civ features. Long-term design: guild-style land, social tools, transfers, ledger, jobs—see <a href="#design-goals">Target feature set</a>.</p>
 
+    <div class="glossary" id="words-we-use" role="region" aria-labelledby="words-we-use-h">
+      <h2 id="words-we-use-h">Words we use</h2>
+      <p style="margin:0 0 0.5rem;font-size:0.88rem;color:var(--muted)">Short glossary so dense sections below read faster. Exact file paths and JSON keys stay spelled out in tables.</p>
+      <table>
+        <thead>
+          <tr><th>Term</th><th>Plain meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><strong>Otters Civ. Revived</strong></th><td>Name on the tin for players.</td></tr>
+          <tr><th scope="row"><strong>Project OOGA</strong></th><td>Our internal nickname for the repo and design docs.</td></tr>
+          <tr><th scope="row"><code>fpsmod</code></th><td>The mod’s technical ID inside the jar (future rename).</td></tr>
+          <tr><th scope="row">Server / host</th><td>The running game that owns your save—single-player counts; “server” is not “only rented hardware.”</td></tr>
+          <tr><th scope="row">Tag</th><td>A datapack-defined group of blocks or mob types (<code>blockTag</code>, <code>entityTag</code>).</td></tr>
+          <tr><th scope="row"><code>blockRewards</code>, <code>entityRewards</code></th><td>Optional JSON maps: pay <em>this</em> exact block or mob type a fixed amount (overrides tag fallbacks when listed).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <h2 id="features">Features (current build)</h2>
+    <p class="lead">Shipped today: money on disk, chat commands, join tips, configurable mining/kill payouts—plus a legacy FPS overlay you can ignore.</p>
     <div class="feature-block">
       <h3 id="features-server">World side (money &amp; rules)</h3>
       <ul>
-        <li>Short welcome in chat when you join — Otters Civ. branding plus pointers to <code>/otter</code> and <code>/money</code>.</li>
-        <li><code>/otter</code> — in-game command list + pointer to rewards config.</li>
-        <li><code>/money</code> and <code>/money set &lt;player&gt; &lt;amount&gt;</code> — read/set wallet (set is bootstrap; permissions TBD).</li>
-        <li>Persistent balances in <code>config/fpsmod/wallet.properties</code>.</li>
-        <li>Mining payouts for blocks matching <code>blockTag</code> unless overridden by per-block ids in <code>blockRewards</code> (<code>rewards.json</code>; shipped datapack defaults include <code>currency_blocks</code>).</li>
-        <li>Combat payouts via <code>entityTag</code> + flat <code>entityReward</code>, or per-type amounts in <code>entityRewards</code>; default tag hostile mobs; direct melee credit only (no bow/trident) in this version.</li>
-        <li>Tunable <code>config/otters_civ_revived/rewards.json</code> (per-id maps, tag fallbacks, cooldowns, creative/spectator skip, dimensions, announcements).</li>
-        <li><code>JobsHooks</code> seam present; no job systems wired yet.</li>
+        <li>Friendly lines in chat when you join—branding and where to type <code>/otter</code> and <code>/money</code>.</li>
+        <li><code>/otter</code> — prints command names and where reward settings live.</li>
+        <li><code>/money</code> checks your balance; <code>/money set &lt;player&gt; &lt;amount&gt;</code> sets someone’s total (admin/bootstrap for now; permissions later).</li>
+        <li>Wallets save under <code>config/fpsmod/wallet.properties</code>.</li>
+        <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
+        <li>Combat: pay on kills that match <code>entityTag</code> (default: hostile mobs), with optional per-mob amounts in <code>entityRewards</code>; this build only credits direct melee—not bows or tridents yet.</li>
+        <li>Tune everything in <code>config/otters_civ_revived/rewards.json</code> (cooldowns, gamemode skips, dimensions, chat announcements, tag ids, per-id maps).</li>
+        <li><code>JobsHooks</code> is a hook stub—no professions wired yet.</li>
       </ul>
       <h3 id="features-client">Client</h3>
       <ul>
@@ -384,11 +449,12 @@
     </div>
 
     <h2 id="design-goals">Target feature set (design goals)</h2>
+    <p class="lead">Plain picture: one economy everyone trusts, guilds that own land together, jobs that change how you earn—not just the passive mining/kill loop you have now.</p>
     <p>Below is the <em>intended</em> scope of Otters Civ. Revived: a civ-style multiplayer layer on Fabric. Ship order and detail follow the repo roadmap; this is not a commitment timeline. Group territory is framed as <strong>guilds</strong> (faction-like mechanics without using “factions” as the product label).</p>
     <div class="feature-block">
       <h3 id="design-goals-economy">Economy</h3>
       <ul>
-        <li><strong>Money</strong> — server-authoritative currency tied to rewards, trades, and sinks.</li>
+        <li><strong>Money</strong> — one authoritative balance the world enforces (not something clients can fake), tied to rewards, trades, and sinks.</li>
         <li><strong>Wallets</strong> — persistent per-player balances (prototype: properties file; later storage may migrate).</li>
         <li><strong>Transfers</strong> — paying other players (<code>/pay</code>-style commands), limits, optional fees, and immutable ledger entries (planned).</li>
       </ul>
@@ -415,6 +481,7 @@
     <nav class="contents" aria-label="Contents">
       <strong>Contents</strong>
       <ol>
+        <li><a href="#words-we-use-h">Words we use</a></li>
         <li><a href="#features">Features (current)</a></li>
         <li><a href="#design-goals">Target feature set</a></li>
         <li><a href="#requirements">Requirements &amp; install stack</a></li>
@@ -435,6 +502,7 @@
     <div style="clear:right"></div>
 
     <h2 id="requirements">Requirements &amp; install stack</h2>
+    <p class="lead">Match these pins to avoid “works on my machine.” Source builds: read <code>gradle.properties</code>; downloads: trust the release page or Modrinth slice for that jar.</p>
     <p>Align versions with the repository’s Gradle pins when building from source; for downloaded JARs, match the Modrinth or release notes for that build.</p>
     <table class="data-table" aria-label="Required versions">
       <thead>
@@ -456,21 +524,23 @@
 
     <dl>
       <dt><span class="cmd">/otter</span></dt>
-      <dd>Lists the mod’s slash commands and points operators to the rewards configuration path. No arguments.</dd>
+      <dd>Shows which commands exist and reminds operators where <code>rewards.json</code> lives. No arguments.</dd>
 
       <dt><span class="cmd">/money</span></dt>
-      <dd>Requires an executing player context. Sends the requesting player’s wallet balance in chat.</dd>
+      <dd>You must be a player in the world (same as vanilla chat commands). Prints <em>your</em> balance.</dd>
 
       <dt><span class="cmd">/money set &lt;player&gt; &lt;amount&gt;</span></dt>
-      <dd>Sets the target player’s balance to <code>amount</code> (<code class="cmd">≥ 0</code>). Intended for admin bootstrap and balancing; broader permission gates are planned.</dd>
+      <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). For operators bootstrapping tests; stricter permission checks are on the roadmap.</dd>
     </dl>
 
     <h2 id="economy">Economy &amp; persistence</h2>
+    <p class="lead">Think “bank file on disk”: one number per player UUID, updated when you earn or an admin sets your balance.</p>
     <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/fpsmod/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
     <p>The wallet file is a Java <code>.properties</code> map: each key is a player UUID string, each value is a non‑negative decimal integer balance. The store comments the file as <q>Project OOGA wallet balances</q> on write. Invalid lines are skipped with a logged warning.</p>
     <div class="note">The rewards file (<code>rewards.json</code>) configures tags and payout sizes; wallet storage remains under <code>config/fpsmod/</code>.</div>
 
     <h2 id="rewards">Passive rewards</h2>
+    <p class="lead">Breaking the right blocks and killing the right mobs silently adds coins. What “right” means is editable JSON—often via tags Datapacks already understand—with optional exceptions per exact block/mob ID.</p>
     <p>Mining and combat payouts are controlled by JSON at <code>config/otters_civ_revived/rewards.json</code> (created with defaults when missing). <strong>Restart</strong> the client or server after editing; the file is read once at startup.</p>
 
     <h3 id="rewards-config">What counts: tags and datapacks</h3>
@@ -501,8 +571,10 @@
     <p>The shipped entity-type tag currently includes only <code>#minecraft:hostile</code>. The default config’s <code>entityTag</code> is still the literal id <code>minecraft:hostile</code>; you may point <code>entityTag</code> at <code>otters_civ_revived:currency_mobs</code> in <code>rewards.json</code> if you want a single customization surface that matches the datapack folder name.</p>
 
     <h2 id="config-reference">All config files (quick reference)</h2>
+    <p class="lead">Everything below mirrors what the jar writes if you omit a field—the table is authoritative for spelling and defaults.</p>
     <p>Exact defaults below match the Gson-backed defaults in code when a key is omitted from JSON or the file is first created.</p>
     <h3 id="config-rewards-json"><code>config/otters_civ_revived/rewards.json</code></h3>
+    <p class="lead"><code>rewards.json</code> toggles payouts, picks tag groups, and optionally sets per-block/per-mob amounts.</p>
     <table class="data-table" aria-label="rewards.json fields">
       <thead>
         <tr><th>Field</th><th>Role</th><th>Default</th></tr>
@@ -529,6 +601,7 @@
     <p>Client-only: <code>showFpsHud=true|false</code> for the legacy FPS overlay. Read failures default to visible HUD for the session.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
+    <p class="lead">Rough delivery spine (M0–M6)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
     <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include permission gating for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, faction commands (<code>/f …</code>), player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
     <table class="data-table" aria-label="Milestone overview">
       <thead>
