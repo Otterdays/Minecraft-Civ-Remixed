@@ -7,6 +7,10 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Added
+- **`AGENTS.md`** (Cursor / universal agent handbook), **`CLAUDE.md`** (Claude Code shim). Git hygiene: `.gitattributes` (`*.html`, `*.mdc` LF); `.gitignore` (`.env*`, `.claude/cache/`). Cross-links in **SUMMARY**, **LOCATIONS** workflow, README contributors.
+
+- **Join welcome**: on `ServerPlayConnectionEvents.JOIN`, players get three system-chat lines branding Otters Civ. Revived and pointing to `/otter`, `/money`, and passive rewards (`JoinWelcome`).
+
 - **`index.html`**: expanded offline/project reference — requirements stack, bundled default `currency_blocks` / `currency_mobs` tag contents, full `rewards.json` defaults table, wallet/HUD config notes, M0–M6 roadmap snapshot, links (issues, whitepaper, architecture). [2026-05-10]: sticky **On this page** sidebar with nested section links, responsive collapse, skip link, `aria-current` highlighting.
 
 - **`/otter`** command: in-game summary of fpsmod/Otters Civ. commands (`OtterCommand`); passive rewards pointers.
@@ -17,7 +21,16 @@ All notable changes to this project are documented here.
 - Added economy bootstrap internals: `WalletStore`, `FileWalletStore`, and `WalletService`.
 - Added `/money` and `/money set <player> <amount>` command paths.
 
+### Fixed
+- **`DOCS/modrinth-description.md`** restored at canonical path (`STYLE_GUIDE`, `SUMMARY`, `index.html` reference); preservation header added. Parallel copy under `DOCS/Ryan-Made-Docs/` may remain for author drafts.
+
 ### Changed
+- **Contributor rules:** **`DOCS/STYLE_GUIDE.md`** § Website parity (`index.html`); **Cursor** `.cursor/rules/index-html-parity.mdc` (`alwaysApply`) + README contributor note + **SUMMARY** quick link pointing at parity checklist.
+
+- **Docs + site:** README passive-rewards + **`index.html`** row; **SUMMARY**, **LOCATIONS** (Otters Civ file map + jar path), **FEATURES** (environment / HUD vs server amend), **ARCHITECTURE** (“Runtime today” bootstrap); `index.html` intro, infobox, commands join blurb, references, contents label for rewards.
+
+- **`rewards.json`**: optional **`blockRewards`** / **`entityRewards`** JSON objects map block or entity-type ids to payout amounts (validated resource locations; wins over `blockTag` / `entityTag` flat `blockReward` / `entityReward` when the id is listed). `RewardOrchestrator` + `RewardRulesLoader` (+ unit test).
+
 - **`LICENSE`**: clarified ARR with carve-outs for gameplay/video/montage use and including the **official unmodified JAR** in mod packs; source reproduction and custom fork redistribution remain reserved without permission.
 - Updated repository remote and metadata references to `Minecraft-Civ-Remixed`.
 - Updated project naming/branding to Project OOGA.

@@ -23,7 +23,7 @@ public final class OtterCommand {
         sendLine(source, "/money set <player> <amount> — set a player's balance (admin bootstrap; lock down soon)");
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Mining + combat payouts use config/otters_civ_revived/rewards.json");
-        sendLine(source, "(tags, cooldowns; default: currency_blocks + minecraft:hostile kills)");
+        sendLine(source, "(tags, per-block/per-mob maps blockRewards/entityRewards, flat blockReward/entityReward fallback, cooldowns)");
         return 1;
     }
 

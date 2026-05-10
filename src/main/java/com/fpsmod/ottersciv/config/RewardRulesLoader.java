@@ -8,12 +8,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class RewardRulesLoader {
     private static final String CONFIG_SUBDIR = "otters_civ_revived";
@@ -21,7 +24,6 @@ public final class RewardRulesLoader {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final java.lang.reflect.Type STRING_LIST_TYPE = new TypeToken<List<String>>() {}.getType();
-
     private RewardRulesLoader() {
     }
 
@@ -44,14 +46,16 @@ public final class RewardRulesLoader {
         }
 
         try (Reader reader = Files.newBufferedReader(path)) {
-            return parseRewardsJson(reader, defaults);
+            return parseRewardsJson(reader, defaults, path.toAbsolutePath().normalize().toString());
         } catch (JsonParseException | IOException e) {
             FpsMod.LOGGER.error("[otters_civ_revived] Failed to read {}; using defaults", path, e);
             return defaults;
         }
     }
 
-    private static RewardRules parseRewardsJson(Reader reader, RewardRules defaults) throws JsonParseException {
+    /** Same-package tests may call with optional {@code diagnosticLabel}. */
+    static RewardRules parseRewardsJson(Reader reader, RewardRules defaults, String diagnosticLabel)
+        throws JsonParseException {
         JsonElement root = com.google.gson.JsonParser.parseReader(reader);
         if (root == null || !root.isJsonObject()) {
             FpsMod.LOGGER.warn("[otters_civ_revived] rewards.json root must be an object; using defaults");
@@ -93,9 +97,74 @@ public final class RewardRulesLoader {
             List<String> list = GSON.fromJson(jo.get("dimensionBlacklist"), STRING_LIST_TYPE);
             r.dimensionBlacklist = list != null ? new java.util.ArrayList<>(list) : new java.util.ArrayList<>();
         }
+        if (jo.has("blockRewards")) {
+            r.blockRewards = parseIdLongMap(diagnosticLabel, "blockRewards", jo.get("blockRewards"));
+        } else if (r.blockRewards == null) {
+            r.blockRewards = new LinkedHashMap<>();
+        }
+        if (jo.has("entityRewards")) {
+            r.entityRewards = parseIdLongMap(diagnosticLabel, "entityRewards", jo.get("entityRewards"));
+        } else if (r.entityRewards == null) {
+            r.entityRewards = new LinkedHashMap<>();
+        }
         clampNonNegative(r);
         sanitizeTags(r);
         return r;
+    }
+
+    /** Deserializes a JSON object of string ids → long amounts; skips invalid ids and logs warnings. */
+    static Map<String, Long> parseIdLongMap(String fileLabel, String fieldName, JsonElement elem) {
+        Map<String, Long> canonical = new LinkedHashMap<>();
+        if (elem == null || elem.isJsonNull()) {
+            return canonical;
+        }
+        if (!elem.isJsonObject()) {
+            FpsMod.LOGGER.warn(
+                "[otters_civ_revived] {}: {} must be a JSON object; ignoring",
+                fileLabel,
+                fieldName
+            );
+            return canonical;
+        }
+        JsonObject o = elem.getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : o.entrySet()) {
+            String keyTrim = entry.getKey() != null ? entry.getKey().trim() : "";
+            Identifier id = Identifier.tryParse(keyTrim);
+            if (id == null) {
+                FpsMod.LOGGER.warn(
+                    "[otters_civ_revived] {}: skipping invalid {} key \"{}\"",
+                    fileLabel,
+                    fieldName,
+                    entry.getKey()
+                );
+                continue;
+            }
+            JsonElement vel = entry.getValue();
+            if (vel == null || vel.isJsonNull()) {
+                canonical.put(id.toString(), 0L);
+                continue;
+            }
+            long v = readNonNegativeLong(vel, entry.getKey());
+            canonical.put(id.toString(), v);
+        }
+        return canonical;
+    }
+
+    private static long readNonNegativeLong(JsonElement vel, String keyForLog) {
+        try {
+            if (vel.getAsJsonPrimitive().isNumber()) {
+                long v = vel.getAsLong();
+                return Math.max(0L, v);
+            }
+        } catch (NumberFormatException | UnsupportedOperationException | ClassCastException ignored) {
+            // fall through
+        }
+        FpsMod.LOGGER.warn("[otters_civ_revived] skipping non-numeric reward for key \"{}\"", keyForLog);
+        return 0L;
+    }
+
+    static RewardRules parseRewardsJson(String json, RewardRules defaults) throws JsonParseException {
+        return parseRewardsJson(new java.io.StringReader(json), defaults, "<embedded>");
     }
 
     private static void sanitizeTags(RewardRules r) {
@@ -108,6 +177,12 @@ public final class RewardRulesLoader {
         if (r.dimensionBlacklist == null) {
             r.dimensionBlacklist = new java.util.ArrayList<>();
         }
+        if (r.blockRewards == null) {
+            r.blockRewards = new LinkedHashMap<>();
+        }
+        if (r.entityRewards == null) {
+            r.entityRewards = new LinkedHashMap<>();
+        }
     }
 
     private static void clampNonNegative(RewardRules r) {
@@ -116,6 +191,20 @@ public final class RewardRulesLoader {
         }
         if (r.entityReward < 0L) {
             r.entityReward = 0L;
+        }
+        if (r.blockRewards != null) {
+            for (Map.Entry<String, Long> e : r.blockRewards.entrySet()) {
+                if (e.getValue() < 0L) {
+                    r.blockRewards.put(e.getKey(), 0L);
+                }
+            }
+        }
+        if (r.entityRewards != null) {
+            for (Map.Entry<String, Long> e : r.entityRewards.entrySet()) {
+                if (e.getValue() < 0L) {
+                    r.entityRewards.put(e.getKey(), 0L);
+                }
+            }
         }
         if (r.blockCooldownMs < 0L) {
             r.blockCooldownMs = 0L;

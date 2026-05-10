@@ -1,7 +1,3 @@
-<!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
-
-[AMENDED 2026-05-11]: Canonical path restored under `DOCS/` (tooling & docs reference `DOCS/modrinth-description.md`). A parallel copy may exist under `DOCS/Ryan-Made-Docs/`; prefer this path for CI and automation.
-
 # Otters Civ. Revived
 
 

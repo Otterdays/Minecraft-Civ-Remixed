@@ -19,9 +19,10 @@ Use **`/otter`** in-game for a command summary.
 
 - Server-side commands: **`/otter`** (help list), **`/money`**, **`/money set <player> <amount>`**
 - Persistent wallet storage via `config/fpsmod/wallet.properties`
-- **Otters Civ. Revived** payouts: break blocks in `otters_civ_revived:currency_blocks`,
-  kill `#minecraft:hostile` mobs by default (direct player hit only in v1); config
-  `config/otters_civ_revived/rewards.json`, datapack tags under `data/otters_civ_revived/`
+- **Join message** (`ServerPlayConnectionEvents.JOIN`): short system-chat intro pointing players at **`/otter`** and **`/money`** and passive rewards
+- **Otters Civ. Revived** payouts: default tag rules — break blocks in `otters_civ_revived:currency_blocks`,
+  kill `#minecraft:hostile` mobs (direct player hit only in v1); **also** tune per-block and per-mob amounts in the same file via optional JSON objects **`blockRewards`** and **`entityRewards`** (registry id → amount; wins over flat `blockReward` / `entityReward` when listed)
+- Config + datapack tags: `config/otters_civ_revived/rewards.json`, `data/otters_civ_revived/` in the JAR
 - `JobsHooks` no-op stub for future jobs/professions
 - Existing FPS HUD module still present as legacy client extra
 
@@ -62,8 +63,9 @@ gradlew.bat test
 - `/money` — show your balance
 - `/money set <player> <amount>` — set balance (bootstrap/admin; permission gate planned)
 
-Passive rewards are configured separately (tags, cooldowns, amounts): see
-`config/otters_civ_revived/rewards.json`.
+Passive rewards are configured in `config/otters_civ_revived/rewards.json`: tags, optional **`blockRewards`** / **`entityRewards`** per-id maps, flat fallbacks, cooldowns, dimensions, creative/spectator skips. **Restart** after edits (read once at startup).
+
+**Offline reference page:** see repository root **`index.html`** (wiki-style command/config/roadmap sheet for browsers).
 
 NOTE: Permission gating and full admin command tree are next roadmap items.
 
@@ -90,6 +92,8 @@ Track checklist progress in `DOCS/ROADMAP.md`.
 - This repo is no longer positioned as a generic FPS template.
 - README reflects the civ-mod target first, with current bootstrap status made explicit.
 - Preserve status docs under `DOCS/` and keep roadmap checklists current while shipping features.
+- **Agents:** automation handbooks **`AGENTS.md`** (canonical) and **`CLAUDE.md`** (Claude Code quick entry — details in **`AGENTS.md`**).
+- **Website:** civ- or rewards-related changes require updating repo root **`index.html`** alongside README/Modrinth copy; Cursor rule `.cursor/rules/index-html-parity.mdc` applies. Full checklist: **`DOCS/STYLE_GUIDE.md`** (Website parity §).
 
 ## License
 

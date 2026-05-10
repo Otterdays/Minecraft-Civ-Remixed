@@ -1,0 +1,14 @@
+---
+description: Keep repo root index.html in sync with Otters Civ. player-facing changes
+alwaysApply: true
+---
+
+# `index.html` parity (Otters Civ. / fpsmod)
+
+Before closing out work that touches **player-visible**, **economy**, **Otters Civ.**, or reward/config behavior:
+
+1. Update **`index.html`** (repo root): features blurb, infobox pinned versions/facts, **`rewards.json`** tables and explanations, command/join-copy, bundled tag lists when tags change, **sidebar**/`id` anchors for new sections, **`meta name="description"`** if positioning changed.
+2. Follow the full checklist in **`DOCS/STYLE_GUIDE.md`** → § **Website parity (`index.html`)**.
+3. Pair with **`DOCS/CHANGELOG.md`** `[Unreleased]` when shipped behavior or config schema shifts; **`DOCS/SCRATCHPAD.md`** checkpoints on longer tasks.
+
+Preserve existing prose unless the author asked to remove it.

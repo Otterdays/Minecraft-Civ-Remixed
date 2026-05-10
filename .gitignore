@@ -17,11 +17,26 @@ classes/
 *.ipr
 *.iws
 
-# vscode
+# vscode / editor (optional machine config; keep tracked rules under .cursor/rules)
 
 .settings/
 .vscode/
 bin/
+
+# secrets & local overrides
+.env
+.env.*
+!.env.example
+
+# Claude Code local/session noise (never commit ephemeral caches here)
+.claude/cache/
+
+# ephemeral logs / local tooling output
+logs/
+
+# python tool caches (e.g. images/optimize-here)
+__pycache__/
+*.py[cod]
 .classpath
 .project
 

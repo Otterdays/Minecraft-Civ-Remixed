@@ -12,10 +12,11 @@ Use this as the first stop for quick discovery.
 
 ## First-check workflow (for future agents/builders)
 
-1. Read `LOCATIONS.md` (this file) for fast pathing.
-2. Read `README.md` for behavior, compatibility, and run/test commands.
-3. Read `build.gradle` and `gradle.properties` before changing versions/deps; read `gradle/wrapper/gradle-wrapper.properties` when changing the Gradle distribution.
-4. Read `src/main/resources/fabric.mod.json` before changing IDs/entrypoints.
+1. Read **`AGENTS.md`** and **`CLAUDE.md`** for repo-wide agent rules + git conventions.
+2. Read `LOCATIONS.md` (this file) for fast pathing.
+3. Read `README.md` for behavior, compatibility, and run/test commands.
+4. Read `build.gradle` and `gradle.properties` before changing versions/deps; read `gradle/wrapper/gradle-wrapper.properties` when changing the Gradle distribution.
+5. Read `src/main/resources/fabric.mod.json` before changing IDs/entrypoints.
 
 ## Core implementation
 
@@ -64,10 +65,19 @@ Use this as the first stop for quick discovery.
 - Run dev client: `gradlew.bat runClient`
 - Run tests: `gradlew.bat test`
 
+## Otters Civ. / economy (server gameplay)
+
+[AMENDED 2026-05-10]:
+- Passive rewards orchestration: `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java`
+- Reward rules + loader: `src/main/java/com/fpsmod/ottersciv/config/RewardRules.java`, `RewardRulesLoader.java`; tests: `src/test/java/com/fpsmod/ottersciv/config/RewardRulesLoaderTest.java`
+- Gameplay wiring: `src/main/java/com/fpsmod/ottersciv/OttersCivGameplay.java` (`JoinWelcome.java` registers join chat)
+- Commands: `src/main/java/com/fpsmod/command/OtterCommand.java`, `MoneyCommand.java`; wallet: `src/main/java/com/fpsmod/economy/`
+- Shipped datapack tags: `src/main/resources/data/otters_civ_revived/tags/`
+
 ## Output paths
 
-- Main mod jar: `BUILT/libs/fps-mod-1.0.0.jar`
-- Sources jar: `BUILT/libs/fps-mod-1.0.0-sources.jar`
+- Main mod jar: `BUILT/libs/project-ooga-1.0.0.jar` (Gradle `mod_version`; older docs may cite `fps-mod-1.0.0.jar`—prefer `gradle.properties`)
+- Sources jar: `BUILT/libs/project-ooga-1.0.0-sources.jar`
 - Test report: `BUILT/reports/tests/test/index.html`
 - Gradle problems report: `BUILT/reports/problems/problems-report.html`
 

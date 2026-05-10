@@ -31,6 +31,8 @@ public final class OttersCivGameplay {
             rewardKill(orchestrator, entity, damageSource)
         );
 
+        JoinWelcome.register();
+
         return orchestrator;
     }
 

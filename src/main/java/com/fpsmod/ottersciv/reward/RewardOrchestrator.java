@@ -58,7 +58,7 @@ public final class RewardOrchestrator {
     }
 
     public void onBlockBroken(ServerPlayer player, ServerLevel level, BlockPos pos, BlockState state) {
-        if (!rules.enabled || rules.blockReward <= 0L) {
+        if (!rules.enabled) {
             return;
         }
         if (!eligiblePlayer(player)) {
@@ -67,33 +67,58 @@ public final class RewardOrchestrator {
         if (dimensionBlocked(level)) {
             return;
         }
-        TagKey<net.minecraft.world.level.block.Block> tag = blockTagKey;
-        if (tag == null) {
-            if (!loggedInvalidBlockTag) {
-                loggedInvalidBlockTag = true;
-                com.fpsmod.FpsMod.LOGGER.warn("[otters_civ_revived] Invalid block tag {}; block rewards disabled", rules.blockTag);
-            }
-            return;
-        }
-        if (!state.is(tag)) {
+
+        long payout = resolvedBlockReward(state);
+        if (payout <= 0L) {
             return;
         }
         if (!pastCooldown(lastBlockRewardMs, player.getUUID(), rules.blockCooldownMs)) {
             return;
         }
 
-        wallets.addBalance(player.getUUID(), rules.blockReward);
-        jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, rules.blockReward, state, null));
+        wallets.addBalance(player.getUUID(), payout);
+        jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
 
         if (rules.announceRewards) {
             player.sendSystemMessage(
-                net.minecraft.network.chat.Component.literal("+" + rules.blockReward + " (mining)")
+                net.minecraft.network.chat.Component.literal("+" + payout + " (mining)")
             );
         }
     }
 
+    private long resolvedBlockReward(BlockState state) {
+        Identifier bid = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        String bidStr = bid != null ? bid.toString() : null;
+        java.util.Map<String, Long> byId = rules.blockRewards;
+        if (bidStr != null && byId != null && byId.containsKey(bidStr)) {
+            return Math.max(0L, byId.get(bidStr));
+        }
+
+        TagKey<net.minecraft.world.level.block.Block> tag = blockTagKey;
+        if (tag == null) {
+            warnInvalidBlockTagOnce();
+            return 0L;
+        }
+        if (!state.is(tag)) {
+            return 0L;
+        }
+        return Math.max(0L, rules.blockReward);
+    }
+
+    private void warnInvalidBlockTagOnce() {
+        if (!loggedInvalidBlockTag) {
+            loggedInvalidBlockTag = true;
+            if (rules.blockReward > 0L) {
+                com.fpsmod.FpsMod.LOGGER.warn(
+                    "[otters_civ_revived] Invalid block tag {}; mining fallback via blockTag/blockReward disabled",
+                    rules.blockTag
+                );
+            }
+        }
+    }
+
     public void onMobKilled(ServerPlayer killer, LivingEntity victim, ServerLevel level) {
-        if (!rules.enabled || rules.entityReward <= 0L) {
+        if (!rules.enabled) {
             return;
         }
         if (!eligiblePlayer(killer)) {
@@ -102,17 +127,10 @@ public final class RewardOrchestrator {
         if (dimensionBlocked(level)) {
             return;
         }
-        TagKey<EntityType<?>> tag = entityTagKey;
-        if (tag == null) {
-            if (!loggedInvalidEntityTag) {
-                loggedInvalidEntityTag = true;
-                com.fpsmod.FpsMod.LOGGER.warn("[otters_civ_revived] Invalid entity tag {}; kill rewards disabled", rules.entityTag);
-            }
-            return;
-        }
 
         EntityType<?> type = victim.getType();
-        if (!entityMatchesKillTag(level, type, tag)) {
+        long payout = resolvedEntityReward(level, type);
+        if (payout <= 0L) {
             return;
         }
 
@@ -120,16 +138,47 @@ public final class RewardOrchestrator {
             return;
         }
 
-        wallets.addBalance(killer.getUUID(), rules.entityReward);
+        wallets.addBalance(killer.getUUID(), payout);
         jobsHooks.onEconomyReward(
             killer,
-            new RewardContext(RewardReason.MOB_KILL, rules.entityReward, null, type)
+            new RewardContext(RewardReason.MOB_KILL, payout, null, type)
         );
 
         if (rules.announceRewards) {
             killer.sendSystemMessage(
-                net.minecraft.network.chat.Component.literal("+" + rules.entityReward + " (combat)")
+                net.minecraft.network.chat.Component.literal("+" + payout + " (combat)")
             );
+        }
+    }
+
+    private long resolvedEntityReward(ServerLevel level, EntityType<?> type) {
+        Identifier tid = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+        String tidStr = tid != null ? tid.toString() : null;
+        java.util.Map<String, Long> byId = rules.entityRewards;
+        if (tidStr != null && byId != null && byId.containsKey(tidStr)) {
+            return Math.max(0L, byId.get(tidStr));
+        }
+
+        TagKey<EntityType<?>> tag = entityTagKey;
+        if (tag == null) {
+            warnInvalidEntityTagOnce();
+            return 0L;
+        }
+        if (!entityMatchesKillTag(level, type, tag)) {
+            return 0L;
+        }
+        return Math.max(0L, rules.entityReward);
+    }
+
+    private void warnInvalidEntityTagOnce() {
+        if (!loggedInvalidEntityTag) {
+            loggedInvalidEntityTag = true;
+            if (rules.entityReward > 0L) {
+                com.fpsmod.FpsMod.LOGGER.warn(
+                    "[otters_civ_revived] Invalid entity tag {}; combat fallback via entityTag/entityReward disabled",
+                    rules.entityTag
+                );
+            }
         }
     }
 

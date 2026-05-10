@@ -3,6 +3,15 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-10] **`AGENTS.md` + `CLAUDE.md`**, `.gitattributes` (`*.html`, `*.mdc` LF), `.gitignore` (`.env*`, `.claude/cache/`); SUMMARY/LOCATIONS/README cross-links; CHANGELOG Added bullet.
+
+- [2026-05-10] **Rules for `index.html` upkeep:** STYLE_GUIDE § Website parity (when to edit, sidebar hygiene, housekeeping); Cursor rule `.cursor/rules/index-html-parity.mdc` (alwaysApply); README contributors + SUMMARY quick link.
+
+- [2026-05-10] **Docs + `index.html` sync:** README (join + per-id rewards + offline page), DOCS `SUMMARY`, `LOCATIONS`, `FEATURES`, `ARCHITECTURE`, `CHANGELOG`; website infobox/intro/commands note/see-also/contents rewards label.
+
+- [2026-05-10] **`rewards.json` per-id payouts**: `blockRewards` / `entityRewards` maps (normalized ids, invalid keys skipped + warn); precedence over tag flat amounts; `RewardOrchestrator`, loader, `OtterCommand` hint, `index.html`, Modrinth description, `RewardRulesLoaderTest`.
+
+- [2026-05-10] **`JoinWelcome`**: `ServerPlayConnectionEvents.JOIN` → three system messages (branding, `/otter` + `/money`, payouts pointer); registered from `OttersCivGameplay.register`.
 - [2026-05-10] **`index.html`**: sticky left **On this page** sidebar (nested anchors, narrow layout + responsive stack), `#main` landmark, skip link, subsection ids for Features/Design goals/config files/`#see-also`, `aria-current` via `IntersectionObserver` + hash.
 - [2026-05-10] **`index.html`** reference page: added requirements/stack table, wallet file format, bundled `currency_blocks` / `currency_mobs` defaults, full `rewards.json` field table (code defaults), config file quick reference, M0–M6 roadmap snapshot, meta description, infobox (artifact + pinned deps + issues), whitepaper/architecture links in references — no removal of prior copy.
 - [2026-05-09] **`/otter`** help command (`OtterCommand`); **`LICENSE`** rewritten (ARR + carve-outs: video/montage, official JAR in mod packs, no source/fork reproduction without permission); README + `fabric.mod.json` description + `modrinth-description` + `CHANGELOG` synced.

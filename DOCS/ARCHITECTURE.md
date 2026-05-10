@@ -31,3 +31,7 @@ domains: economy, jobs/professions, factions, land claims, and player shops.
 - No main-thread blocking I/O on hot gameplay paths.
 - Deterministic transaction updates with rollback-safe boundaries.
 - Explicit error paths for all state-mutating operations.
+
+## Runtime Today (Bootstrap; 2026-05-10)
+
+Shipped subset before the planned data layer above: **`WalletService`** + file-backed **`wallet.properties`**; **`RewardOrchestrator`** applies **`RewardRules`** loaded once from **`config/otters_civ_revived/rewards.json`** (tags + optional per-id **`blockRewards`**/**`entityRewards`**, cooldowns); Fabric events bridge block breaks and melee kills. Welcome copy on **`ServerPlayConnectionEvents.JOIN`** (**`JoinWelcome`**). Commands **`/otter`**, **`/money`**. Player-facing prose + config tables: **`index.html`** (repo root).

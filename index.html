@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, configurable mining and mob-kill payouts, default currency block and mob tags, roadmap, and config file reference.">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat tips, configurable mining and combat payouts (tags + per-id blockRewards/entityRewards in rewards.json), roadmap, offline reference.">
   <title>Otters Civ. Revived (fpsmod) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -304,7 +304,12 @@
             </ul>
           </li>
           <li><a href="#requirements">Requirements</a></li>
-          <li><a href="#commands">Commands</a></li>
+          <li>
+            <a href="#commands">Commands</a>
+            <ul class="sub">
+              <li><a href="#join-messages">Join messages</a></li>
+            </ul>
+          </li>
           <li><a href="#economy">Economy &amp; persistence</a></li>
           <li>
             <a href="#rewards">Passive rewards</a>
@@ -344,24 +349,26 @@
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Namespaces</th><td>Gameplay tags & config: <code>otters_civ_revived</code>; wallet & HUD: <code>fpsmod</code></td></tr>
         <tr><th>Economy store</th><td><code>config/fpsmod/wallet.properties</code></td></tr>
-        <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code></td></tr>
+        <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
+        <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
         <tr><th>Source</th><td><a href="https://github.com/Otterdays/Minecraft-Civ-Remixed">GitHub repository</a> · <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/issues">Issues</a></td></tr>
         <tr><th>License</th><td>All rights reserved; see <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/LICENSE">LICENSE</a> (mod-pack & video carve-outs)</td></tr>
       </tbody>
     </table>
 
-    <p><strong>Otters Civ. Revived</strong> is a server-oriented Fabric mod that introduces a persistent wallet, chat commands for balances, configurable payouts for breaking certain blocks and killing tagged mobs, and a bundled legacy FPS overlay from an earlier template. Long-term design targets include guild-based territory, social systems (friends, private messages), deeper economy (transfers, ledger), and jobs with leveled traits—see <a href="#design-goals">Target feature set</a>.</p>
+    <p><strong>Otters Civ. Revived</strong> is a server-oriented Fabric mod that introduces a persistent wallet, chat commands for balances, a short <strong>join</strong> system-chat intro, and configurable mining/combat payouts (<strong>tag pools</strong> plus optional <strong>per-block</strong> / <strong>per-mob-type</strong> amounts in <code>rewards.json</code>). A bundled legacy FPS overlay from an earlier template remains optional on clients. Long-term design targets include guild-based territory, social systems (friends, private messages), deeper economy (transfers, ledger), and jobs with leveled traits—see <a href="#design-goals">Target feature set</a>.</p>
 
     <h2 id="features">Features (current build)</h2>
     <div class="feature-block">
       <h3 id="features-server">Server</h3>
       <ul>
+        <li>Short welcome in chat when you join — Otters Civ. branding plus pointers to <code>/otter</code> and <code>/money</code>.</li>
         <li><code>/otter</code> — in-game command list + pointer to rewards config.</li>
         <li><code>/money</code> and <code>/money set &lt;player&gt; &lt;amount&gt;</code> — read/set wallet (set is bootstrap; permissions TBD).</li>
         <li>Persistent balances in <code>config/fpsmod/wallet.properties</code>.</li>
-        <li>Mining payouts for blocks in <code>otters_civ_revived:currency_blocks</code> (see datapack + <code>rewards.json</code>).</li>
-        <li>Combat payouts for mobs matching the configured entity tag (default <code>#minecraft:hostile</code>); direct player melee attribution only in this version (no bow/trident credit).</li>
-        <li>Tunable <code>config/otters_civ_revived/rewards.json</code> (amounts, cooldowns, creative/spectator skip, dimensions, announcements).</li>
+        <li>Mining payouts for blocks matching <code>blockTag</code> unless overridden by per-block ids in <code>blockRewards</code> (<code>rewards.json</code>; shipped datapack defaults include <code>currency_blocks</code>).</li>
+        <li>Combat payouts via <code>entityTag</code> + flat <code>entityReward</code>, or per-type amounts in <code>entityRewards</code>; default tag hostile mobs; direct melee credit only (no bow/trident) in this version.</li>
+        <li>Tunable <code>config/otters_civ_revived/rewards.json</code> (per-id maps, tag fallbacks, cooldowns, creative/spectator skip, dimensions, announcements).</li>
         <li><code>JobsHooks</code> seam present; no job systems wired yet.</li>
       </ul>
       <h3 id="features-client">Client</h3>
@@ -402,7 +409,7 @@
         <li><strong>Traits &amp; levels</strong> — per-job progression (levels, perks, or trait lines)—integrates with the mod’s planned <code>JobsHooks</code> pipeline for stacking modifiers on rewards.</li>
       </ul>
     </div>
-    <div class="note">Current releases implement only wallets, <code>/money</code>, tag-based mining/combat grants, and a no-op jobs hook. Guilds, messaging, friends, <code>/pay</code>, and profession trees are not yet in the JAR.</div>
+    <div class="note">Current releases implement only wallets, <code>/money</code>, join tips, tag-based mining/combat grants with optional per-id payout maps, and a no-op jobs hook. Guilds, messaging, friends, <code>/pay</code>, and profession trees are not yet in the JAR.</div>
 
     <nav class="contents" aria-label="Contents">
       <strong>Contents</strong>
@@ -410,13 +417,17 @@
         <li><a href="#features">Features (current)</a></li>
         <li><a href="#design-goals">Target feature set</a></li>
         <li><a href="#requirements">Requirements &amp; install stack</a></li>
-        <li><a href="#commands">Commands</a></li>
+        <li><a href="#commands">Commands</a> · <a href="#join-messages">join messages</a></li>
         <li><a href="#economy">Economy &amp; persistence</a></li>
-        <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tag config</a>, <a href="#bundled-tags">default tags</a>)</li>
+        <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tags &amp; per-id maps</a>, <a href="#bundled-tags">default tags</a>)</li>
         <li><a href="#config-reference">All config files (reference)</a></li>
         <li><a href="#roadmap-milestones">Roadmap milestones (M0–M6)</a></li>
         <li><a href="#client">Client (detail)</a></li>
         <li><a href="#limits">Operational limits</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#building">Building from source</a></li>
+        <li><a href="#changelog">Changelog</a></li>
       </ol>
     </nav>
 
@@ -439,6 +450,7 @@
 
     <h2 id="commands">Commands</h2>
     <p>Commands register on the <em>logical server</em> (including single-player integrated servers). The in-game analogue of this article is <code>/otter</code>, which prints a short synopsis.</p>
+    <p id="join-messages">Players also see a few <strong>automatic system messages when they connect</strong> (not a slash command): Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a one-line pointer to passive rewards / <code>rewards.json</code>.</p>
 
     <dl>
       <dt><span class="cmd">/otter</span></dt>
@@ -462,13 +474,14 @@
     <h3 id="rewards-config">What counts: tags and datapacks</h3>
     <p>Which blocks and mobs pay is <em>not</em> hard-coded in that JSON as a block list. The config points at <strong>tag identifiers</strong>; the tag contents come from Minecraft’s tag system (vanilla + mod + user datapacks).</p>
     <ul>
-      <li><code>blockTag</code> — block tag id (e.g. <code>otters_civ_revived:currency_blocks</code>). A broken block pays only if it matches this tag. Point it at any valid block tag, including vanilla (e.g. <code>minecraft:iron_ores</code>).</li>
-      <li><code>entityTag</code> — entity type tag id (default <code>minecraft:hostile</code>). A kill pays only if the mob’s type is in that tag. You may use the mod’s <code>otters_civ_revived:currency_mobs</code> or a custom tag from your own datapack.</li>
+      <li><code>blockTag</code> — block tag id (e.g. <code>otters_civ_revived:currency_blocks</code>). Used for the fallback <code>blockReward</code> when that block’s registry id is not listed in <code>blockRewards</code>. Point it at any valid block tag.</li>
+      <li><code>entityTag</code> — entity type tag id (default <code>minecraft:hostile</code>). Used for <code>entityReward</code> fallback when the mob’s id is missing from <code>entityRewards</code>. Your own datapack tags are fine.</li>
       <li><strong>Membership</strong> — The mod ships tag JSON under <code>data/otters_civ_revived/tags/…</code> inside the JAR. Server owners can add world/server <strong>datapacks</strong> to merge extra entries into those tags or define new tags, then set <code>blockTag</code> / <code>entityTag</code> to those ids in <code>rewards.json</code>.</li>
-      <li><strong>Amounts</strong> — <code>blockReward</code> and <code>entityReward</code> are single flat values for all matches in the tag (no per-block or per-mob table in this version).</li>
+      <li><strong>Per-block / per-mob payouts</strong> — Objects <code>blockRewards</code> and <code>entityRewards</code> map registry ids (e.g. <code>"minecraft:diamond_ore": 40</code>, <code>"minecraft:zombie": 2</code>) to whole-number payouts. Keys are validated and normalized at load; invalid ids are skipped with a server log warning.</li>
+      <li><strong>Fallback amounts</strong> — If the broken block’s id is not listed under <code>blockRewards</code>, the payout is <code>blockReward</code> only when that block matches <code>blockTag</code>. Same pattern for kills: <code>entityRewards</code> wins, otherwise <code>entityReward</code> when the victim’s type matches <code>entityTag</code>. Listed ids pay their configured amount even without tag membership.</li>
     </ul>
 
-    <p>Other keys in the same file: <code>enabled</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code use block tag <code>otters_civ_revived:currency_blocks</code> and hostile mobs via <code>minecraft:hostile</code>.</p>
+    <p>Other keys in the same file: <code>enabled</code>, optional <code>blockRewards</code> / <code>entityRewards</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code use block tag <code>otters_civ_revived:currency_blocks</code> and hostile mobs via <code>minecraft:hostile</code>; override maps default to empty until you add them.</p>
     <p>Kill credit in this build favors direct player hits; bows, tridents, and other indirect kills are not credited yet.</p>
 
     <h3 id="bundled-tags">Bundled datapack tags (default JAR)</h3>
@@ -495,15 +508,17 @@
       <tbody>
         <tr><td><code>enabled</code></td><td>Master toggle for mining/kill payouts</td><td><code>true</code></td></tr>
         <tr><td><code>blockTag</code></td><td>Block tag id for break rewards</td><td><code>otters_civ_revived:currency_blocks</code></td></tr>
-        <tr><td><code>blockReward</code></td><td>Amount added per qualifying break</td><td><code>1</code></td></tr>
+        <tr><td><code>blockReward</code></td><td>Payout when a block matches <code>blockTag</code> but has no entry in <code>blockRewards</code></td><td><code>1</code></td></tr>
         <tr><td><code>entityTag</code></td><td>Entity-type tag id for kill rewards</td><td><code>minecraft:hostile</code></td></tr>
-        <tr><td><code>entityReward</code></td><td>Amount added per qualifying kill</td><td><code>5</code></td></tr>
+        <tr><td><code>entityReward</code></td><td>Payout when entity type matches <code>entityTag</code> but has no entry in <code>entityRewards</code></td><td><code>5</code></td></tr>
         <tr><td><code>blockCooldownMs</code></td><td>Per-player throttle after a block payout (ms)</td><td><code>50</code></td></tr>
         <tr><td><code>entityCooldownMs</code></td><td>Per-player throttle after a mob payout (ms)</td><td><code>100</code></td></tr>
         <tr><td><code>skipCreative</code></td><td>Skip rewards for creative-mode players</td><td><code>true</code></td></tr>
         <tr><td><code>skipSpectator</code></td><td>Skip rewards for spectator-mode players</td><td><code>true</code></td></tr>
         <tr><td><code>dimensionBlacklist</code></td><td>Array of dimension resource locations to disable rewards in</td><td><code>[]</code> (none)</td></tr>
         <tr><td><code>announceRewards</code></td><td>If true, sends the earning player system messages such as <code>+1 (mining)</code> or <code>+5 (combat)</code></td><td><code>true</code></td></tr>
+        <tr><td><code>blockRewards</code></td><td>Optional object <code>{ "minecraft:block_id": &lt;amount&gt;, … }</code>; per-break payout for that block id (wins over tag).</td><td><code>{}</code></td></tr>
+        <tr><td><code>entityRewards</code></td><td>Optional object <code>{ "minecraft:entity_type": &lt;amount&gt;, … }</code>; per-kill payout (wins over entity tag).</td><td><code>{}</code></td></tr>
       </tbody>
     </table>
     <h3 id="config-wallet"><code>config/fpsmod/wallet.properties</code></h3>
@@ -539,8 +554,85 @@
       <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
     </ul>
 
+    <h2 id="architecture">Architecture</h2>
+    <p>Project OOGA is structured as five domain layers built on top of the Fabric baseline. The current JAR only activates the economy surface; the layers below are the planned target shape.</p>
+    <table class="data-table" aria-label="Architecture layers">
+      <thead>
+        <tr><th>Layer</th><th>Responsibility</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Data layer</td><td>Persistent records for player, wallet, faction, claim, and shop entities; schema versioning and migration runner.</td></tr>
+        <tr><td>Domain services</td><td>Wallet, progression, faction governance, claim checks, market transactions—each behind a service boundary.</td></tr>
+        <tr><td>Event layer</td><td>Fabric event listeners routed through validation before calling domain services.</td></tr>
+        <tr><td>Interface layer</td><td>Commands and Screen Handler UX; primary player-facing surface.</td></tr>
+        <tr><td>Operator layer</td><td>Config profiles, audit logs, balancing controls.</td></tr>
+      </tbody>
+    </table>
+    <h3>Planned data model (v1)</h3>
+    <table class="data-table" aria-label="Planned data model">
+      <thead>
+        <tr><th>Table</th><th>Key fields</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>player_profile</code></td><td>wallet balance, profession/job state, faction reference</td></tr>
+        <tr><td><code>faction_profile</code></td><td>members, rank/roles, treasury, diplomacy state</td></tr>
+        <tr><td><code>claim_record</code></td><td>chunk ownership, permission flags</td></tr>
+        <tr><td><code>shop_record</code></td><td>listings, stock, pricing, tax, transaction references</td></tr>
+        <tr><td><code>transaction_log</code></td><td>immutable event-style economy audit entries</td></tr>
+      </tbody>
+    </table>
+    <h3>Runtime flow</h3>
+    <ol>
+      <li>Player action emits game event.</li>
+      <li>Validation checks permissions and limits.</li>
+      <li>Domain service computes result.</li>
+      <li>Transaction and state changes persist atomically.</li>
+      <li>Player receives feedback via UI, chat, or action bar.</li>
+    </ol>
+    <div class="note">Reliability targets: no main-thread blocking I/O on hot gameplay paths; deterministic transaction updates with rollback-safe boundaries; explicit error paths for all state-mutating operations.</div>
+
+    <h2 id="installation">Installation</h2>
+    <p>Client install is optional (FPS HUD only). Server install enables economy commands and passive payouts.</p>
+    <ol>
+      <li>Install <strong>Fabric Loader <code>&gt;= 0.19.2</code></strong> for Minecraft <code>26.1.2</code>. The <a href="https://fabricmc.net/use/installer/">Fabric installer</a> handles this.</li>
+      <li>Drop <strong>Fabric API</strong> (<code>0.146.1+26.1.2</code> or compatible) into your <code>mods/</code> folder.</li>
+      <li>Drop the mod JAR (<code>project-ooga-1.0.0.jar</code>) into <code>mods/</code>.</li>
+      <li>Start the server (or client). Config files are created automatically on first launch under <code>config/fpsmod/</code> and <code>config/otters_civ_revived/</code>.</li>
+      <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, then restart.</li>
+    </ol>
+    <div class="note">Java 25+ is required. The mod declares environment <code>*</code>: install on the server for economy features; clients only need the JAR for the optional FPS HUD.</div>
+
+    <h2 id="building">Building from source</h2>
+    <p>Requires JDK 25+ and Git. The repo uses the Gradle wrapper—no separate Gradle install needed.</p>
+    <ol>
+      <li>Clone: <code>git clone https://github.com/Otterdays/Minecraft-Civ-Remixed.git</code></li>
+      <li>Build: <code>./gradlew build</code> (Linux/macOS) or <code>gradlew.bat build</code> (Windows)</li>
+      <li>Output JAR: <code>BUILT/libs/project-ooga-1.0.0.jar</code></li>
+    </ol>
+    <p>The build version and Minecraft target are pinned in <code>gradle.properties</code>. Match Fabric API and Loader to the pins there for a reproducible build.</p>
+
+    <h2 id="changelog">Changelog</h2>
+    <h3>Unreleased</h3>
+    <dl>
+      <dt>Added</dt>
+      <dd><code>/otter</code> command — in-game synopsis and config pointers.</dd>
+      <dd><code>/money</code> and <code>/money set &lt;player&gt; &lt;amount&gt;</code> — wallet read and admin bootstrap.</dd>
+      <dd>Passive rewards: mining payout for <code>otters_civ_revived:currency_blocks</code>; kill payout for <code>#minecraft:hostile</code> (direct melee only).</dd>
+      <dd><code>WalletStore</code>, <code>FileWalletStore</code>, <code>WalletService</code> — persistence layer.</dd>
+      <dd><code>RewardOrchestrator</code> + <code>JobsHooks</code> stub for future professions.</dd>
+      <dd>Config: <code>config/otters_civ_revived/rewards.json</code> (created on first run).</dd>
+      <dd>Project OOGA whitepaper and full DOCS set (architecture, roadmap, SBOM, style guide, changelog).</dd>
+      <dd><strong>Imagery Optimizery</strong> desktop utility (<code>images/optimize-here/</code>) — Pillow batch pipeline with optional tkinter GUI.</dd>
+    </dl>
+    <dl>
+      <dt>Changed</dt>
+      <dd><code>fabric.mod.json</code> environment changed from <code>client</code> to <code>*</code> to enable server command registration.</dd>
+      <dd>LICENSE clarified: ARR with carve-outs for gameplay/video use and including the official unmodified JAR in mod packs.</dd>
+      <dd>Repository rebranded to <code>Minecraft-Civ-Remixed</code> / Project OOGA.</dd>
+    </dl>
+
     <div class="references" id="see-also">
-      <p><strong>See also:</strong> project <code>README.md</code>; <code>DOCS/ROADMAP.md</code>; product direction <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/DOCS/whitepaper.md"><code>DOCS/whitepaper.md</code></a>; <code>DOCS/ARCHITECTURE.md</code>; repository <code>LICENSE</code> for redistribution terms.</p>
+      <p><strong>See also:</strong> project <code>README.md</code>; <code>AGENTS.md</code>, <code>CLAUDE.md</code> (automation handbooks); <code>DOCS/SUMMARY.md</code>, <code>DOCS/ROADMAP.md</code>; <code>DOCS/modrinth-description.md</code> (listing copy); product direction <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/DOCS/whitepaper.md"><code>DOCS/whitepaper.md</code></a>; <code>DOCS/ARCHITECTURE.md</code>, <code>DOCS/LOCATIONS.md</code>; repository <code>LICENSE</code> for redistribution terms.</p>
       <p style="margin-top:0.5rem;font-style:italic">This page ships with the repository for offline browsing; not affiliated with Wikimedia Foundation.</p>
     </div>
         </main>

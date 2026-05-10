@@ -8,5 +8,8 @@
 *.properties text eol=lf
 *.json text eol=lf
 *.md text eol=lf
+*.mdc text eol=lf
+
+*.html text eol=lf
 
 gradlew text eol=lf

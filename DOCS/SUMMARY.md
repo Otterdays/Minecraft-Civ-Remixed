@@ -9,6 +9,8 @@
 - Strategic direction: all-in-one civ mod suite (factions/jobs/professions/economy/player shops)
 
 ## Quick Links
+- Agent handbooks: **`AGENTS.md`** (Cursor / universal), **`CLAUDE.md`** (Claude Code shim → full detail in **`AGENTS.md`**)
+- Offline wiki-style reference (**update with civ/player-facing edits**): **`index.html`** (repo root); rule: `DOCS/STYLE_GUIDE.md` § Website parity
 - Roadmap: `DOCS/ROADMAP.md`
 - Whitepaper: `whitepaper.md`
 - Scratchpad: `DOCS/SCRATCHPAD.md`
@@ -24,6 +26,10 @@
 2. Jobs/professions progression loop.
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
+
+[AMENDED 2026-05-10]:
+- **Passive rewards tuning:** same `config/otters_civ_revived/rewards.json` supports optional **`blockRewards`** and **`entityRewards`** maps (validated block/entity ids → payouts; precedence over tag-wide `blockReward`/`entityReward` when an id is listed). Join UX: **`JoinWelcome`** broadcasts a few system-chat lines on player connect (`/otter`, `/money`, rewards pointer). Offline **reference site:** repo root **`index.html`** (sidebar TOC, configs, roadmap links).
+- **Docs surface:** README + `DOCS/modrinth-description.md` + `DOCS/CHANGELOG`; website copy tracks those features where listed.
 
 [AMENDED 2026-05-09]:
 - Commands: **`/otter`** (mod command list / config pointers), **`/money`**, **`/money set`**. Licensing: **`LICENSE`** is ARR with explicit carve-outs (gameplay/video/montage; official unmodified JAR in mod packs); see file for boundaries.

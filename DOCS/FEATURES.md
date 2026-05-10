@@ -57,3 +57,6 @@ Read failures → default **show** (`true`). Write failures logged; in-memory to
 - No keybinding for toggle (screen button only).
 - No frame-by-frame FPS; not a profiler.
 - No dedicated server / datapack logic — **`environment`: `client`** in `fabric.mod.json`.
+
+[AMENDED 2026-05-10]:
+- The **released mod** uses **`environment`: `*`** in `fabric.mod.json` so server-side economy and Otters Civ. rewards run; the HUD sections above describe the **optional client-only FPS overlay**. Server civ gameplay (wallet, `/money`, `/otter`, `rewards.json` with optional `blockRewards`/`entityRewards`, join chat) lives in README and Otters Civ. packages — not in this HUD-only subsection.
