@@ -289,7 +289,7 @@
           <li>
             <a href="#features">Features (current)</a>
             <ul class="sub">
-              <li><a href="#features-server">Server</a></li>
+              <li><a href="#features-server">World side</a></li>
               <li><a href="#features-client">Client</a></li>
               <li><a href="#features-not-in-release">Not in this release</a></li>
             </ul>
@@ -305,7 +305,7 @@
           </li>
           <li><a href="#requirements">Requirements</a></li>
           <li>
-            <a href="#commands">Commands</a>
+            <a href="#commands">Chat commands</a>
             <ul class="sub">
               <li><a href="#join-messages">Join messages</a></li>
             </ul>
@@ -339,7 +339,7 @@
       <div class="shell">
         <main id="main">
     <h1 id="top">Otters Civ. Revived</h1>
-    <p class="tagline">Unofficial reference page for the Fabric mod (technical id: <code>fpsmod</code>). Repository codename: Project OOGA / Minecraft Civ Remixed.</p>
+    <p class="tagline">Unofficial reference for the Fabric mod <strong>Otters Civ. Revived</strong>. <strong>Codename (team / repo):</strong> <strong>Project OOGA</strong>. Technical mod id: <code>fpsmod</code>. Repository title: Minecraft Civ Remixed.</p>
 
     <table class="infobox">
       <caption>Mod summary</caption>
@@ -347,6 +347,7 @@
         <tr><th>Platform</th><td>Minecraft: Java Edition (Fabric)</td></tr>
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
+        <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
         <tr><th>Namespaces</th><td>Gameplay tags & config: <code>otters_civ_revived</code>; wallet & HUD: <code>fpsmod</code></td></tr>
         <tr><th>Economy store</th><td><code>config/fpsmod/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
@@ -356,11 +357,11 @@
       </tbody>
     </table>
 
-    <p><strong>Otters Civ. Revived</strong> is a server-oriented Fabric mod that introduces a persistent wallet, chat commands for balances, a short <strong>join</strong> system-chat intro, and configurable mining/combat payouts (<strong>tag pools</strong> plus optional <strong>per-block</strong> / <strong>per-mob-type</strong> amounts in <code>rewards.json</code>). A bundled legacy FPS overlay from an earlier template remains optional on clients. Long-term design targets include guild-based territory, social systems (friends, private messages), deeper economy (transfers, ledger), and jobs with leveled traits—see <a href="#design-goals">Target feature set</a>.</p>
+    <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows a short <strong>welcome tip</strong> when you join, and can pay you for mining or fighting mobs (see <code>rewards.json</code>). An optional legacy FPS overlay is unrelated to the civ features. Long-term design: guild-style land, social tools, transfers, ledger, jobs—see <a href="#design-goals">Target feature set</a>.</p>
 
     <h2 id="features">Features (current build)</h2>
     <div class="feature-block">
-      <h3 id="features-server">Server</h3>
+      <h3 id="features-server">World side (money &amp; rules)</h3>
       <ul>
         <li>Short welcome in chat when you join — Otters Civ. branding plus pointers to <code>/otter</code> and <code>/money</code>.</li>
         <li><code>/otter</code> — in-game command list + pointer to rewards config.</li>
@@ -417,7 +418,7 @@
         <li><a href="#features">Features (current)</a></li>
         <li><a href="#design-goals">Target feature set</a></li>
         <li><a href="#requirements">Requirements &amp; install stack</a></li>
-        <li><a href="#commands">Commands</a> · <a href="#join-messages">join messages</a></li>
+        <li><a href="#commands">Chat commands</a> · <a href="#join-messages">join messages</a></li>
         <li><a href="#economy">Economy &amp; persistence</a></li>
         <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tags &amp; per-id maps</a>, <a href="#bundled-tags">default tags</a>)</li>
         <li><a href="#config-reference">All config files (reference)</a></li>
@@ -446,10 +447,11 @@
         <tr><td>Java runtime</td><td><code>25</code> or newer</td></tr>
       </tbody>
     </table>
-    <p>The mod declares environment <code>*</code> (client + server): install on the server for economy and payouts; clients only need the JAR if you want the optional FPS HUD overlay.</p>
+    <p><strong>Install note:</strong> Put the mod on the machine that <strong>hosts the world</strong> (single-player = your own game; multiplayer = the host’s <code>mods</code> folder). Players only need the client JAR if they want the optional FPS overlay—money and commands work from the world host.</p>
 
-    <h2 id="commands">Commands</h2>
-    <p>Commands register on the <em>logical server</em> (including single-player integrated servers). The in-game analogue of this article is <code>/otter</code>, which prints a short synopsis.</p>
+    <h2 id="commands">Slash commands (in-game chat)</h2>
+    <p><strong>Simple explanation:</strong> Press your <strong>chat</strong> key (often <strong>T</strong>), type a line that starts with <strong><code>/</code></strong> (for example <code>/money</code>), press <strong>Enter</strong>. That works while you are <strong>playing inside a world</strong>—single-player or multiplayer. You are not using a separate “server program” window; “server” in modding just means <q>the part of Minecraft that remembers money and runs the command.</q></p>
+    <p>Try <code>/otter</code> first; it prints a short in-game help list.</p>
     <p id="join-messages">Players also see a few <strong>automatic system messages when they connect</strong> (not a slash command): Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a one-line pointer to passive rewards / <code>rewards.json</code>.</p>
 
     <dl>
@@ -600,7 +602,7 @@
       <li>Start the server (or client). Config files are created automatically on first launch under <code>config/fpsmod/</code> and <code>config/otters_civ_revived/</code>.</li>
       <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, then restart.</li>
     </ol>
-    <div class="note">Java 25+ is required. The mod declares environment <code>*</code>: install on the server for economy features; clients only need the JAR for the optional FPS HUD.</div>
+    <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets and payouts. Other players only need the JAR on their PC if they want the optional FPS HUD.</div>
 
     <h2 id="building">Building from source</h2>
     <p>Requires JDK 25+ and Git. The repo uses the Gradle wrapper—no separate Gradle install needed.</p>

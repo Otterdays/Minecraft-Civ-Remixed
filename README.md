@@ -11,9 +11,15 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-ARR%20%2B%20carve--outs-darkred?style=flat-square" alt="License"/></a>
 </p>
 
-> **Otters Civ. Revived** is the player-facing name. Repository codename **Project OOGA**. Mod identifier on disk remains **`fpsmod`** until a planned rename pass.
+| What to call it | Name |
+|-----------------|------|
+| **The mod (for players)** | **Otters Civ. Revived** |
+| **Our internal codename (for the team / repo chatter)** | **Project OOGA** |
+| **Technical mod id inside the jar** | **`fpsmod`** (planned rename later) |
 
-Otters Civ. Revived is a **Fabric** companion for Minecraft Java that adds a **persistent server wallet**, **slash commands**, **join-time tips**, and **configurable payouts** when players mine tagged blocks or defeat hostile mobs. Long-term horizon: factions-style territory, jobs, shops, and a fuller economy—tracked in **`DOCS/ROADMAP.md`**.
+**Project OOGA** is the nickname we use in docs and Discord-style talk; players still see **Otters Civ. Revived**.
+
+Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends a **welcome tip** when you join, and can **pay you** when you mine certain blocks or defeat certain mobs. Long-term: land claims, jobs, shops—see **`DOCS/ROADMAP.md`**.
 
 ---
 
@@ -56,15 +62,19 @@ Tests: **`gradlew.bat test`** · Dev client: **`gradlew.bat runClient`**
 
 ---
 
-## Commands (server)
+## Slash commands (what you type in Minecraft chat)
 
-| Command | Purpose |
-|---------|---------|
-| `/otter` | Help listing and pointers to reward config paths |
-| `/money` | Show your wallet balance |
-| `/money set <player> <amount>` | Bootstrap / admin balance set (permissions still on the roadmap) |
+**Plain English:** These are the same kind of commands as `/gamemode` or `/give`. Press **T** (or your chat key), type something that **starts with `/`**, press **Enter**. You can do that **any time you are inside a world** with the mod loaded—**your single-player world counts too**. You are **not** opening a black terminal or a website; it is just the game chat.
 
-Reward tuning lives in **`config/otters_civ_revived/rewards.json`** (restart required after edits).
+When docs say **“server,”** they mean **“the game side that stores your balance and checks the rules,”** not “only for multiplayer pros.” Multiplayer **realms / rented servers** use the same commands; single-player uses them too.
+
+| Command | What it does |
+|---------|----------------|
+| `/otter` | Shows a short help list and where reward settings live |
+| `/money` | Shows **your** money |
+| `/money set <player> <amount>` | Sets someone’s balance (bootstrap / admin; proper permissions later) |
+
+Money rules and mining/combat payouts are edited in **`config/otters_civ_revived/rewards.json`** (restart the game after you change that file).
 
 ---
 

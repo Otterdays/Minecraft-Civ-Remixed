@@ -1,6 +1,6 @@
 # Repository instructions for coding agents
 
-**Project:** Minecraft Civ Remixed / **Project OOGA** — Fabric mod (**mod id:** `fpsmod`, player-facing: **Otters Civ. Revived**). Repo: Otterdays/Minecraft-Civ-Remixed.
+**Project:** repo **Minecraft Civ Remixed**. **Internal codename:** **Project OOGA**. **Players see:** **Otters Civ. Revived**. **Mod id:** `fpsmod`. Remote: Otterdays/Minecraft-Civ-Remixed.
 
 ## Before substantive work
 

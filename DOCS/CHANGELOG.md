@@ -25,6 +25,8 @@ All notable changes to this project are documented here.
 - **`DOCS/modrinth-description.md`** restored at canonical path (`STYLE_GUIDE`, `SUMMARY`, `index.html` reference); preservation header added. Parallel copy under `DOCS/Ryan-Made-Docs/` may remain for author drafts.
 
 ### Changed
+- **README** + **`index.html`**: naming table (player name vs codename **Project OOGA** vs `fpsmod`); “commands” clarified as normal **slash chat** commands (single-player + multiplayer); “server” explained in plain language; features heading **World side**; **fabric.mod.json** description calls out codename.
+
 - **README**: GitHub-ready layout (shields badges, Highlights table, condensed install, Commands table, Documentation index pointing at `DOCS/`, roadmap/contributing stubs); deep technical/agent workflow delegated to **`AGENTS.md`** / **`DOCS/`**.
 
 - **Contributor rules:** **`DOCS/STYLE_GUIDE.md`** § Website parity (`index.html`); **Cursor** `.cursor/rules/index-html-parity.mdc` (`alwaysApply`) + README contributor note + **SUMMARY** quick link pointing at parity checklist.

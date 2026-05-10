@@ -3,7 +3,7 @@
   "id": "fpsmod",
   "version": "${version}",
   "name": "Project OOGA: Civ Remixed",
-  "description": "Otters Civ. Revived (fpsmod): economy, mining/combat payouts, /money, /otter help. ARR + mod pack & video carve-outs—see LICENSE.",
+  "description": "Otters Civ. Revived — codename Project OOGA (id: fpsmod). Economy, payouts, chat /money /otter help. ARR + mod pack & video carve-outs — see LICENSE.",
   "authors": [
     "otterdays"
   ],
