@@ -25,7 +25,9 @@ What’s new...? Civilization building gameplay on the server.
 - **`/money`** — show your wallet balance on the server.
 - **`/money set <player> <amount>`** — set a player’s balance (**operators / vanilla gamemaster band** today; richer permission nodes planned—see repo **`DOCS/ROADMAP.md`**).
 - **Persistent wallets** — balances stored server-side (`config/otters_civ_revived/wallet.properties`; older `config/fpsmod/wallet.properties` moves there on first load).
-- **Mining & combat payouts (Otters Civ.)** — breaking blocks in tag `otters_civ_revived:currency_blocks` and killing entities in `#minecraft:hostile` (defaults) grant coins, **or** set per-block / per-mob payouts in the same file via **`blockRewards`** and **`entityRewards`** (registry id → amount); flat `blockReward` / `entityReward` still apply when an id is not listed. Tune `config/otters_civ_revived/rewards.json` (cooldowns, skip creative/spectator, dimensions). Ranged/indirect kills do not pay in this v1 (direct player hit only).
+[AMENDED 2026-05-10]: **Per-id payouts** live beside **`rewards.json`**: **`block_values.json`** / **`entity_values.json`**. Logical-server **startup** expands **tag payouts** (`blockTag`, `entityTag`) into those maps when unparsed/unseeded yet, merges inline overrides + operator edits.
+
+- **Mining & combat payouts (Otters Civ.)** — breaking blocks tagged by **`blockTag`** and killing mobs typed by **`entityTag`** pays coins; turnkey JSON lists (**`block_values.json`/`entity_values.json`**) populate from tags at first **`SERVER_STARTED`**, tweak every id’s amount there (or stash sparse overrides inline in **`rewards.json`**). Fallback tag logic still catches brand-new mods/blocks absent from persisted JSON until you rerun with an empty sibling file again. Tune `config/otters_civ_revived/rewards.json` plus those value files (**rewards.json**: cooldowns, skips, blacklist, announcements). Ranged/indirect kills do not pay in this v1 (direct player hit only).
 - **Legacy client HUD** — optional FPS readout + screen toggle from the original template; grandfathered extra, not core product.
 
 ## Roadmap

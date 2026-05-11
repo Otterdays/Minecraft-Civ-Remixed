@@ -7,6 +7,8 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Added
+- **`config/otters_civ_revived/block_values.json`** and **`entity_values.json`**: whole-file registry id → payout maps. On **`ServerLifecycleEvents.SERVER_STARTED`** they are **filled from resolved tag memberships** (**`blockTag`** / **`entityTag`** with flat **`blockReward`** / **`entityReward`**) when the file had no keys, unions **`rewards.json`** inline maps plus any existing sibling overlays, persists sorted JSON, then replaces **`RewardOrchestrator`** rules (**`finalizeRewardsForRunningServer`**). Operators keep a turnkey editable spreadsheet-of-ids UX; **`/otter`**, **`index.html`**, README.
+
 - **`AGENTS.md`** (Cursor / universal agent handbook), **`CLAUDE.md`** (Claude Code shim). Git hygiene: `.gitattributes` (`*.html`, `*.mdc` LF); `.gitignore` (`.env*`, `.claude/cache/`). Cross-links in **SUMMARY**, **LOCATIONS** workflow, README contributors.
 
 - **Join welcome**: on `ServerPlayConnectionEvents.JOIN`, players get three system-chat lines branding Otters Civ. Revived and pointing to `/otter`, `/money`, and passive rewards (`JoinWelcome`).
@@ -22,6 +24,10 @@ All notable changes to this project are documented here.
 - Added `/money` and `/money set <player> <amount>` command paths.
 
 ### Fixed
+- **`block_values.json` / `entity_values.json` were persisting as empty `{}`** when the default `otters_civ_revived:currency_blocks` tag (and any other datapack-defined block tag) was used. Block tag expansion previously walked `BuiltInRegistries.BLOCK` and called `BlockState.is(TagKey)` — that path checks the static built-in holders, but in modern Minecraft datapack tag bindings live on the **server's live registry** layer. `RewardTagExpansion.payoutsForTaggedBlocks` now takes a `ServerLevel` and resolves membership via `level.registryAccess().lookupOrThrow(Registries.BLOCK)`, mirroring the entity path. Also: tag expansion no longer bails when the flat `blockReward`/`entityReward` is `0` — empty/zero payouts still get a prefilled id list so operators have something concrete to edit. Logs a warning when zero blocks/entities resolve for a tag id. End user-visible: editing `block_values.json` / `entity_values.json` now actually has content to customize.
+- **`RewardRulesLoader.writeDefaults`**: append a trailing newline when generating the default `config/otters_civ_revived/rewards.json`, matching the sibling `block_values.json` / `entity_values.json` writer (`persistSortedLongMapJson`). Cosmetic POSIX-friendly fix; no behavior change.
+- **Test coverage:** added direct unit tests for `RewardRulesLoader.composeEffectiveIdMap` (production merge path used by `finalizeRewardsForRunningServer`) covering tier1 → inline → sibling precedence, sibling-empty persistence with trailing newline, and the "do not overwrite existing sibling file" invariant. Closes the gap where only the test-only `mergeExternalValueFiles` helper was exercised.
+
 - **`DOCS/modrinth-description.md`** restored at canonical path (`STYLE_GUIDE`, `SUMMARY`, `index.html` reference); preservation header added. Parallel copy under `DOCS/Ryan-Made-Docs/` may remain for author drafts.
 
 ### Changed

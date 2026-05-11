@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat (first-visit onboarding vs welcome-back for returning players per world save), configurable mining and combat payouts (tags + per-id blockRewards/entityRewards in rewards.json), roadmap, offline reference.">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
   <title>Otters Civ. Revived (fpsmod) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -369,6 +369,8 @@
             <a href="#config-reference">Config reference</a>
             <ul class="sub">
               <li><a href="#config-rewards-json"><code>rewards.json</code></a></li>
+              <li><a href="#config-block-values"><code>block_values.json</code></a></li>
+              <li><a href="#config-entity-values"><code>entity_values.json</code></a></li>
               <li><a href="#config-wallet"><code>wallet.properties</code></a></li>
               <li><a href="#config-hud"><code>hud.properties</code></a></li>
             </ul>
@@ -395,7 +397,7 @@
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
-        <tr><th>Namespaces</th><td>Otters Civ. economy: <code>otters_civ_revived</code> (<code>rewards.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>)</td></tr>
+        <tr><th>Namespaces</th><td>Otters Civ. economy: <code>otters_civ_revived</code> (<code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>)</td></tr>
         <tr><th>Economy store</th><td><code>config/otters_civ_revived/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
         <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
@@ -535,7 +537,7 @@
     </dl>
 
     <h3 id="command-permissions">Who can run which command (today)</h3>
-    <p><strong>Open to players:</strong> <code>/otter</code> (help only), <code>/money</code> with no arguments (read your balance in chat). Passive mining/kill payouts have no slash command—they follow <code>rewards.json</code>.</p>
+    <p><strong>Open to players:</strong> <code>/otter</code> (help only), <code>/money</code> with no arguments (read your balance in chat). Passive mining/kill payouts have no slash command—they follow <code>rewards.json</code> plus optional <code>block_values.json</code> / <code>entity_values.json</code> (merged at startup).</p>
     <p><strong>Gamemaster / OP band only:</strong> <code>/money set &lt;player&gt; &lt;amount&gt;</code> checks <code>CommandSourceStack.permissions()</code> for <code class="cmd">Permission.HasCommandLevel(GAMEMASTERS)</code>—same tier vanilla uses for many built-in cheats. Dedicated console and suitably permissioned integrations still work as the server configures them.</p>
     <p class="lead"><strong>Future:</strong> a dedicated Otters Civ. permission apparatus (explicit string ids, optional Fabric Permissions API / server plugins, non-OP econ moderators). Sketched under <strong>Permissions apparatus (planned)</strong> in <code>DOCS/ROADMAP.md</code> and M1’s admin-permission backlog.</p>
 
@@ -543,11 +545,11 @@
     <p class="lead">Think “bank file on disk”: one number per player UUID, updated when you earn or an admin sets your balance.</p>
     <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/otters_civ_revived/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
     <p>On disk the wallet is UTF‑8 text: optional <code># Name: …</code> hint lines precede each <code>uuid=balance</code> line (same semantics as Java <code>.properties</code> for the key=value part). Loader accepts older files without name lines. Comments on write explain the format; malformed balance lines log a warning and are skipped when possible.</p>
-    <div class="note"><code>rewards.json</code> and <code>wallet.properties</code> both live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay still uses only <code>config/fpsmod/hud.properties</code>.</div>
+    <div class="note"><code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, and <code>wallet.properties</code> live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay still uses only <code>config/fpsmod/hud.properties</code>.</div>
 
     <h2 id="rewards">Passive rewards</h2>
     <p class="lead">Breaking the right blocks and killing the right mobs silently adds coins. What “right” means is editable JSON—often via tags Datapacks already understand—with optional exceptions per exact block/mob ID.</p>
-    <p>Mining and combat payouts are controlled by JSON at <code>config/otters_civ_revived/rewards.json</code> (created with defaults when missing). <strong>Restart</strong> the client or server after editing; the file is read once at startup.</p>
+    <p>Mining and combat payouts load from JSON at <code>config/otters_civ_revived/rewards.json</code>, then merge sibling <code>block_values.json</code> and <code>entity_values.json</code> whole-file maps (see below). All are created with defaults when missing. <strong>Restart</strong> the client or server after editing; the files are read once at startup.</p>
 
     <h3 id="rewards-config">What counts: tags and datapacks</h3>
     <p>Which blocks and mobs pay is <em>not</em> hard-coded in that JSON as a block list. The config points at <strong>tag identifiers</strong>; the tag contents come from Minecraft’s tag system (vanilla + mod + user datapacks).</p>
@@ -555,11 +557,12 @@
       <li><code>blockTag</code> — block tag id (e.g. <code>otters_civ_revived:currency_blocks</code>). Used for the fallback <code>blockReward</code> when that block’s registry id is not listed in <code>blockRewards</code>. Point it at any valid block tag.</li>
       <li><code>entityTag</code> — entity type tag id (default <code>minecraft:hostile</code>). Used for <code>entityReward</code> fallback when the mob’s id is missing from <code>entityRewards</code>. Your own datapack tags are fine.</li>
       <li><strong>Membership</strong> — The mod ships tag JSON under <code>data/otters_civ_revived/tags/…</code> inside the JAR. Server owners can add world/server <strong>datapacks</strong> to merge extra entries into those tags or define new tags, then set <code>blockTag</code> / <code>entityTag</code> to those ids in <code>rewards.json</code>.</li>
-      <li><strong>Per-block / per-mob payouts</strong> — Objects <code>blockRewards</code> and <code>entityRewards</code> map registry ids (e.g. <code>"minecraft:diamond_ore": 40</code>, <code>"minecraft:zombie": 2</code>) to whole-number payouts. Keys are validated and normalized at load; invalid ids are skipped with a server log warning.</li>
-      <li><strong>Fallback amounts</strong> — If the broken block’s id is not listed under <code>blockRewards</code>, the payout is <code>blockReward</code> only when that block matches <code>blockTag</code>. Same pattern for kills: <code>entityRewards</code> wins, otherwise <code>entityReward</code> when the victim’s type matches <code>entityTag</code>. Listed ids pay their configured amount even without tag membership.</li>
+      <li><strong>Per-block / per-mob payouts</strong> — Objects <code>blockRewards</code> and <code>entityRewards</code> in <code>rewards.json</code> map registry ids (e.g. <code>"minecraft:diamond_ore": 40</code>, <code>"minecraft:zombie": 2</code>) to whole-number payouts. Keys are validated and normalized at load; invalid ids are skipped with a server log warning.</li>
+      <li><strong>Dedicated value files</strong> — <code>block_values.json</code> / <code>entity_values.json</code> beside <code>rewards.json</code> normally contain <strong>one line per rewarded block/hostile mob</strong>; Otters Civ. seeds them automatically on <strong><code>SERVER_STARTED</code></strong> whenever a sibling file parses to zero keys (<code>{}</code>, invalid JSON counts as zero). Rows default to whichever <code>blockTag</code> / <code>entityTag</code> resolves to plus flat <code>blockReward</code> / <code>entityReward</code>. Inline <code>blockRewards</code> / <code>entityRewards</code> overrides win on shared keys.</li>
+      <li><strong>Fallback amounts</strong> — Once maps are merged, if the broken block’s id is not listed, the payout is <code>blockReward</code> only when that block matches <code>blockTag</code>. Same pattern for kills: merged <code>entityRewards</code> wins, otherwise <code>entityReward</code> when the victim’s type matches <code>entityTag</code>. Listed ids pay their configured amount even without tag membership.</li>
     </ul>
 
-    <p>Other keys in the same file: <code>enabled</code>, optional <code>blockRewards</code> / <code>entityRewards</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code use block tag <code>otters_civ_revived:currency_blocks</code> and hostile mobs via <code>minecraft:hostile</code>; override maps default to empty until you add them.</p>
+    <p>Other keys in <code>rewards.json</code>: <code>enabled</code>, optional <code>blockRewards</code> / <code>entityRewards</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code target <code>otters_civ_revived:currency_blocks</code> and <code>#minecraft:hostile</code>; sibling value files populate from those tags automatically the first time the server starts with empty maps.</p>
     <p>Kill credit in this build favors direct player hits; bows, tridents, and other indirect kills are not credited yet.</p>
 
     <h3 id="bundled-tags">Bundled datapack tags (default JAR)</h3>
@@ -578,9 +581,9 @@
 
     <h2 id="config-reference">All config files (quick reference)</h2>
     <p class="lead">Everything below mirrors what the jar writes if you omit a field—the table is authoritative for spelling and defaults.</p>
-    <p>Exact defaults below match the Gson-backed defaults in code when a key is omitted from JSON or the file is first created.</p>
+    <p><code>rewards.json</code> defaults mirror Gson-backed coded defaults when omitted. <strong>Value files:</strong> on first logical server start with no persisted ids, Otters Civ. writes populated <code>block_values.json</code> / <code>entity_values.json</code> sourced from resolved tags (sorted keys)—see anchors below.</p>
     <h3 id="config-rewards-json"><code>config/otters_civ_revived/rewards.json</code></h3>
-    <p class="lead"><code>rewards.json</code> toggles payouts, picks tag groups, and optionally sets per-block/per-mob amounts.</p>
+    <p class="lead"><code>rewards.json</code> toggles payouts, picks tag groups, cooldowns/dimensions, and may carry inline per-block/per-mob maps (combined with sibling value files).</p>
     <table class="data-table" aria-label="rewards.json fields">
       <thead>
         <tr><th>Field</th><th>Role</th><th>Default</th></tr>
@@ -597,10 +600,16 @@
         <tr><td><code>skipSpectator</code></td><td>Skip rewards for spectator-mode players</td><td><code>true</code></td></tr>
         <tr><td><code>dimensionBlacklist</code></td><td>Array of dimension resource locations to disable rewards in</td><td><code>[]</code> (none)</td></tr>
         <tr><td><code>announceRewards</code></td><td>If true, sends the earning player system messages such as <code>+1 (mining)</code> or <code>+5 (combat)</code></td><td><code>true</code></td></tr>
-        <tr><td><code>blockRewards</code></td><td>Optional object <code>{ "minecraft:block_id": &lt;amount&gt;, … }</code>; per-break payout for that block id (wins over tag).</td><td><code>{}</code></td></tr>
-        <tr><td><code>entityRewards</code></td><td>Optional object <code>{ "minecraft:entity_type": &lt;amount&gt;, … }</code>; per-kill payout (wins over entity tag).</td><td><code>{}</code></td></tr>
+        <tr><td><code>blockRewards</code></td><td>Optional object <code>{ "minecraft:block_id": &lt;amount&gt;, … }</code>; per-break payout for that block id (wins over tag). <code><a href="#config-block-values">block_values.json</a></code> patches on load after these keys.</td><td><code>{}</code></td></tr>
+        <tr><td><code>entityRewards</code></td><td>Optional object <code>{ "minecraft:entity_type": &lt;amount&gt;, … }</code>; per-kill payout (wins over entity tag). Patched afterward by <code><a href="#config-entity-values">entity_values.json</a></code>.</td><td><code>{}</code></td></tr>
       </tbody>
     </table>
+    <h3 id="config-block-values"><code>config/otters_civ_revived/block_values.json</code></h3>
+    <p class="lead">Whole-file map: block registry id (<code>namespace:path</code>) → non‑negative payout. On Fabric’s logical-server <strong>started</strong> callback, Otters Civ. expands whatever <code>blockTag</code> points at (including nested datapack references like <code>#minecraft:diamond_ores</code>), assigns each matched block flat <code>blockReward</code>, unions inline <code>blockRewards</code> from <code>rewards.json</code>, and—only while this file parses to zero keys—persists sorted UTF‑8 JSON you can skim like a spreadsheet.</p>
+    <p>If this file already has keys, startup only merges—it never wipes your edits. Broken JSON logs an error and is treated empty (then regenerated if still “no sibling keys”).</p>
+    <h3 id="config-entity-values"><code>config/otters_civ_revived/entity_values.json</code></h3>
+    <p class="lead">Same pattern for entity type ids (<code>#minecraft:hostile</code> resolves to dozens of vanilla mobs) using flat <code>entityReward</code> defaults when prefilling.</p>
+    <p>Again: regenerated only while the sibling file has no surviving keys—existing operator files remain authoritative overlays.</p>
     <h3 id="config-wallet"><code>config/otters_civ_revived/wallet.properties</code></h3>
     <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
     <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>

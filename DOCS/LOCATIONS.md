@@ -72,7 +72,7 @@ Use this as the first stop for quick discovery.
 
 [AMENDED 2026-05-10]:
 - Passive rewards orchestration: `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java`
-- Reward rules + loader: `src/main/java/com/fpsmod/ottersciv/config/RewardRules.java`, `RewardRulesLoader.java`; tests: `src/test/java/com/fpsmod/ottersciv/config/RewardRulesLoaderTest.java`
+- Reward rules / expansion: `RewardRules.java`, `RewardRulesLoader.java` (**`loadBootstrapRewards`**, **`finalizeRewardsForRunningServer`**), **`RewardTagExpansion.java`**, **`KillRewardTagChecks.java`** (+ `reward/RewardOrchestrator.java` **`replaceRules`**); sibling JSON under **`config/otters_civ_revived/`**. Tests: `RewardRulesLoaderTest.java`
 - Gameplay wiring: `src/main/java/com/fpsmod/ottersciv/OttersCivGameplay.java` (`JoinWelcome.java` registers join chat; **`JoinAttendanceSavedData.java`** — per-save returning-player flag, **`fpsmod:join_attendance`**)
 - Commands: `src/main/java/com/fpsmod/command/OtterCommand.java`, `MoneyCommand.java` (`/money set` · `Permission.HasCommandLevel(GAMEMASTERS)`); wallet: `src/main/java/com/fpsmod/economy/`
 - Shipped datapack tags: `src/main/resources/data/otters_civ_revived/tags/`

@@ -25,12 +25,15 @@ public final class RewardRules {
      * Optional payouts keyed by block id (e.g. {@code minecraft:diamond_ore}).
      * If a broken block matches a key here, this amount wins (even when the block is not in {@link #blockTag}).
      * Use {@code 0} for an explicit no-pay entry. Keys are normalized to lower case on load.
+     * {@link RewardRulesLoader#finalizeRewardsForRunningServer} runs on logical server boot: merged map combines
+     * tag-derived defaults, keys from {@code rewards.json}, and persisted sibling overlays.
      */
     public Map<String, Long> blockRewards = new LinkedHashMap<>();
 
     /**
      * Optional payouts keyed by entity type id (e.g. {@code minecraft:zombie}).
      * Same precedence rules as blocks. Keys are normalized on load.
+     * Hydrated alongside {@link RewardRulesLoader#finalizeRewardsForRunningServer} exactly like blocks.
      */
     public Map<String, Long> entityRewards = new LinkedHashMap<>();
 

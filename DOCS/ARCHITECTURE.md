@@ -34,7 +34,7 @@ domains: economy, jobs/professions, factions, land claims, and player shops.
 
 ## Runtime Today (Bootstrap; 2026-05-10)
 
-Shipped subset before the planned data layer above: **`WalletService`** + file-backed **`wallet.properties`**; **`RewardOrchestrator`** applies **`RewardRules`** loaded once from **`config/otters_civ_revived/rewards.json`** (tags + optional per-id **`blockRewards`**/**`entityRewards`**, cooldowns); Fabric events bridge block breaks and melee kills. Welcome copy on **`ServerPlayConnectionEvents.JOIN`** (**`JoinWelcome`**). Commands **`/otter`**, **`/money`**. Player-facing prose + config tables: **`index.html`** (repo root).
+Shipped subset before the planned data layer above: **`WalletService`** + file-backed **`wallet.properties`**; **`RewardOrchestrator`** starts from **`RewardRulesLoader.loadBootstrapRewards()`** (**`rewards.json`**) then swaps in **`finalizeRewardsForRunningServer()`** output on **`ServerLifecycleEvents.SERVER_STARTED`**, which expands **`blockTag`/`entityTag`**, unions inline maps plus sibling overlays, persists sorted **`block_values.json`/`entity_values.json`** when sibling files lacked keys (`RewardRulesLoader` + **`RewardTagExpansion`**); Fabric events bridge block breaks and melee kills. Welcome copy on **`ServerPlayConnectionEvents.JOIN`** (**`JoinWelcome`**). Commands **`/otter`**, **`/money`**. Player-facing prose + config tables: **`index.html`** (repo root).
 
 [AMENDED 2026-05-11]: **`wallet.properties`** path is **`config/otters_civ_revived/wallet.properties`** (alongside **`rewards.json`**). **`config/fpsmod/`** retains only grandfathered HUD settings (**`hud.properties`**). **`FileWalletStore`** migrates a legacy **`config/fpsmod/wallet.properties`** on first load if the new path is missing.
 

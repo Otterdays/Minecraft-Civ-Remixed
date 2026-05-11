@@ -30,7 +30,7 @@ Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows
 | **`fpsmod`** | Jar’s technical mod ID (rename planned) |
 | **Server / host** | The game instance that owns the save—your single-player session or multiplayer host |
 | **Tag** | A vanilla datapack grouping of blocks or mob types (`blockTag`, `entityTag` in **`rewards.json`**) |
-| **`blockRewards` / `entityRewards`** | Optional per-block or per–mob-type payout overrides in **`rewards.json`** |
+| **`blockRewards` / `entityRewards`** | Optional per-block or per–mob-type payout overrides in **`rewards.json`** (merged with **`block_values.json`** / **`entity_values.json`**; sibling files patch same keys on top at startup) |
 
 ---
 
@@ -41,7 +41,7 @@ One-line version: **wallet + chat commands + optional mining/kill payouts + join
 | Area | What you get |
 |------|----------------|
 | **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/otters_civ_revived/wallet.properties` (legacy `config/fpsmod/wallet.properties` migrates once on load) |
-| **Payouts** | Tag-driven mining & combat rewards; optional **per-block** / **per-entity-type** amounts via `blockRewards` & `entityRewards` in **`config/otters_civ_revived/rewards.json`** |
+| **Payouts** | Tag-driven mining & combat rewards; **per-block** / **per-entity-type** amounts via inline `blockRewards` / `entityRewards` **or** dedicated **`block_values.json`** / **`entity_values.json`** next to **`rewards.json`** (merged; sibling files override same keys after load) |
 | **Onboarding** | System chat on join: **first visit per save** — three lines; **returning** — short **welcome back ~**name + `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
 | **Client extra** | Optional legacy FPS HUD (cosmetic template carry-over) |
 
@@ -87,7 +87,7 @@ When docs say **“server,”** they mean **“the game side that stores your ba
 | `/money` | Shows **your** money |
 | `/money set <player> <amount>` | Sets someone’s balance (**gamemaster / OP-equivalent** only—same band as many vanilla cheat commands; see below) |
 
-Money rules and mining/combat payouts are edited in **`config/otters_civ_revived/rewards.json`** (restart the game after you change that file).
+Money rules load from **`config/otters_civ_revived/rewards.json`**; **`block_values.json`** / **`entity_values.json`** list per-block / per-mob payouts. On logical server startup the mod expands your configured **`blockTag`**/**`entityTag`** into those maps when empty, merges inline overrides from **`rewards.json`**, persists sorted JSON, then applies it—restart after edits.
 
 ### Command permissions (current)
 

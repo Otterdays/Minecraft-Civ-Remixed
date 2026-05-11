@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
 
-import java.util.Optional;
+import java.util.Objects;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Otters Civ. Revived — single entry for paying players on block breaks and kills. */
 public final class RewardOrchestrator {
     private final WalletService wallets;
-    private final RewardRules rules;
+    private volatile RewardRules rules;
     private final JobsHooks jobsHooks;
     private final ConcurrentHashMap<UUID, Long> lastBlockRewardMs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> lastEntityRewardMs = new ConcurrentHashMap<>();
@@ -35,8 +35,16 @@ public final class RewardOrchestrator {
 
     public RewardOrchestrator(WalletService wallets, RewardRules rules, JobsHooks jobsHooks) {
         this.wallets = wallets;
-        this.rules = rules;
+        this.rules = Objects.requireNonNull(rules, "reward rules");
         this.jobsHooks = jobsHooks;
+        refreshTagKeys();
+    }
+
+    /** Applies rules produced after registry/tag load (expanded per-id payouts on disk when needed). */
+    public void replaceRules(RewardRules next) {
+        this.rules = Objects.requireNonNull(next, "reward rules");
+        this.loggedInvalidBlockTag = false;
+        this.loggedInvalidEntityTag = false;
         refreshTagKeys();
     }
 
@@ -198,15 +206,7 @@ public final class RewardOrchestrator {
     }
 
     private static boolean entityMatchesKillTag(ServerLevel level, EntityType<?> type, TagKey<EntityType<?>> tag) {
-        Optional<ResourceKey<EntityType<?>>> key = BuiltInRegistries.ENTITY_TYPE.getResourceKey(type);
-        if (key.isEmpty()) {
-            return false;
-        }
-        return level.registryAccess()
-            .lookupOrThrow(Registries.ENTITY_TYPE)
-            .get(key.get())
-            .map(holder -> holder.is(tag))
-            .orElse(false);
+        return KillRewardTagChecks.isEntityTypeTagged(level, type, tag);
     }
 
     /**

@@ -10,7 +10,7 @@
 
 ## Product scope reminder
 
-Economy bootstrap is live: **`/money`**, **`/otter`**, wallet file, **`rewards.json`** (tags + optional **`blockRewards`** / **`entityRewards`**), **`JoinWelcome`**, datapack **`otters_civ_revived`**. Larger civ roadmap: **`DOCS/ROADMAP.md`**.
+Economy bootstrap is live: **`/money`**, **`/otter`**, wallet file, **`rewards.json`** (tags + optional **`blockRewards`** / **`entityRewards`**) plus optional sibling **`block_values.json`** / **`entity_values.json`**, **`JoinWelcome`**, datapack **`otters_civ_revived`**. Larger civ roadmap: **`DOCS/ROADMAP.md`**.
 
 ## Mandatory site parity
 

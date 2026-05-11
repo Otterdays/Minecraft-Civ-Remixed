@@ -3,6 +3,14 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-11] **Empty `block_values.json` bug fix:** block tag expansion now resolves membership via `level.registryAccess().lookupOrThrow(Registries.BLOCK)` (mirrors entity path); `payoutsForTaggedBlocks` takes a `ServerLevel`. Datapack tags (incl. mod-bundled `otters_civ_revived:currency_blocks`) bind to the live server registry, not the static `BuiltInRegistries.BLOCK` holders — old static-holder lookup returned zero matches and the persisted sibling file was `{}`. Zero-reward tags no longer short-circuit expansion; ids prefill with `0` so operators can still edit. Warn-log on zero matches. CHANGELOG `Fixed`.
+
+- [2026-05-11] **Reward config debug pass:** `RewardRulesLoader.writeDefaults` now appends `System.lineSeparator()` (parity with sibling JSON writer); `composeEffectiveIdMap` made package-private and directly unit-tested (precedence + sibling-empty persistence + preserve-existing-sibling). Closes test gap where only `mergeExternalValueFiles` was exercised. CHANGELOG `Fixed`.
+
+- [2026-05-10] **Prefilled per-id payouts:** logical-server **started** expands `blockTag`/`entityTag` into default amounts (`RewardTagExpansion`), persists sibling JSON when unparsed/nonexistent, applies `finalizeRewardsForRunningServer` + orchestrator **`replaceRules`**. Bootstrap **`loadBootstrapRewards`**. CHANGELOG/`index`/ARCHITECTURE/`/otter`.
+
+- [2026-05-10] **Per-id reward files:** `block_values.json` / `entity_values.json` beside `rewards.json` merged after inline maps (`RewardRulesLoader`); CHANGELOG/README/`index.html`/modrinth/ARCHITECTURE/LOCATIONS/`/otter`; `RewardRulesLoaderTest`.
+
 - [2026-05-11] **`index.html` + docs surface:** **`#limits`** states join onboarding vs welcome-back is **per world save** (`fpsmod:join_attendance`, not `config/`). **SUMMARY** amended: canonical reference is repo root **`index.html`** only (no **`website/`** mirror).
 
 - [2026-05-11] **`JoinWelcome` returning players:** **`JoinAttendanceSavedData`** (**`fpsmod:join_attendance`**, overworld **`SavedDataStorage`**); styled **welcome back ~name** + short refresher vs full three-line first join. CHANGELOG **`Changed`**, **LOCATIONS**, **FEATURES** / **SUMMARY** amended, **`index.html`** / README join copy.

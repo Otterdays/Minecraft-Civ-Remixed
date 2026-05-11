@@ -59,7 +59,7 @@ Read failures → default **show** (`true`). Write failures logged; in-memory to
 - No dedicated server / datapack logic — **`environment`: `client`** in `fabric.mod.json`.
 
 [AMENDED 2026-05-10]:
-- The **released mod** uses **`environment`: `*`** in `fabric.mod.json` so server-side economy and Otters Civ. rewards run; the HUD sections above describe the **optional client-only FPS overlay**. Server civ gameplay (wallet, `/money`, `/otter`, `rewards.json` with optional `blockRewards`/`entityRewards`, join chat) lives in README and Otters Civ. packages — not in this HUD-only subsection.
+- The **released mod** uses **`environment`: `*`** in `fabric.mod.json` so server-side economy and Otters Civ. rewards run; the HUD sections above describe the **optional client-only FPS overlay**. Server civ gameplay (wallet, `/money`, `/otter`, `rewards.json` with optional `blockRewards`/`entityRewards` plus optional `block_values.json`/`entity_values.json`, join chat) lives in README and Otters Civ. packages — not in this HUD-only subsection.
 
 [AMENDED 2026-05-11]:
 - **Command permissions (bootstrap):** **`/money`** (read balance) is open to ordinary players; **`/money set`** is restricted to vanilla **gamemaster** tier (`PermissionLevel.GAMEMASTERS`, OP-band). A dedicated permission node system is **not** shipped yet — see **`DOCS/ROADMAP.md`** *Permissions apparatus (planned)* for the future approach; admin **give/add**–style commands (when added) should follow the same gate until then.

@@ -23,8 +23,9 @@ public final class OtterCommand {
         sendLine(source, "/money set <player> <amount> — set balance (gamemaster / OP-band only; roadmap: custom permission nodes)");
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
-        sendLine(source, "Mining + combat payouts use config/otters_civ_revived/rewards.json");
-        sendLine(source, "(tags, per-block/per-mob maps blockRewards/entityRewards, flat blockReward/entityReward fallback, cooldowns)");
+        sendLine(source, "Mining + combat payouts: config/otters_civ_revived/rewards.json (tags + cooldowns + …)");
+        sendLine(source, "block_values.json / entity_values.json list every tagged block/hostile mob with default payouts;");
+        sendLine(source, "filled from blockTag & entityTag on first logical SERVER_STARTED when files have no ids yet. Restart after edits.");
         return 1;
     }
 
