@@ -1,15 +1,14 @@
 package com.fpsmod.client.ui;
 
 import com.fpsmod.FpsMod;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -19,6 +18,10 @@ import java.util.List;
 /**
  * Otters Civ. Revived — stylized in-game hub. Opens from client-side {@code /otter}.
  * Pure-geometry rendering (no asset textures) so it stays asset-pipeline-free for v1.
+ *
+ * <p>26.1 Screen API: vanilla calls {@link #extractRenderState} every frame to record
+ * draw commands into the render graph. We render the panel directly here; mouse input
+ * arrives via {@link #mouseClicked(MouseButtonEvent, boolean)}.
  */
 public final class OttersCivScreen extends Screen {
 
@@ -38,8 +41,6 @@ public final class OttersCivScreen extends Screen {
         }
     }
 
-    // Palette — modern dark-navy w/ gold + aqua accents.
-    private static final int BG_DIM         = 0xCC0A0E1A;
     private static final int PANEL_BG       = 0xFF111827;
     private static final int PANEL_BG_ALT   = 0xFF0B1220;
     private static final int PANEL_BORDER   = 0xFF1F2937;
@@ -61,98 +62,96 @@ public final class OttersCivScreen extends Screen {
     private final long openedAt = System.currentTimeMillis();
     private Tab active = Tab.HOME;
     private final List<Rect> hotspots = new ArrayList<>();
+    private int lastMouseX;
+    private int lastMouseY;
 
     public OttersCivScreen() {
         super(Component.literal("Otters Civ. Revived"));
     }
 
     @Override
-    protected void init() {
-        super.init();
-    }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        // Animated dim backdrop.
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         float t = Mth.clamp((System.currentTimeMillis() - openedAt) / (float) ANIM_MS, 0f, 1f);
         float eased = easeOutCubic(t);
         int dimAlpha = (int) (0xCC * eased) & 0xFF;
         g.fill(0, 0, this.width, this.height, (dimAlpha << 24) | 0x0A0E1A);
+    }
 
-        super.render(g, mouseX, mouseY, partialTick);
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        float t = Mth.clamp((System.currentTimeMillis() - openedAt) / (float) ANIM_MS, 0f, 1f);
+        float eased = easeOutCubic(t);
+        int yOffset = (int) ((1f - eased) * 14f);
 
         int px = (this.width - PANEL_W) / 2;
-        int py = (this.height - PANEL_H) / 2;
-        int yOffset = (int) ((1f - eased) * 14f);
-        py += yOffset;
+        int py = (this.height - PANEL_H) / 2 + yOffset;
 
         hotspots.clear();
 
-        // Outer drop shadow approximation.
+        // Drop shadow.
         g.fill(px + 3, py + 6, px + PANEL_W + 3, py + PANEL_H + 6, 0x66000000);
-        // Panel body.
+        // Panel body with shaved corners.
         roundedFill(g, px, py, px + PANEL_W, py + PANEL_H, PANEL_BG);
         // Top accent stripe.
         g.fill(px + 1, py + 1, px + PANEL_W - 1, py + 2, ACCENT_GOLD);
         // Sidebar background.
         g.fill(px + 1, py + 2, px + SIDEBAR_W, py + PANEL_H - 1, PANEL_BG_ALT);
-        // Sidebar / body divider.
+        // Sidebar divider.
         g.fill(px + SIDEBAR_W, py + 2, px + SIDEBAR_W + 1, py + PANEL_H - 1, PANEL_BORDER);
-        // Outer border (subtle).
-        outline(g, px, py, px + PANEL_W, py + PANEL_H, PANEL_BORDER);
+        // Outer border.
+        outlineRect(g, px, py, px + PANEL_W, py + PANEL_H, PANEL_BORDER);
 
-        // Title.
         drawTitle(g, px + 8, py + 8);
 
-        // Sidebar tabs.
         int tabsY = py + 38;
         for (Tab tab : Tab.values()) {
             int x0 = px + 4;
             int x1 = px + SIDEBAR_W - 4;
             int y0 = tabsY;
             int y1 = tabsY + TAB_H;
-            boolean hover = mouseX >= x0 && mouseX <= x1 && mouseY >= y0 && mouseY <= y1;
+            boolean hover = inside(mouseX, mouseY, x0, y0, x1, y1);
             boolean selected = tab == active;
             renderTab(g, x0, y0, x1, y1, tab, selected, hover);
             hotspots.add(new Rect(x0, y0, x1, y1, "tab:" + tab.name()));
             tabsY += TAB_H + 2;
         }
 
-        // Content area.
         int cx = px + SIDEBAR_W + 14;
         int cy = py + 12;
         int cw = PANEL_W - SIDEBAR_W - 22;
         int ch = PANEL_H - 24;
         renderContent(g, cx, cy, cw, ch, mouseX, mouseY);
 
-        // Footer hint.
         String hint = "ESC to close · click tab to switch";
-        g.drawString(this.font, hint, px + PANEL_W - 4 - this.font.width(hint), py + PANEL_H - 11, TEXT_DIM, false);
+        g.text(this.font, hint, px + PANEL_W - 4 - this.font.width(hint), py + PANEL_H - 11, TEXT_DIM, false);
     }
 
-    private void drawTitle(GuiGraphics g, int x, int y) {
+    private void drawTitle(GuiGraphicsExtractor g, int x, int y) {
         Font f = this.font;
-        // Stacked title — caps, accent dot, subtitle.
-        g.drawString(f, "OTTERS CIV.", x, y, ACCENT_GOLD, false);
-        g.drawString(f, "REVIVED", x, y + 10, ACCENT_AQUA, false);
-        g.fill(x + 62, y + 5, x + 66, y + 9, ACCENT_GOLD); // accent dot
+        g.text(f, "OTTERS CIV.", x, y, ACCENT_GOLD, false);
+        g.text(f, "REVIVED", x, y + 10, ACCENT_AQUA, false);
+        g.fill(x + 62, y + 5, x + 66, y + 9, ACCENT_GOLD);
     }
 
-    private void renderTab(GuiGraphics g, int x0, int y0, int x1, int y1, Tab tab, boolean selected, boolean hover) {
-        int bg = selected ? HOVER_BG : (hover ? 0xFF182334 : 0x00000000);
+    private void renderTab(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, Tab tab, boolean selected, boolean hover) {
+        int bg = selected ? HOVER_BG : (hover ? 0xFF182334 : 0);
         if (bg != 0) {
             g.fill(x0, y0, x1, y1, bg);
         }
         if (selected) {
-            // Left accent bar.
             g.fill(x0, y0, x0 + 2, y1, ACCENT_GOLD);
         }
-        int color = selected ? TEXT_PRIMARY : (hover ? TEXT_PRIMARY : TEXT_MUTED);
-        g.drawString(this.font, tab.label, x0 + 8, y0 + 6, color, false);
-        g.drawString(this.font, tab.subtitle, x0 + 8, y0 + 17, selected ? ACCENT_AQUA : TEXT_DIM, false);
+        int color = selected || hover ? TEXT_PRIMARY : TEXT_MUTED;
+        g.text(this.font, tab.label, x0 + 8, y0 + 6, color, false);
+        g.text(this.font, tab.subtitle, x0 + 8, y0 + 17, selected ? ACCENT_AQUA : TEXT_DIM, false);
     }
 
-    private void renderContent(GuiGraphics g, int x, int y, int w, int h, int mouseX, int mouseY) {
+    private void renderContent(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         switch (active) {
             case HOME -> renderHome(g, x, y, w, h, mouseX, mouseY);
             case WALLET -> renderWallet(g, x, y, w, h, mouseX, mouseY);
@@ -162,108 +161,104 @@ public final class OttersCivScreen extends Screen {
         }
     }
 
-    private void renderHome(GuiGraphics g, int x, int y, int w, int h, int mouseX, int mouseY) {
+    private void renderHome(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Welcome back");
-        bodyLine(g, x, y + 14, "Project OOGA — an all-in-one civ suite.");
-        bodyLine(g, x, y + 26, "Economy live. Factions & jobs incoming.");
+        body(g, x, y + 14, "Project OOGA — an all-in-one civ suite.", TEXT_PRIMARY);
+        body(g, x, y + 26, "Economy live. Factions & jobs incoming.", TEXT_PRIMARY);
 
-        int bx = x;
-        int by = y + 50;
         int bw = (w - 8) / 2;
-        renderButton(g, bx,            by, bw, 22, "Open Wallet", "action:wallet", mouseX, mouseY);
-        renderButton(g, bx + bw + 8,   by, bw, 22, "Rewards Info", "action:rewards", mouseX, mouseY);
-        renderButton(g, bx,            by + 28, bw, 22, "Configs Folder", "action:open_config", mouseX, mouseY);
-        renderButton(g, bx + bw + 8,   by + 28, bw, 22, "Run /money",     "action:money", mouseX, mouseY);
+        renderButton(g, x,           y + 50, bw, 22, "Open Wallet",    "action:wallet",      mouseX, mouseY);
+        renderButton(g, x + bw + 8,  y + 50, bw, 22, "Rewards Info",   "action:rewards",     mouseX, mouseY);
+        renderButton(g, x,           y + 78, bw, 22, "Configs Folder", "action:open_config", mouseX, mouseY);
+        renderButton(g, x + bw + 8,  y + 78, bw, 22, "Run /money",     "action:money",       mouseX, mouseY);
 
-        g.drawString(this.font, "Mod id: fpsmod  ·  /otter  ·  /money", x, y + h - 11, TEXT_DIM, false);
+        g.text(this.font, "Mod id: fpsmod  ·  /otter  ·  /money", x, y + h - 11, TEXT_DIM, false);
     }
 
-    private void renderWallet(GuiGraphics g, int x, int y, int w, int h, int mouseX, int mouseY) {
+    private void renderWallet(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Wallet");
-        bodyLine(g, x, y + 14, "Balance shown via /money in chat.");
-        bodyLine(g, x, y + 26, "Server stores wallets at:");
-        g.drawString(this.font, "config/otters_civ_revived/wallet.properties", x, y + 38, ACCENT_AQUA, false);
+        body(g, x, y + 14, "Balance shown via /money in chat.", TEXT_PRIMARY);
+        body(g, x, y + 26, "Server stores wallets at:", TEXT_PRIMARY);
+        g.text(this.font, "config/otters_civ_revived/wallet.properties", x, y + 38, ACCENT_AQUA, false);
 
         renderButton(g, x,        y + 60, 130, 22, "Run /money",       "action:money",       mouseX, mouseY);
         renderButton(g, x + 138,  y + 60, 130, 22, "Open Wallet File", "action:open_wallet", mouseX, mouseY);
 
-        bodyLineMuted(g, x, y + 92, "Operator: /money set <player> <amount> (gamemaster).");
-        bodyLineMuted(g, x, y + 104, "Hint lines (# Name:) refresh on join & rewards.");
+        body(g, x, y + 92,  "Operator: /money set <player> <amount> (gamemaster).", TEXT_MUTED);
+        body(g, x, y + 104, "Hint lines (# Name:) refresh on join & rewards.",       TEXT_MUTED);
     }
 
-    private void renderRewards(GuiGraphics g, int x, int y, int w, int h, int mouseX, int mouseY) {
+    private void renderRewards(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Rewards");
-        bodyLine(g, x, y + 14, "Mining: tag otters_civ_revived:currency_blocks");
-        bodyLine(g, x, y + 26, "Combat: tag otters_civ_revived:currency_mobs");
-        bodyLineMuted(g, x, y + 40, "Per-id overrides in block_values.json / entity_values.json.");
-        bodyLineMuted(g, x, y + 52, "Inline overrides in rewards.json (blockRewards/entityRewards).");
+        body(g, x, y + 14, "Mining: tag otters_civ_revived:currency_blocks", TEXT_PRIMARY);
+        body(g, x, y + 26, "Combat: tag otters_civ_revived:currency_mobs",   TEXT_PRIMARY);
+        body(g, x, y + 40, "Per-id overrides in block_values.json / entity_values.json.", TEXT_MUTED);
+        body(g, x, y + 52, "Inline overrides in rewards.json (blockRewards/entityRewards).", TEXT_MUTED);
 
-        renderButton(g, x,         y + 76, 140, 22, "Open rewards.json",   "action:open_rewards",       mouseX, mouseY);
-        renderButton(g, x + 148,   y + 76, 140, 22, "Open block_values",   "action:open_block_values",  mouseX, mouseY);
+        renderButton(g, x,         y + 76,  140, 22, "Open rewards.json",  "action:open_rewards",       mouseX, mouseY);
+        renderButton(g, x + 148,   y + 76,  140, 22, "Open block_values",  "action:open_block_values",  mouseX, mouseY);
         renderButton(g, x,         y + 102, 140, 22, "Open entity_values", "action:open_entity_values", mouseX, mouseY);
         renderButton(g, x + 148,   y + 102, 140, 22, "Configs Folder",     "action:open_config",        mouseX, mouseY);
     }
 
-    private void renderCiv(GuiGraphics g, int x, int y, int w, int h) {
+    private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         sectionHeading(g, x, y, "Civilization");
-        bodyLine(g, x, y + 14, "Factions, jobs, professions, player shops.");
-        bodyLineMuted(g, x, y + 28, "Roadmap-tracked. See DOCS/ROADMAP.md.");
+        body(g, x, y + 14, "Factions, jobs, professions, player shops.", TEXT_PRIMARY);
+        body(g, x, y + 28, "Roadmap-tracked. See DOCS/ROADMAP.md.",       TEXT_MUTED);
 
-        // "Coming Soon" badge.
         int bx = x + (w - 110) / 2;
         int by = y + h / 2 - 8;
         g.fill(bx, by, bx + 110, by + 18, PANEL_BG_ALT);
-        outline(g, bx, by, bx + 110, by + 18, ACCENT_GOLD);
+        outlineRect(g, bx, by, bx + 110, by + 18, ACCENT_GOLD);
         String s = "COMING SOON";
-        g.drawString(this.font, s, bx + (110 - this.font.width(s)) / 2, by + 5, ACCENT_GOLD, false);
+        g.text(this.font, s, bx + (110 - this.font.width(s)) / 2, by + 5, ACCENT_GOLD, false);
     }
 
-    private void renderHelp(GuiGraphics g, int x, int y, int w, int h) {
+    private void renderHelp(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         sectionHeading(g, x, y, "Help & Commands");
-        bodyLine(g, x, y + 14,  "/otter — opens this menu");
-        bodyLine(g, x, y + 26,  "/money — show your balance");
-        bodyLine(g, x, y + 38,  "/money set <player> <amount> — op only");
-        bodyLineMuted(g, x, y + 56,  "Datapacks: data/otters_civ_revived/tags/block/");
-        bodyLineMuted(g, x, y + 68,  "             data/otters_civ_revived/tags/entity_type/");
-        bodyLineMuted(g, x, y + 84,  "Precedence: sibling file > inline > tag flat reward.");
-        bodyLineMuted(g, x, y + 96,  "Docs: README.md, index.html, DOCS/");
+        body(g, x, y + 14,  "/otter — opens this menu",                           TEXT_PRIMARY);
+        body(g, x, y + 26,  "/money — show your balance",                         TEXT_PRIMARY);
+        body(g, x, y + 38,  "/money set <player> <amount> — op only",             TEXT_PRIMARY);
+        body(g, x, y + 56,  "Datapacks: data/otters_civ_revived/tags/block/",     TEXT_MUTED);
+        body(g, x, y + 68,  "             data/otters_civ_revived/tags/entity_type/", TEXT_MUTED);
+        body(g, x, y + 84,  "Precedence: sibling file > inline > tag flat reward.",  TEXT_MUTED);
+        body(g, x, y + 96,  "Docs: README.md, index.html, DOCS/",                    TEXT_MUTED);
     }
 
-    private void renderButton(GuiGraphics g, int x, int y, int w, int h, String label, String actionKey, int mouseX, int mouseY) {
-        boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+    private void renderButton(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, String actionKey, int mouseX, int mouseY) {
+        boolean hover = inside(mouseX, mouseY, x, y, x + w, y + h);
         int bg = hover ? BTN_BG_HOVER : BTN_BG;
         g.fill(x, y, x + w, y + h, bg);
-        outline(g, x, y, x + w, y + h, hover ? ACCENT_AQUA : PANEL_BORDER);
+        outlineRect(g, x, y, x + w, y + h, hover ? ACCENT_AQUA : PANEL_BORDER);
         int tw = this.font.width(label);
-        g.drawString(this.font, label, x + (w - tw) / 2, y + (h - 8) / 2, hover ? ACCENT_GOLD : TEXT_PRIMARY, false);
+        g.text(this.font, label, x + (w - tw) / 2, y + (h - 8) / 2, hover ? ACCENT_GOLD : TEXT_PRIMARY, false);
         hotspots.add(new Rect(x, y, x + w, y + h, actionKey));
     }
 
-    private void sectionHeading(GuiGraphics g, int x, int y, String title) {
-        g.drawString(this.font, title, x, y, ACCENT_GOLD, false);
+    private void sectionHeading(GuiGraphicsExtractor g, int x, int y, String title) {
+        g.text(this.font, title, x, y, ACCENT_GOLD, false);
         g.fill(x, y + 10, x + 18, y + 11, ACCENT_AQUA);
     }
 
-    private void bodyLine(GuiGraphics g, int x, int y, String s) {
-        g.drawString(this.font, s, x, y, TEXT_PRIMARY, false);
+    private void body(GuiGraphicsExtractor g, int x, int y, String s, int color) {
+        g.text(this.font, s, x, y, color, false);
     }
 
-    private void bodyLineMuted(GuiGraphics g, int x, int y, String s) {
-        g.drawString(this.font, s, x, y, TEXT_MUTED, false);
-    }
-
-    private static void outline(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+    private static void outlineRect(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int color) {
         g.fill(x0, y0, x1, y0 + 1, color);
         g.fill(x0, y1 - 1, x1, y1, color);
         g.fill(x0, y0, x0 + 1, y1, color);
         g.fill(x1 - 1, y0, x1, y1, color);
     }
 
-    /** Filled rect with 1px shaved corners for a soft rounded feel without extra textures. */
-    private static void roundedFill(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+    private static void roundedFill(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int color) {
         g.fill(x0 + 1, y0, x1 - 1, y1, color);
         g.fill(x0, y0 + 1, x0 + 1, y1 - 1, color);
         g.fill(x1 - 1, y0 + 1, x1, y1 - 1, color);
+    }
+
+    private static boolean inside(int mx, int my, int x0, int y0, int x1, int y1) {
+        return mx >= x0 && mx <= x1 && my >= y0 && my <= y1;
     }
 
     private static float easeOutCubic(float t) {
@@ -272,16 +267,18 @@ public final class OttersCivScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClicked) {
+        if (event.button() == 0) {
+            int mx = (int) event.x();
+            int my = (int) event.y();
             for (Rect r : hotspots) {
-                if (r.contains(mouseX, mouseY)) {
+                if (r.contains(mx, my)) {
                     handleAction(r.key);
                     return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClicked);
     }
 
     private void handleAction(String key) {
@@ -310,10 +307,7 @@ public final class OttersCivScreen extends Screen {
         this.onClose();
     }
 
-    /**
-     * Opens a folder on the local machine. Only useful in singleplayer / on the host's box,
-     * but harmless on dedicated clients (just opens their own config dir).
-     */
+    /** Opens the client's own config dir. On a host machine this is the server-side config too. */
     private static void openClientConfigDir(String sub) {
         try {
             Path dir = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve(sub);
@@ -329,11 +323,7 @@ public final class OttersCivScreen extends Screen {
             Path dir = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve(sub);
             dir.toFile().mkdirs();
             File f = dir.resolve(fileName).toFile();
-            if (f.exists()) {
-                Util.getPlatform().openFile(f);
-            } else {
-                Util.getPlatform().openFile(dir.toFile());
-            }
+            Util.getPlatform().openFile(f.exists() ? f : dir.toFile());
         } catch (Exception e) {
             FpsMod.LOGGER.warn("[otters_civ_revived] open config file failed", e);
         }
@@ -344,14 +334,8 @@ public final class OttersCivScreen extends Screen {
         return false;
     }
 
-    /** Wallpaper-style backdrop is already drawn in {@link #render}; suppress vanilla blur. */
-    @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        // intentionally empty — render() draws its own backdrop
-    }
-
     private record Rect(int x0, int y0, int x1, int y1, String key) {
-        boolean contains(double mx, double my) {
+        boolean contains(int mx, int my) {
             return mx >= x0 && mx <= x1 && my >= y0 && my <= y1;
         }
     }

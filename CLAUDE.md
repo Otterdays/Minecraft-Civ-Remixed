@@ -19,6 +19,17 @@ This file bootstraps **Claude Code** for **Minecraft-Civ-Remixed** (**Project OO
 - Branches: `feature/`, `fix/`, `docs/`, `chore/` as appropriate.
 - Match **`.gitattributes`** line endings; never commit `.env` secrets or prism launcher configs from user machines into this repo accidentally.
 
+## Tooling — use everything available
+
+Full details in **`AGENTS.md`** § **AI IDE tooling**. The short version:
+
+- **Web search first** — don't guess Minecraft/Fabric APIs, Gradle versions, or library signatures. Use **WebSearch**, **Exa MCP** (`web_search_exa`), or **Context7** (`resolve-library-id` → `query-docs`) to get current docs.
+- **MCP servers** are live: **Context7** (library docs), **Exa** (neural web search), **GitHub** (PRs/issues/code search), **Memory** (persistent knowledge graph), **Playwright** (browser testing), **Sequential Thinking** (structured reasoning). Read their tool schemas before calling.
+- **Subagents** (Cursor Task tool): use `explore` for codebase search, `build-error-resolver` for Gradle failures, `java-reviewer` / `code-reviewer` for code quality, `security-reviewer` for wallet/config/permission changes.
+- Prefer **Grep/Glob/SemanticSearch** over shell search commands; **Read/Write/StrReplace** over shell file ops.
+
+> If unsure about an API or behavior — **search first**, don't assume.
+
 ## Build
 
 `gradlew.bat build` · `gradlew.bat test`

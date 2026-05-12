@@ -46,7 +46,12 @@
       "Bash(javap -public net/minecraft/client/Minecraft.class)",
       "Bash(\"/c/Program Files/Microsoft/jdk-21.0.4.7-hotspot/bin/javap.exe\" -public /tmp/inspect/net/minecraft/util/Util.class)",
       "Bash(unzip -qo /c/Users/home/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.1.2/minecraft-merged-deobf-26.1.2.jar net/minecraft/client/gui/GuiGraphicsExtractor.class net/minecraft/client/gui/screens/PauseScreen.class net/minecraft/client/gui/components/events/AbstractContainerEventHandler.class net/minecraft/client/gui/components/events/ContainerEventHandler.class net/minecraft/client/input/MouseButtonEvent.class)",
-      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -public /tmp/inspect/net/minecraft/client/gui/GuiGraphicsExtractor.class)"
+      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -public /tmp/inspect/net/minecraft/client/gui/GuiGraphicsExtractor.class)",
+      "Bash(unzip -qo /c/Users/home/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.1.2/minecraft-merged-deobf-26.1.2.jar net/minecraft/client/multiplayer/ClientPacketListener.class net/minecraft/client/gui/Font.class)",
+      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p /tmp/inspect/net/minecraft/client/gui/screens/Screen.class)",
+      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p /tmp/inspect/net/minecraft/client/gui/screens/PauseScreen.class)",
+      "Bash(unzip -qo /c/Users/home/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.1.2/minecraft-merged-deobf-26.1.2.jar net/minecraft/client/gui/screens/PauseScreen.class)",
+      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p -c /tmp/inspect/net/minecraft/client/gui/screens/PauseScreen.class)"
     ]
   }
 }

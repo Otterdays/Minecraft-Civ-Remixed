@@ -1,0 +1,45 @@
+---
+description: Ensure agents use all available tools — MCPs, web search, subagents, plugins
+alwaysApply: true
+---
+
+# Use all available tools
+
+You have powerful tools beyond file editing and terminal. **Use them proactively.**
+
+## Web search — use before guessing
+
+- **WebSearch** / **WebFetch** for Minecraft/Fabric API details, Gradle plugin versions, library docs, or any version-sensitive info.
+- **Exa MCP** (`web_search_exa`) for neural search when you need examples, compatibility info, or broad research.
+- **Context7 MCP** (`resolve-library-id` → `query-docs`) for up-to-date library/framework documentation.
+
+> Never assume an API signature, method name, or Minecraft behavior from training data when you can verify it in seconds.
+
+## MCP servers — read schema, then call
+
+- **Context7**: library docs lookup (Fabric API, Gradle, modding references).
+- **Exa**: neural web search + page fetch.
+- **GitHub**: code search, PR/issue management on `Otterdays/Minecraft-Civ-Remixed`.
+- **Memory**: persistent cross-session knowledge graph — store decisions, lessons, context.
+- **Playwright**: browser-based testing of `index.html`, visual verification.
+- **Sequential Thinking**: structured multi-step reasoning for complex problems.
+
+Always read the MCP tool's JSON schema before your first call to avoid parameter errors.
+
+## Subagents (Task tool)
+
+Use specialized subagents for parallel or domain-specific work:
+
+- `explore` — fast read-only codebase search.
+- `build-error-resolver` — Gradle/build failures.
+- `java-reviewer` / `code-reviewer` — code quality on Java changes.
+- `security-reviewer` — wallet, config, permission changes.
+- `architect` / `planner` — design decisions, feature breakdown.
+
+Launch multiple subagents in parallel when independent.
+
+## Preferred built-in tools
+
+- **Grep** / **Glob** / **SemanticSearch** over shell `grep` / `find`.
+- **Read** / **Write** / **StrReplace** over shell `cat` / `sed` / `echo`.
+- **ReadLints** after editing Java files.

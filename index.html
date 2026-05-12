@@ -433,7 +433,7 @@
       <h3 id="features-server">World side (money &amp; rules)</h3>
       <ul>
         <li>Friendly lines in chat when you join: <strong>first visit on this world save</strong> = three system lines (branding, <code>/otter</code>, <code>/money</code>, rewards pointer). <strong>Returning</strong> players see a styled <q>welcome back ~</q> display name plus a shorter refresher (persisted per save, not in <code>config/</code>).</li>
-        <li><code>/otter</code> — prints command names and where reward settings live.</li>
+        <li><code>/otter</code> — opens a <strong>stylized in-game menu</strong> (sidebar tabs: Home · Wallet · Rewards · Civ · Help) with quick-action buttons for <code>/money</code> and one-click links that open the config files (<code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>, <code>wallet.properties</code>) in your OS file manager. On vanilla clients without the mod, the server-side fallback prints the same info as chat lines.</li>
         <li><code>/money</code> checks your balance (everyone). <code>/money set &lt;player&gt; &lt;amount&gt;</code> changes someone’s total and requires vanilla <strong>gamemaster-style</strong> command permission (same band as cheat commands / OP)—see <a href="#command-permissions">permissions</a>.</li>
         <li>Wallets save under <code>config/otters_civ_revived/wallet.properties</code> (same folder as rewards; legacy <code>config/fpsmod/wallet.properties</code> is moved here on first load).</li>
         <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
