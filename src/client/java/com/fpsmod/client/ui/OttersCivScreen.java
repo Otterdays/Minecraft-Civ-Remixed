@@ -26,11 +26,11 @@ import java.util.List;
 public final class OttersCivScreen extends Screen {
 
     private enum Tab {
-        HOME("Home", "Mod overview & quick actions"),
-        WALLET("Wallet", "Your balance & quick commands"),
-        REWARDS("Rewards", "Mining & combat payouts"),
-        CIV("Civ", "Factions & professions — coming soon"),
-        HELP("Help", "Commands, configs, datapacks");
+        HOME("Home", "Quick actions"),
+        WALLET("Wallet", "Balance & commands"),
+        REWARDS("Rewards", "Mining & combat"),
+        CIV("Civ", "Coming soon"),
+        HELP("Help", "Commands & configs");
 
         final String label;
         final String subtitle;
@@ -53,9 +53,9 @@ public final class OttersCivScreen extends Screen {
     private static final int BTN_BG         = 0xFF1F2937;
     private static final int BTN_BG_HOVER   = 0xFF334155;
 
-    private static final int PANEL_W = 420;
-    private static final int PANEL_H = 240;
-    private static final int SIDEBAR_W = 110;
+    private static final int PANEL_W = 460;
+    private static final int PANEL_H = 248;
+    private static final int SIDEBAR_W = 128;
     private static final int TAB_H = 28;
     private static final long ANIM_MS = 180L;
 
@@ -124,11 +124,16 @@ public final class OttersCivScreen extends Screen {
         int cx = px + SIDEBAR_W + 14;
         int cy = py + 12;
         int cw = PANEL_W - SIDEBAR_W - 22;
-        int ch = PANEL_H - 24;
+        int ch = PANEL_H - 34;
         renderContent(g, cx, cy, cw, ch, mouseX, mouseY);
 
-        String hint = "ESC to close · click tab to switch";
-        g.text(this.font, hint, px + PANEL_W - 4 - this.font.width(hint), py + PANEL_H - 11, TEXT_DIM, false);
+        // Footer band — separates content from chrome and prevents overlap with tab content.
+        int footerY = py + PANEL_H - 14;
+        g.fill(px + SIDEBAR_W + 1, footerY, px + PANEL_W - 1, footerY + 1, PANEL_BORDER);
+        String left = "Mod id: fpsmod · /otter · /money";
+        String hint = "ESC to close";
+        g.text(this.font, left, px + SIDEBAR_W + 10, footerY + 4, TEXT_DIM, false);
+        g.text(this.font, hint, px + PANEL_W - 6 - this.font.width(hint), footerY + 4, TEXT_DIM, false);
     }
 
     private void drawTitle(GuiGraphicsExtractor g, int x, int y) {
@@ -147,8 +152,25 @@ public final class OttersCivScreen extends Screen {
             g.fill(x0, y0, x0 + 2, y1, ACCENT_GOLD);
         }
         int color = selected || hover ? TEXT_PRIMARY : TEXT_MUTED;
-        g.text(this.font, tab.label, x0 + 8, y0 + 6, color, false);
-        g.text(this.font, tab.subtitle, x0 + 8, y0 + 17, selected ? ACCENT_AQUA : TEXT_DIM, false);
+        int textX = x0 + 8;
+        int maxW = (x1 - 2) - textX;
+        g.text(this.font, fit(tab.label, maxW),    textX, y0 + 6,  color, false);
+        g.text(this.font, fit(tab.subtitle, maxW), textX, y0 + 17, selected ? ACCENT_AQUA : TEXT_DIM, false);
+    }
+
+    /** Truncates with ellipsis so labels never bleed past the sidebar. */
+    private String fit(String s, int maxWidth) {
+        Font f = this.font;
+        if (f.width(s) <= maxWidth) {
+            return s;
+        }
+        String ell = "…";
+        int eW = f.width(ell);
+        int i = s.length();
+        while (i > 0 && f.width(s.substring(0, i)) + eW > maxWidth) {
+            i--;
+        }
+        return i <= 0 ? ell : s.substring(0, i) + ell;
     }
 
     private void renderContent(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -171,8 +193,6 @@ public final class OttersCivScreen extends Screen {
         renderButton(g, x + bw + 8,  y + 50, bw, 22, "Rewards Info",   "action:rewards",     mouseX, mouseY);
         renderButton(g, x,           y + 78, bw, 22, "Configs Folder", "action:open_config", mouseX, mouseY);
         renderButton(g, x + bw + 8,  y + 78, bw, 22, "Run /money",     "action:money",       mouseX, mouseY);
-
-        g.text(this.font, "Mod id: fpsmod  ·  /otter  ·  /money", x, y + h - 11, TEXT_DIM, false);
     }
 
     private void renderWallet(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
