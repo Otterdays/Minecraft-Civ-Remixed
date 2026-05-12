@@ -28,7 +28,10 @@ bin/
 .env.*
 !.env.example
 
-# Claude Code local/session noise (never commit ephemeral caches here)
+# Claude Code: KEEP `.claude/` rules / settings / agents / commands / hooks tracked so collaborators
+# inherit the same workspace conventions. Only ignore ephemeral caches. Do NOT add `.claude/` itself
+# here — that would drop `CLAUDE.md`'s companion config (settings.local.json, agents/, commands/,
+# hooks/) and force every contributor to reconfigure. Same intent as `.cursor/rules/` staying tracked.
 .claude/cache/
 
 # ephemeral logs / local tooling output

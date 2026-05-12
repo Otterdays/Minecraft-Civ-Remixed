@@ -2,6 +2,7 @@ package com.fpsmod;
 
 import com.fpsmod.client.FpsHudOverlay;
 import com.fpsmod.client.FpsHudScreenButton;
+import com.fpsmod.client.OtterClientCommand;
 import net.fabricmc.api.ClientModInitializer;
 
 public class FpsModClient implements ClientModInitializer {
@@ -9,5 +10,6 @@ public class FpsModClient implements ClientModInitializer {
     public void onInitializeClient() {
         FpsHudOverlay.register();
         FpsHudScreenButton.register();
+        OtterClientCommand.register();
     }
 }

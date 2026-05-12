@@ -2,22 +2,26 @@ package com.fpsmod.ottersciv.config;
 
 import com.fpsmod.FpsMod;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
 import java.util.LinkedHashMap;
-import java.util.Optional;
+import java.util.function.Function;
 
 /**
- * Expands block / entity payout tags into per-id payout maps. Queries the server's live registry for the
- * tag's members directly (HolderSet.Named) instead of iterating every registry entry and asking "is this
- * tagged?" — the direct query reliably reflects datapack tag bindings at SERVER_STARTED time.
+ * Expands block / entity payout tags into per-id payout maps.
+ *
+ * <p>Uses {@link Registry#getTagOrEmpty(TagKey)} on the static {@link BuiltInRegistries} — that's where
+ * {@code TagLoader} binds datapack tag membership during the server resource reload. The
+ * {@code RegistryAccess.Frozen} view exposed by {@code ServerLevel#registryAccess()} does <em>not</em>
+ * carry tag bindings in this Minecraft version (even vanilla tags like {@code minecraft:hostile} come
+ * back empty through that path), so the lookup must go through the static registry.</p>
  */
 public final class RewardTagExpansion {
     private RewardTagExpansion() {
@@ -28,7 +32,7 @@ public final class RewardTagExpansion {
         TagKey<Block> tagKey,
         long perBlock
     ) {
-        return resolveTagMembers(level, Registries.BLOCK, tagKey, perBlock, "block");
+        return resolveTagMembers(BuiltInRegistries.BLOCK, tagKey, perBlock, "block", BuiltInRegistries.BLOCK::getKey);
     }
 
     public static LinkedHashMap<String, Long> payoutsForTaggedEntities(
@@ -36,30 +40,32 @@ public final class RewardTagExpansion {
         TagKey<EntityType<?>> tagKey,
         long perMob
     ) {
-        return resolveTagMembers(overworldSample, Registries.ENTITY_TYPE, tagKey, perMob, "entity");
+        return resolveTagMembers(
+            BuiltInRegistries.ENTITY_TYPE,
+            tagKey,
+            perMob,
+            "entity",
+            BuiltInRegistries.ENTITY_TYPE::getKey
+        );
     }
 
     private static <T> LinkedHashMap<String, Long> resolveTagMembers(
-        ServerLevel level,
-        ResourceKey<net.minecraft.core.Registry<T>> registryKey,
+        Registry<T> registry,
         TagKey<T> tagKey,
         long perEntry,
-        String label
+        String label,
+        Function<T, Identifier> idLookup
     ) {
         LinkedHashMap<String, Long> out = new LinkedHashMap<>();
-        if (level == null) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] {} tag expansion skipped: server level is null", label);
-            return out;
-        }
         if (tagKey == null) {
             FpsMod.LOGGER.warn("[otters_civ_revived] {} tag expansion skipped: tag id failed to parse", label);
             return out;
         }
         long amount = Math.max(0L, perEntry);
 
-        Optional<HolderSet.Named<T>> members;
+        Iterable<Holder<T>> members;
         try {
-            members = level.registryAccess().lookupOrThrow(registryKey).get(tagKey);
+            members = registry.getTagOrEmpty(tagKey);
         } catch (RuntimeException e) {
             FpsMod.LOGGER.error(
                 "[otters_civ_revived] Could not query {} registry for tag {}; expansion aborted",
@@ -70,30 +76,37 @@ public final class RewardTagExpansion {
             return out;
         }
 
-        if (members.isEmpty()) {
-            FpsMod.LOGGER.warn(
-                "[otters_civ_revived] {} tag {} is not present in the server registry — datapack missing, tag id misspelled, or tag empty",
-                label,
-                tagKey.location()
-            );
-            return out;
-        }
-
-        for (Holder<T> holder : members.get()) {
-            Optional<ResourceKey<T>> key = holder.unwrapKey();
-            if (key.isEmpty()) {
+        for (Holder<T> holder : members) {
+            T value;
+            try {
+                value = holder.value();
+            } catch (RuntimeException e) {
                 continue;
             }
-            out.put(key.get().location().toString(), amount);
+            Identifier id = idLookup.apply(value);
+            if (id != null) {
+                out.put(id.toString(), amount);
+            }
         }
 
-        FpsMod.LOGGER.info(
-            "[otters_civ_revived] {} tag {} resolved {} entries (each defaulting to {})",
-            label,
-            tagKey.location(),
-            out.size(),
-            amount
-        );
+        if (out.isEmpty()) {
+            long boundTagCount = registry.getTags().count();
+            FpsMod.LOGGER.warn(
+                "[otters_civ_revived] {} tag {} resolved 0 entries (registry holds {} bound tags total). "
+                    + "Tag id may be misspelled, datapack not loaded, or tags not yet bound on this registry.",
+                label,
+                tagKey.location(),
+                boundTagCount
+            );
+        } else {
+            FpsMod.LOGGER.info(
+                "[otters_civ_revived] {} tag {} resolved {} entries (each defaulting to {})",
+                label,
+                tagKey.location(),
+                out.size(),
+                amount
+            );
+        }
         return out;
     }
 

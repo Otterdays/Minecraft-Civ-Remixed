@@ -3,6 +3,12 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-11] **Operator "add your own blocks/mobs" doc surface:** `index.html` new section `#add-custom-payouts` (three-tier: edit sibling files / inline `rewards.json` / extend bundled tag via server datapack — singular dir names called out); sidebar TOC anchor; README payout subsection with same three-tier and link back to `index.html`; **`/otter`** in-chat help reflows with numbered steps + precedence note. CHANGELOG `Added`.
+
+- [2026-05-11] **Tag expansion — static `Registry.getTagOrEmpty` (the actual fix):** runtime log showed `level.registryAccess().lookupOrThrow(...).get(TagKey)` returns `Optional.empty()` for `minecraft:hostile` and every other tag in MC 26.1.2 (1.21.11 internal). Tags only resolve via the static `BuiltInRegistries.X.getTagOrEmpty(TagKey)` path where `TagLoader` binds them during reload. Also wires `ServerLifecycleEvents.END_DATA_PACK_RELOAD` to re-finalize after `/reload`. Empty-lookup warning now logs total bound-tag count. CHANGELOG `Fixed`.
+
+- [2026-05-11] **Tag expansion rewrite — `HolderSet.Named` direct lookup:** `RewardTagExpansion` now asks the server registry for the tag's members directly (`lookupOrThrow(Registries.X).get(tagKey)` → `Optional<HolderSet.Named<T>>`) and iterates those holders, mapping `holder.value()` back to id via `BuiltInRegistries.X::getKey`. Replaces the "walk every block, ask holder.is(tag)" approach which produced empty prefill files. Adds `INFO` log on tag resolution (entry count) and `WARN` on empty/missing. CHANGELOG `Fixed`.
+
 - [2026-05-11] **Empty `block_values.json` bug fix:** block tag expansion now resolves membership via `level.registryAccess().lookupOrThrow(Registries.BLOCK)` (mirrors entity path); `payoutsForTaggedBlocks` takes a `ServerLevel`. Datapack tags (incl. mod-bundled `otters_civ_revived:currency_blocks`) bind to the live server registry, not the static `BuiltInRegistries.BLOCK` holders — old static-holder lookup returned zero matches and the persisted sibling file was `{}`. Zero-reward tags no longer short-circuit expansion; ids prefill with `0` so operators can still edit. Warn-log on zero matches. CHANGELOG `Fixed`.
 
 - [2026-05-11] **Reward config debug pass:** `RewardRulesLoader.writeDefaults` now appends `System.lineSeparator()` (parity with sibling JSON writer); `composeEffectiveIdMap` made package-private and directly unit-tested (precedence + sibling-empty persistence + preserve-existing-sibling). Closes test gap where only `mergeExternalValueFiles` was exercised. CHANGELOG `Fixed`.
@@ -75,6 +81,14 @@
 
 ## Blockers
 - None currently.
+
+## Hard-won lessons (2026-05-11)
+- **Tag resource directories are SINGULAR in MC 1.21+** (`tags/block/`, `tags/entity_type/`, `tags/item/`, `tags/fluid/`, `tags/damage_type/`, `tags/worldgen/...`). The plural forms (`blocks/`, `entity_types/`) are silently ignored by `TagLoader` — no error, just empty tags. When a bundled tag returns zero entries, check the directory name FIRST by enumerating `data/minecraft/tags/` in the deobf jar.
+- **`minecraft:hostile` is not a vanilla entity-type tag** in 1.21+. Real vanilla entity tags include `skeletons`, `zombies`, `undead`, `illager`, `raiders`, `arthropod`, `aquatic`. There is no umbrella "hostile mobs" tag — hostility is a code-level `MobCategory.MONSTER` thing. Ship your own tag (we ship `otters_civ_revived:currency_mobs`) listing actual mob ids.
+- **Do not** query tag membership through `level.registryAccess().lookupOrThrow(Registries.X).get(TagKey)` in this MC version — that view returns empty for every tag. Use `BuiltInRegistries.X.getTagOrEmpty(TagKey)` on the static registry instead.
+- **Do not** short-circuit prefill when the flat reward is 0 — operators still need the id list to edit.
+- **Do** hydrate on both `SERVER_STARTED` and `END_DATA_PACK_RELOAD` so `/reload` recovers without a server restart.
+- **Do** log the registry's total bound-tag count whenever a lookup yields zero — that diagnostic was what cracked this. "374 bound tags but ours returns 0" pointed directly at "our tag isn't being loaded," which led to discovering the plural-vs-singular directory bug.
 
 ## Out-of-Scope Observations
 - Java package/mod id still references `fpsmod`; full namespace migration not started.

@@ -371,6 +371,7 @@
               <li><a href="#config-rewards-json"><code>rewards.json</code></a></li>
               <li><a href="#config-block-values"><code>block_values.json</code></a></li>
               <li><a href="#config-entity-values"><code>entity_values.json</code></a></li>
+              <li><a href="#add-custom-payouts">Add your own blocks &amp; mobs</a></li>
               <li><a href="#config-wallet"><code>wallet.properties</code></a></li>
               <li><a href="#config-hud"><code>hud.properties</code></a></li>
             </ul>
@@ -592,7 +593,7 @@
         <tr><td><code>enabled</code></td><td>Master toggle for mining/kill payouts</td><td><code>true</code></td></tr>
         <tr><td><code>blockTag</code></td><td>Block tag id for break rewards</td><td><code>otters_civ_revived:currency_blocks</code></td></tr>
         <tr><td><code>blockReward</code></td><td>Payout when a block matches <code>blockTag</code> but has no entry in <code>blockRewards</code></td><td><code>1</code></td></tr>
-        <tr><td><code>entityTag</code></td><td>Entity-type tag id for kill rewards</td><td><code>minecraft:hostile</code></td></tr>
+        <tr><td><code>entityTag</code></td><td>Entity-type tag id for kill rewards</td><td><code>otters_civ_revived:currency_mobs</code> <em>(bundled — vanilla 1.21+ has no <code>minecraft:hostile</code> entity tag)</em></td></tr>
         <tr><td><code>entityReward</code></td><td>Payout when entity type matches <code>entityTag</code> but has no entry in <code>entityRewards</code></td><td><code>5</code></td></tr>
         <tr><td><code>blockCooldownMs</code></td><td>Per-player throttle after a block payout (ms)</td><td><code>50</code></td></tr>
         <tr><td><code>entityCooldownMs</code></td><td>Per-player throttle after a mob payout (ms)</td><td><code>100</code></td></tr>
@@ -610,6 +611,40 @@
     <h3 id="config-entity-values"><code>config/otters_civ_revived/entity_values.json</code></h3>
     <p class="lead">Same pattern for entity type ids (<code>#minecraft:hostile</code> resolves to dozens of vanilla mobs) using flat <code>entityReward</code> defaults when prefilling.</p>
     <p>Again: regenerated only while the sibling file has no surviving keys—existing operator files remain authoritative overlays.</p>
+    <div class="note"><strong>If the sibling files persist as <code>{ }</code>:</strong> the mod prefills on both <code>SERVER_STARTED</code> and <code>END_DATA_PACK_RELOAD</code>, so running <code>/reload</code> (or deleting the empty files and restarting) re-fills them. <code>logs/latest.log</code> will print <code>[otters_civ_revived] block tag … resolved N entries</code> on success, or a warning with the registry's total bound-tag count if the tag id can't be resolved (typo, missing datapack, etc.).</div>
+
+    <h3 id="add-custom-payouts">Adding your own blocks &amp; mobs</h3>
+    <p class="lead">Three ways, pick the one that fits how permanent the change should be. All three coexist; later layers override earlier ones for the same id.</p>
+    <ol>
+      <li>
+        <strong>Edit <code>block_values.json</code> / <code>entity_values.json</code> directly</strong> — easiest. Add lines like
+        <code>"minecraft:ancient_debris": 500,</code> or <code>"yourmod:custom_ore": 75,</code> anywhere in the JSON object, save, and <code>/reload</code> (or restart). Per-id payouts <em>always</em> win over tag fallback, so this works for blocks/mobs that aren't in any tag at all. Keep keys lowercase <code>namespace:path</code>; invalid ids log a warning and are skipped.
+      </li>
+      <li>
+        <strong>Inline in <code>rewards.json</code></strong> — same idea, different file. Add entries under <code>blockRewards</code> or <code>entityRewards</code>:
+<pre><code>{
+  "blockRewards": {
+    "minecraft:ancient_debris": 500,
+    "yourmod:custom_ore": 75
+  },
+  "entityRewards": {
+    "minecraft:warden": 250
+  }
+}</code></pre>
+        At startup the sibling value files merge <em>on top</em>, so if the same id appears in both files, the sibling file wins. Use whichever feels natural — <code>rewards.json</code> for "config I check in," sibling files for "ops dial-tuning."
+      </li>
+      <li>
+        <strong>Extend the bundled tag via a server datapack</strong> — for entries that should automatically appear in regenerated sibling files and inherit the flat <code>blockReward</code> / <code>entityReward</code>:
+        <ol>
+          <li>Drop a <code>pack.mcmeta</code> + <code>data/otters_civ_revived/tags/block/currency_blocks.json</code> into <code>&lt;world&gt;/datapacks/&lt;your_pack&gt;/</code> (note the <strong>singular</strong> <code>block</code> / <code>entity_type</code> directory names — plural is silently ignored by MC 1.21+).</li>
+          <li>Contents: <code>{ "replace": false, "values": ["yourmod:custom_ore", "#yourmod:custom_ore_tag"] }</code>. Nested <code>#tag</code> references resolve recursively.</li>
+          <li><code>/reload</code> — the prefill re-runs on <code>END_DATA_PACK_RELOAD</code>; if the sibling file has no keys yet, your entries appear in the regenerated JSON at <code>blockReward</code> amount.</li>
+        </ol>
+        Alternatively, change <code>blockTag</code> / <code>entityTag</code> in <code>rewards.json</code> to point at a different tag id entirely (vanilla, modded, or one you defined).
+      </li>
+    </ol>
+    <p><strong>Precedence (high → low) when a block breaks or mob dies:</strong> sibling value file entry → <code>rewards.json</code> inline map entry → tag membership with flat reward → no payout. So <em>any</em> explicit per-id line in either JSON beats tag-wide fallback.</p>
+
     <h3 id="config-wallet"><code>config/otters_civ_revived/wallet.properties</code></h3>
     <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
     <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>

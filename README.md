@@ -89,6 +89,14 @@ When docs say **“server,”** they mean **“the game side that stores your ba
 
 Money rules load from **`config/otters_civ_revived/rewards.json`**; **`block_values.json`** / **`entity_values.json`** list per-block / per-mob payouts. On logical server startup the mod expands your configured **`blockTag`**/**`entityTag`** into those maps when empty, merges inline overrides from **`rewards.json`**, persists sorted JSON, then applies it—restart after edits.
 
+#### Adding your own blocks or mobs
+
+Three layers, low → high precedence. Combine freely.
+
+1. **Edit `block_values.json` / `entity_values.json`** — add `"namespace:id": amount` lines (e.g. `"minecraft:ancient_debris": 500`), save, `/reload`. Per-id entries win over tag fallback, so the block/mob does **not** need to be in any tag.
+2. **Inline in `rewards.json`** — same idea under the `blockRewards` / `entityRewards` objects. Sibling value files merge on top, overriding overlapping ids.
+3. **Server datapack extending the bundled tag** — drop `data/otters_civ_revived/tags/block/currency_blocks.json` (or `tags/entity_type/currency_mobs.json`) into `<world>/datapacks/<your_pack>/` with `{ "replace": false, "values": ["yourmod:custom_ore"] }`. **Use the singular directory names** (`block`, `entity_type`) — MC 1.21+ silently ignores the plural forms. `/reload` and the prefill re-runs. Full walkthrough: [`index.html` → Adding your own blocks & mobs](index.html#add-custom-payouts).
+
 ### Command permissions (current)
 
 - **Everyone** who can open chat: **`/money`** (read-only balance).

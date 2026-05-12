@@ -46,6 +46,13 @@ public class FpsMod implements ModInitializer {
         ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules);
 
         ServerLifecycleEvents.SERVER_STARTED.register(FpsMod::onLogicalServerFullyStarted);
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
+            (server, resourceManager, success) -> {
+                if (success) {
+                    onLogicalServerFullyStarted(server);
+                }
+            }
+        );
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             OtterCommand.register(dispatcher);

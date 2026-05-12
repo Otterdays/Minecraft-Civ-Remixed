@@ -25,7 +25,13 @@ public final class OtterCommand {
         sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
         sendLine(source, "Mining + combat payouts: config/otters_civ_revived/rewards.json (tags + cooldowns + …)");
         sendLine(source, "block_values.json / entity_values.json list every tagged block/hostile mob with default payouts;");
-        sendLine(source, "filled from blockTag & entityTag on first logical SERVER_STARTED when files have no ids yet. Restart after edits.");
+        sendLine(source, "filled from blockTag & entityTag on SERVER_STARTED + END_DATA_PACK_RELOAD when files have no ids yet.");
+        sendLine(source, "--- Adding custom blocks/mobs ---");
+        sendLine(source, "1) Edit block_values.json / entity_values.json: add \"namespace:id\": amount lines. /reload.");
+        sendLine(source, "2) Or inline in rewards.json under blockRewards / entityRewards. Sibling files override on overlap.");
+        sendLine(source, "3) Or ship a server datapack extending otters_civ_revived:currency_blocks / currency_mobs");
+        sendLine(source, "   at data/otters_civ_revived/tags/block/ or tags/entity_type/ (singular dirs — MC 1.21+).");
+        sendLine(source, "Precedence: sibling file > rewards.json inline > tag membership flat reward.");
         return 1;
     }
 

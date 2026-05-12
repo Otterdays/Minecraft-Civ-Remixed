@@ -70,6 +70,18 @@ Use this as the first stop for quick discovery.
 [AMENDED 2026-05-11]:
 - Runtime wallet path: **`config/otters_civ_revived/wallet.properties`** (`FileWalletStore`); migrate-from legacy **`config/fpsmod/wallet.properties`** once if present. Optional **`# Name:`** plaintext lines precede **`uuid=balance`**; persist via **`WalletService`** (`WalletLedger` load/save).
 
+[AMENDED 2026-05-11 — root-cause pass]:
+- **Bundled-tag resource paths are SINGULAR (MC 1.21+ requirement):**
+  - `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json` (NOT `tags/blocks/`)
+  - `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` (NOT `tags/entity_types/`)
+  Minecraft's `TagLoader` silently ignores plural directory names — confirmed by enumerating `data/minecraft/tags/` in the deobf jar (`block`, `entity_type`, `damage_type`, `enchantment`, `fluid`, etc. — all singular).
+- **Default `entityTag` is `otters_civ_revived:currency_mobs`** (our bundled tag with explicit hostile-mob ids). Vanilla has **no** `minecraft:hostile` entity-type tag in 1.21+; do not change the default back to that.
+
+[AMENDED 2026-05-11]:
+- **Tag expansion lookup path (do not regress):** **`RewardTagExpansion`** queries **`BuiltInRegistries.X.getTagOrEmpty(TagKey)`** on the **static** registry — not `level.registryAccess().lookupOrThrow(...).get(TagKey)`. In MC 26.1.2 (1.21.11 internal mappings) the `RegistryAccess.Frozen` view returns `Optional.empty()` for every tag (verified at runtime against vanilla `minecraft:hostile`). `TagLoader` binds datapack tags onto static `BuiltInRegistries` during resource reload; that's the only reliable enumeration source for the prefill.
+- **Hydrate triggers:** **`FpsMod.onInitialize`** registers BOTH **`ServerLifecycleEvents.SERVER_STARTED`** (initial fill) and **`ServerLifecycleEvents.END_DATA_PACK_RELOAD`** (re-fill after `/reload`); both route through **`RewardRulesLoader.finalizeRewardsForRunningServer`** → **`RewardOrchestrator.replaceRules`**. Empty-tag diagnostic logs total bound-tag count so future regressions are obvious in `logs/latest.log`.
+- **Test access seam:** **`RewardRulesLoader.composeEffectiveIdMap`** is package-private and directly unit-tested (precedence, sibling-empty persist, preserve-existing-sibling). Tag expansion itself is integration-only.
+
 [AMENDED 2026-05-10]:
 - Passive rewards orchestration: `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java`
 - Reward rules / expansion: `RewardRules.java`, `RewardRulesLoader.java` (**`loadBootstrapRewards`**, **`finalizeRewardsForRunningServer`**), **`RewardTagExpansion.java`**, **`KillRewardTagChecks.java`** (+ `reward/RewardOrchestrator.java` **`replaceRules`**); sibling JSON under **`config/otters_civ_revived/`**. Tests: `RewardRulesLoaderTest.java`

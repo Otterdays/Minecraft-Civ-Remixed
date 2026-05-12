@@ -27,6 +27,15 @@
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
 
+[AMENDED 2026-05-11 — root cause]:
+- **Three stacked bugs**, all proven by live log diagnostic ("registry holds 374 bound tags total" → tags load fine, ours just don't exist):
+  1. Bundled tag dirs were **plural** (`tags/blocks/`, `tags/entity_types/`); MC 1.21+ loads only **singular** (`tags/block/`, `tags/entity_type/`). Moved files.
+  2. `minecraft:hostile` is **not** a vanilla entity-type tag in 1.21+ (verified against deobf jar). Default `entityTag` changed to `otters_civ_revived:currency_mobs`.
+  3. `currency_mobs.json` self-referenced `#minecraft:hostile`. Replaced with explicit hostile-mob id list (zombie/skeleton/creeper/spider/enderman/witch/slime/magma_cube/phantom/blaze/ghast/piglins/wither/warden/illagers/guardians/shulker/silverfish/endermite/breeze).
+
+[AMENDED 2026-05-11]:
+- **Reward prefill bug (live-confirmed) and fix:** `block_values.json` / `entity_values.json` were persisting as empty `{}` even though `rewards.json` was generating correctly. Two stacked bugs: (1) flat reward = 0 short-circuited expansion; (2) `level.registryAccess().lookupOrThrow(Registries.X).get(TagKey)` returns `Optional.empty()` for every tag — including vanilla `minecraft:hostile` — in MC 26.1.2 (internal 1.21.11). Fix: enumerate via `BuiltInRegistries.X.getTagOrEmpty(TagKey)` on the static registry (where `TagLoader` actually binds datapack tags); zero-reward tags still prefill ids at `0` so operators can edit; hydrate now wires both `SERVER_STARTED` and `END_DATA_PACK_RELOAD`; empty-tag warnings log the registry's bound-tag total. Operator UX restored: deleting empty sibling files (or running `/reload`) regenerates them with full id lists. Lessons stamped in `DOCS/LOCATIONS.md` and `DOCS/ARCHITECTURE.md`.
+
 [AMENDED 2026-05-11]:
 - **Commands:** **`/money`** for all chat users; **`/money set`** requires vanilla **gamemaster** (`PermissionLevel.GAMEMASTERS`). Roadmap **`Permissions apparatus (planned)`** describes future plugin-style nodes.
 - **Wallet path:** **`config/otters_civ_revived/wallet.properties`** (economy grouped with **`rewards.json`**). **`config/fpsmod/hud.properties`** stays FPS-overlay-only; legacy **`config/fpsmod/wallet.properties`** auto-migrates on first wallet read. Optional **`# Name:`** plaintext above each **`uuid=balance`** for operators; refreshed on join, **`/money`**, **`/money set`**, and reward events.

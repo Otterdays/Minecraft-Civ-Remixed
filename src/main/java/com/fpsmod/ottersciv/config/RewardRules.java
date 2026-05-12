@@ -11,7 +11,7 @@ public final class RewardRules {
     public boolean enabled = true;
     public String blockTag = "otters_civ_revived:currency_blocks";
     public long blockReward = 1L;
-    public String entityTag = "minecraft:hostile";
+    public String entityTag = "otters_civ_revived:currency_mobs";
     public long entityReward = 5L;
     public long blockCooldownMs = 50L;
     public long entityCooldownMs = 100L;
