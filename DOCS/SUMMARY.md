@@ -36,6 +36,9 @@
 [AMENDED 2026-05-12 — jobs HUD]:
 - **In-game job bar.** Compact bar above vanilla XP showing icon + slug + level + XP fill (gold gradient). Server pushes `JobStatusPayload` on join/job-change/reward. Client mirror + HUD overlay. Operator-tunable via `/otter` → Jobs tab (visible toggle, X/Y nudge, scale ±, reset, `/job` shortcuts). Persistence `config/fpsmod/jobs_hud.properties`. BMP-only icons (⛏▲✿⚔) for unifont compatibility.
 
+[AMENDED 2026-05-13 — jobs HUD UX/docs]:
+- **Jobs HUD config path and `/otter` Jobs UX corrected.** Actual client config path is **`config/project_ooga/jobs_hud.properties`** (the old `config/fpsmod/jobs_hud.properties` note became stale after the mod-id rename). `/otter` → **Jobs** now includes a live preview of the HUD bar plus one-click join buttons for miner / lumberjack / farmer / fighter, so the screen no longer reads like "controls with no bar." Overlay registration now sits after **`VanillaHudElements.INFO_BAR`** instead of anchoring to the experience-level text layer specifically.
+
 [AMENDED 2026-05-12 — jobs MVP]:
 - **Jobs/professions M2 first slice shipped.** Fixed-set: miner / lumberjack / farmer / fighter. One active slot. XP only on matching block-break / mob-kill events; level curve `100 * L^1.5` cap 50; payout multiplier `1.0 + L/50`. Commands `/job`, `/job list|join|leave|stats`. Persistence `config/otters_civ_revived/jobs.properties` (UUID.active=<slug>, UUID.xp.<slug>=N). Bundled tags `otters_civ_revived:job/{miner,lumberjack,farmer}_blocks` + `fighter_mobs` (singular `tags/block/` · `tags/entity_type/` dirs). New package `com.fpsmod.jobs`; `JobsHooks` interface gained `multiplyPayout` stage; `RewardOrchestrator` calls it pre-`addBalance`. Lessons + paths in `DOCS/LOCATIONS.md` + `DOCS/ARCHITECTURE.md`.
 

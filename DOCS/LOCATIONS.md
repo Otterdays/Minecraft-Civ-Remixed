@@ -89,6 +89,11 @@ Use this as the first stop for quick discovery.
 - **UI controls:** `OttersCivScreen` JOBS tab — toggle/reset + X/Y/scale nudge buttons + `/job`, `/job list` shortcut buttons. Action keys prefixed `jobs:` route through `handleJobsAction(String)`.
 - **Fabric API method names (this version, do not regress):** `PayloadTypeRegistry.clientboundPlay()` / `serverboundPlay()` (not `playS2C`/`playC2S`); `ClientPlayNetworking.registerGlobalReceiver(TYPE, (payload, context) -> {})`; `ServerPlayNetworking.send(serverPlayer, payload)`.
 
+[AMENDED 2026-05-13 — jobs HUD UX cleanup]:
+- **Client config path:** `JobsHudConfig` now persists to **`config/project_ooga/jobs_hud.properties`** (matching `OogaMod.MOD_ID` after the mod-id rename); older docs claiming `config/fpsmod/jobs_hud.properties` are stale.
+- **HUD layer anchor:** `JobsHudOverlay` now attaches after **`VanillaHudElements.INFO_BAR`** so the job bar rides with the vanilla XP/jump/locator strip rather than the experience-level text layer specifically.
+- **Jobs tab usability:** `OttersCivScreen` JOBS tab now renders a preview of the live HUD bar and exposes one-click join buttons for miner / lumberjack / farmer / fighter in addition to the existing toggle / X / Y / scale controls.
+
 [AMENDED 2026-05-12 — jobs MVP]:
 - **Jobs package:** `src/main/java/com/fpsmod/jobs/` — `Job` enum (slug + tag id + Kind.BLOCK/ENTITY), `JobsConfig` (xp curve + multiplier, level cap 50), `JobState` (active slot + EnumMap XP), `JobsLedger` record, `JobsStore` interface, `FileJobsStore` (UUID-keyed properties at `config/otters_civ_revived/jobs.properties`), `JobsService` (impl of `JobsHooks` w/ `multiplyPayout` + `onEconomyReward`; per-job id-set cache refreshed on SERVER_STARTED + END_DATA_PACK_RELOAD).
 - **Command:** `src/main/java/com/fpsmod/command/JobCommand.java` — `/job`, `/job list|stats|leave`, `/job join <slug>` (brigadier suggestions over the 4 slugs).

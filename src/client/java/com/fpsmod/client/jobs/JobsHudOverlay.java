@@ -41,6 +41,9 @@ public final class JobsHudOverlay {
     private static final int TEXT_LIGHT  = 0xFFE5E7EB;
     private static final int TEXT_GOLD   = 0xFFE9B949;
     private static final int TEXT_AQUA   = 0xFF67E8F9;
+    private static final int H_PADDING   = 6;
+    private static final int TEXT_GAP    = 8;
+    private static final int SCREEN_PAD  = 4;
 
     private static final JobsHudConfig CONFIG = new JobsHudConfig();
 
@@ -51,13 +54,28 @@ public final class JobsHudOverlay {
     }
 
     public static void register() {
-        // Render after the experience level (which itself draws above the XP bar) so our overlay
-        // paints on top. Position is computed manually relative to vanilla XP bar Y.
+        // Render after the info bar so we sit above the vanilla XP/jump/locator strip without
+        // depending on the experience-level text layer specifically.
         HudElementRegistry.attachElementAfter(
-            VanillaHudElements.EXPERIENCE_LEVEL,
+            VanillaHudElements.INFO_BAR,
             OVERLAY_ID,
             JobsHudOverlay::render
         );
+    }
+
+    public static void renderPreview(
+        GuiGraphicsExtractor g,
+        Font font,
+        int x,
+        int y,
+        int maxWidth,
+        float scale,
+        JobStatusPayload payload
+    ) {
+        if (payload == null || payload.slug().isEmpty()) return;
+        int barW = resolveBarWidth(font, payload, scale, Math.max(80, maxWidth));
+        int barH = Math.max(14, (int) (BAR_BASE_H * scale));
+        drawBar(g, font, x, y, barW, barH, payload);
     }
 
     private static void render(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
@@ -73,18 +91,28 @@ public final class JobsHudOverlay {
         Font font = mc.font;
 
         float scale = CONFIG.scale();
-        int barW = Math.max(80, (int) (BAR_BASE_W * scale));
+        int maxWidth = Math.max(80, screenW - (SCREEN_PAD * 2));
+        int barW = resolveBarWidth(font, p, scale, maxWidth);
         int barH = Math.max(14, (int) (BAR_BASE_H * scale));
 
         // Anchor: above vanilla XP bar (~y = screenH - 32). Offset Y is "pixels higher than that".
-        int anchorY = screenH - 32 - barH - CONFIG.offsetY();
-        int anchorX = (screenW - barW) / 2 + CONFIG.offsetX();
+        int anchorY = clamp(screenH - 32 - barH - CONFIG.offsetY(), SCREEN_PAD, screenH - SCREEN_PAD - barH);
+        int anchorX = clamp((screenW - barW) / 2 + CONFIG.offsetX(), SCREEN_PAD, screenW - SCREEN_PAD - barW);
 
-        int x0 = anchorX;
-        int y0 = anchorY;
-        int x1 = anchorX + barW;
-        int y1 = anchorY + barH;
+        drawBar(g, font, anchorX, anchorY, barW, barH, p);
+    }
 
+    private static void drawBar(
+        GuiGraphicsExtractor g,
+        Font font,
+        int x0,
+        int y0,
+        int barW,
+        int barH,
+        JobStatusPayload p
+    ) {
+        int x1 = x0 + barW;
+        int y1 = y0 + barH;
         // Background + border.
         g.fill(x0, y0, x1, y1, BG);
         outline(g, x0, y0, x1, y1, BORDER);
@@ -110,22 +138,81 @@ public final class JobsHudOverlay {
 
         // Icon + label line.
         String icon = ICON_BY_SLUG.getOrDefault(p.slug(), "*");
-        String name = p.slug().toUpperCase(java.util.Locale.ROOT);
-        String left = icon + "  " + name + "  Lvl " + p.level();
-        int textY = y0 + (barH - 8) / 2 - 2;
-        g.text(font, left, x0 + 6, textY, TEXT_LIGHT, false);
-
-        String right;
-        if (p.level() >= 50) {
-            right = "MAX";
-        } else {
-            right = inLevel + " / " + range + " xp";
-        }
+        String right = rightLabel(p, inLevel, range);
         int rightW = font.width(right);
-        g.text(font, right, x1 - 6 - rightW, textY, TEXT_AQUA, false);
+        int leftX = x0 + H_PADDING;
+        int rightX = x1 - H_PADDING - rightW;
+        int leftMaxWidth = Math.max(0, rightX - leftX - TEXT_GAP);
+        String left = fitLeftLabel(font, p, icon, leftMaxWidth);
+        int textY = y0 + (barH - 8) / 2 - 2;
+        g.text(font, left, leftX, textY, TEXT_LIGHT, false);
+        g.text(font, right, rightX, textY, TEXT_AQUA, false);
 
         // Icon recoloring: redraw just the icon in gold over the white version.
-        g.text(font, icon, x0 + 6, textY, TEXT_GOLD, false);
+        g.text(font, icon, leftX, textY, TEXT_GOLD, false);
+    }
+
+    private static int resolveBarWidth(Font font, JobStatusPayload payload, float scale, int maxWidth) {
+        int scaledBaseWidth = Math.max(80, (int) (BAR_BASE_W * scale));
+        long range = Math.max(1L, payload.xpForNextLevel() - payload.xpForLevel());
+        long inLevel = Math.max(0L, payload.xp() - payload.xpForLevel());
+        String left = fullLeftLabel(payload);
+        String right = rightLabel(payload, inLevel, range);
+        int desiredWidth = (H_PADDING * 2) + font.width(left) + TEXT_GAP + font.width(right);
+        return Math.min(maxWidth, Math.max(scaledBaseWidth, desiredWidth));
+    }
+
+    private static String fullLeftLabel(JobStatusPayload p) {
+        String icon = ICON_BY_SLUG.getOrDefault(p.slug(), "*");
+        String name = p.slug().toUpperCase(java.util.Locale.ROOT);
+        return icon + "  " + name + "  Lvl " + p.level();
+    }
+
+    private static String rightLabel(JobStatusPayload p, long inLevel, long range) {
+        if (p.level() >= 50) {
+            return "MAX";
+        }
+        return inLevel + " / " + range + " xp";
+    }
+
+    private static String fitLeftLabel(Font font, JobStatusPayload p, String icon, int maxWidth) {
+        String suffix = "  Lvl " + p.level();
+        String prefix = icon + "  ";
+        int suffixWidth = font.width(suffix);
+        int prefixWidth = font.width(prefix);
+        if (maxWidth <= prefixWidth) {
+            return icon;
+        }
+        if (maxWidth <= prefixWidth + suffixWidth) {
+            return trimToWidth(font, prefix + suffix, maxWidth);
+        }
+
+        String name = p.slug().toUpperCase(java.util.Locale.ROOT);
+        int nameWidth = Math.max(0, maxWidth - prefixWidth - suffixWidth);
+        return prefix + trimToWidth(font, name, nameWidth) + suffix;
+    }
+
+    private static String trimToWidth(Font font, String text, int maxWidth) {
+        if (maxWidth <= 0 || text.isEmpty()) {
+            return "";
+        }
+        if (font.width(text) <= maxWidth) {
+            return text;
+        }
+        String ellipsis = "…";
+        int ellipsisWidth = font.width(ellipsis);
+        if (ellipsisWidth > maxWidth) {
+            return "";
+        }
+        int len = text.length();
+        while (len > 0 && font.width(text.substring(0, len)) + ellipsisWidth > maxWidth) {
+            len--;
+        }
+        return len <= 0 ? ellipsis : text.substring(0, len) + ellipsis;
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static void outline(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int color) {

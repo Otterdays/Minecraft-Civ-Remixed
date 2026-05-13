@@ -1,6 +1,8 @@
 package com.fpsmod.client.ui;
 
 import com.fpsmod.OogaMod;
+import com.fpsmod.client.jobs.JobsHudOverlay;
+import com.fpsmod.jobs.net.JobStatusPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -147,7 +149,7 @@ public final class OttersCivScreen extends Screen {
         // Footer band — separates content from chrome and prevents overlap with tab content.
         int footerY = py + PANEL_H - 14;
         g.fill(px + SIDEBAR_W + 1, footerY, px + PANEL_W - 1, footerY + 1, PANEL_BORDER);
-        String left = "Mod id: fpsmod · /otter · /money";
+        String left = "Mod id: project_ooga · /otter · /money";
         String hint = "ESC to close";
         g.text(this.font, left, px + SIDEBAR_W + 10, footerY + 4, TEXT_DIM, false);
         g.text(this.font, hint, px + PANEL_W - 6 - this.font.width(hint), footerY + 4, TEXT_DIM, false);
@@ -304,7 +306,10 @@ public final class OttersCivScreen extends Screen {
     private void renderJobs(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Jobs");
         var p = com.fpsmod.client.jobs.JobsClientState.latest();
-        var hud = com.fpsmod.client.jobs.JobsHudOverlay.config();
+        var hud = JobsHudOverlay.config();
+        JobStatusPayload preview = (p != null && !p.slug().isEmpty())
+            ? p
+            : new JobStatusPayload("lumberjack", 0, 0L, 0L, 100L);
 
         String activeLine;
         String levelLine;
@@ -320,17 +325,24 @@ public final class OttersCivScreen extends Screen {
         body(g, x, y + 14, activeLine, TEXT_PRIMARY);
         body(g, x, y + 26, levelLine,  TEXT_MUTED);
 
-        // HUD config row.
+        // HUD preview + config row.
         sectionHeading(g, x, y + 44, "HUD Bar");
         body(g, x, y + 58,
+            p == null || p.slug().isEmpty()
+                ? "Preview below. Live bar appears above vanilla XP after /job join <slug>."
+                : "Preview mirrors the live bar drawn above vanilla XP when this menu is closed.",
+            TEXT_MUTED);
+        JobsHudOverlay.renderPreview(g, this.font, x, y + 72, Math.min(250, w - 4), hud.scale(), preview);
+        body(g, x, y + 102,
             "Visible: " + (hud.visible() ? "ON" : "OFF")
                 + "   X: " + hud.offsetX()
                 + "   Y: " + hud.offsetY()
                 + "   Scale: " + String.format(java.util.Locale.ROOT, "%.2f", hud.scale()),
             TEXT_PRIMARY);
 
-        int row1Y = y + 74;
-        int row2Y = y + 100;
+        int row1Y = y + 118;
+        int row2Y = y + 144;
+        int row3Y = y + 170;
         int bw = 60;
         int bh = 22;
         int gap = 6;
@@ -358,6 +370,14 @@ public final class OttersCivScreen extends Screen {
         g.text(this.font, "Scale", rx, row2Y + 7, TEXT_MUTED, false);
         renderButton(g, rx + 32,                 row2Y, nb, bh, "−",  "jobs:s-", mouseX, mouseY);
         renderButton(g, rx + 32 + nb + nbgap,    row2Y, nb, bh, "+",  "jobs:s+", mouseX, mouseY);
+
+        // Direct join shortcuts reduce the "controls but no HUD" confusion for first-time users.
+        int joinW = 74;
+        int joinGap = 4;
+        renderButton(g, x,                         row3Y, joinW, bh, "Miner",      "jobs:join_miner",      mouseX, mouseY);
+        renderButton(g, x + (joinW + joinGap),    row3Y, joinW, bh, "Lumberjack", "jobs:join_lumberjack", mouseX, mouseY);
+        renderButton(g, x + (joinW + joinGap) * 2, row3Y, joinW, bh, "Farmer",     "jobs:join_farmer",     mouseX, mouseY);
+        renderButton(g, x + (joinW + joinGap) * 3, row3Y, joinW, bh, "Fighter",    "jobs:join_fighter",    mouseX, mouseY);
     }
 
     private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h) {
@@ -411,17 +431,18 @@ public final class OttersCivScreen extends Screen {
         drawCommandRow(g, x, row,      "/otter",                          "opens this menu",                 Status.SHIPPED);
         drawCommandRow(g, x, row + 12, "/money",                          "balance",                         Status.SHIPPED);
         drawCommandRow(g, x, row + 24, "/money set <p> <amt>",            "op-tier set",                     Status.SHIPPED);
-        drawCommandRow(g, x, row + 36, "/job join|leave|info <slug>",     "M2 jobs",                         Status.SHIPPED);
+        drawCommandRow(g, x, row + 36, "/job",                            "active job + progression",        Status.SHIPPED);
         drawCommandRow(g, x, row + 48, "/job list",                       "jobs catalog",                    Status.SHIPPED);
+        drawCommandRow(g, x, row + 60, "/job join <slug> · /job leave",   "pick or clear a job",            Status.SHIPPED);
 
         // Planned commands.
-        drawCommandRow(g, x, row + 64, "/pay <player> <amount>",          "M1 transfer",                     Status.PLANNED);
-        drawCommandRow(g, x, row + 76, "/ooga money add|take",            "M1 admin grant/burn",             Status.PLANNED);
-        drawCommandRow(g, x, row + 88, "/profession info",                "M2 progression view",             Status.PLANNED);
-        drawCommandRow(g, x, row +100, "/f create|invite|join|...",       "M3 factions",                     Status.PLANNED);
-        drawCommandRow(g, x, row +112, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
+        drawCommandRow(g, x, row + 76, "/pay <player> <amount>",          "M1 transfer",                     Status.PLANNED);
+        drawCommandRow(g, x, row + 88, "/ooga money add|take",            "M1 admin grant/burn",             Status.PLANNED);
+        drawCommandRow(g, x, row +100, "/profession info",                "M2 progression view",             Status.PLANNED);
+        drawCommandRow(g, x, row +112, "/f create|invite|join|...",       "M3 factions",                     Status.PLANNED);
+        drawCommandRow(g, x, row +124, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
 
-        body(g, x, row + 130, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
+        body(g, x, row + 142, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
     }
 
     private void renderButton(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, String actionKey, int mouseX, int mouseY) {
@@ -504,7 +525,7 @@ public final class OttersCivScreen extends Screen {
     }
 
     private void handleJobsAction(String op) {
-        var hud = com.fpsmod.client.jobs.JobsHudOverlay.config();
+        var hud = JobsHudOverlay.config();
         switch (op) {
             case "toggle" -> hud.setVisible(!hud.visible());
             case "reset"  -> hud.reset();
@@ -516,6 +537,10 @@ public final class OttersCivScreen extends Screen {
             case "s+" -> hud.nudgeScale(0.1f);
             case "cmd_stats" -> runCommand("job");
             case "cmd_list"  -> runCommand("job list");
+            case "join_miner"      -> runCommand("job join miner");
+            case "join_lumberjack" -> runCommand("job join lumberjack");
+            case "join_farmer"     -> runCommand("job join farmer");
+            case "join_fighter"    -> runCommand("job join fighter");
             default -> { /* no-op */ }
         }
     }

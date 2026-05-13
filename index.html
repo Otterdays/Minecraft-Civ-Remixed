@@ -407,7 +407,7 @@
       </tbody>
     </table>
 
-    <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows <strong>join system messages</strong> (full onboarding the first time you connect to <em>that</em> save, a shorter <q>welcome back ~</q> line when you’ve been there before), and can pay you for mining or fighting mobs (see <code>rewards.json</code>). An optional legacy FPS overlay is unrelated to the civ features. Long-term design: guild-style land, social tools, transfers, ledger, jobs—see <a href="#design-goals">Target feature set</a>.</p>
+    <p><strong>Otters Civ. Revived</strong> (<strong>codename: Project OOGA</strong>) is a Fabric mod that keeps a <strong>saved wallet per world</strong>, adds <strong>slash commands</strong> you type in normal Minecraft chat, shows <strong>join system messages</strong> (full onboarding the first time you connect to <em>that</em> save, a shorter <q>welcome back ~</q> line when you’ve been there before), pays you for mining or fighting mobs (see <code>rewards.json</code>), and ships a <strong>jobs HUD bar</strong> above vanilla XP when you have an active job. Long-term design: guild-style land, social tools, transfers, ledger, deeper jobs—see <a href="#design-goals">Target feature set</a>.</p>
 
     <div class="glossary" id="words-we-use" role="region" aria-labelledby="words-we-use-h">
       <h2 id="words-we-use-h">Words we use</h2>
@@ -428,27 +428,28 @@
     </div>
 
     <h2 id="features">Features (current build)</h2>
-    <p class="lead">Shipped today: money on disk, chat commands, join tips, configurable mining/kill payouts—plus a legacy FPS overlay you can ignore.</p>
+    <p class="lead">Shipped today: money on disk, chat commands, join tips, configurable mining/kill payouts, and a jobs HUD bar with in-game controls.</p>
     <div class="feature-block">
       <h3 id="features-server">World side (money &amp; rules)</h3>
       <ul>
         <li>Friendly lines in chat when you join: <strong>first visit on this world save</strong> = three system lines (branding, <code>/otter</code>, <code>/money</code>, rewards pointer). <strong>Returning</strong> players see a styled <q>welcome back ~</q> display name plus a shorter refresher (persisted per save, not in <code>config/</code>).</li>
-        <li><code>/otter</code> — opens a <strong>stylized in-game menu</strong> (sidebar tabs: Home · Wallet · Rewards · Civ · Help) with quick-action buttons for <code>/money</code> and one-click links that open the config files (<code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>, <code>wallet.properties</code>) in your OS file manager. On vanilla clients without the mod, the server-side fallback prints the same info as chat lines.</li>
+        <li><code>/otter</code> — opens a <strong>stylized in-game menu</strong> (sidebar tabs: Home · Wallet · Jobs · Rewards · Civ · Help) with quick-action buttons for <code>/money</code>, jobs/HUD controls, and one-click links that open the config files (<code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>, <code>wallet.properties</code>) in your OS file manager. On vanilla clients without the mod, the server-side fallback prints the same info as chat lines.</li>
         <li><code>/money</code> checks your balance (everyone). <code>/money set &lt;player&gt; &lt;amount&gt;</code> changes someone’s total and requires vanilla <strong>gamemaster-style</strong> command permission (same band as cheat commands / OP)—see <a href="#command-permissions">permissions</a>.</li>
         <li>Wallets save under <code>config/otters_civ_revived/wallet.properties</code> (same folder as rewards; legacy <code>config/fpsmod/wallet.properties</code> is moved here on first load).</li>
         <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
         <li>Combat: pay on kills that match <code>entityTag</code> (default: hostile mobs), with optional per-mob amounts in <code>entityRewards</code>; this build only credits direct melee—not bows or tridents yet.</li>
         <li>Tune everything in <code>config/otters_civ_revived/rewards.json</code> (cooldowns, gamemode skips, dimensions, chat announcements, tag ids, per-id maps).</li>
-        <li><code>JobsHooks</code> is a hook stub—no professions wired yet.</li>
+        <li><code>/job</code>, <code>/job list</code>, <code>/job join &lt;slug&gt;</code>, and <code>/job leave</code> drive the first jobs slice (miner, lumberjack, farmer, fighter). The jobs HUD only appears while you have an active job selected.</li>
       </ul>
       <h3 id="features-client">Client</h3>
       <ul>
+        <li>Jobs HUD overlay — compact bar above vanilla XP showing icon, job slug, level, and XP progress. Tune it from <code>/otter</code> → <strong>Jobs</strong> (preview, show/hide, X/Y nudges, scale, reset, one-click join buttons). Client config lives at <code>config/project_ooga/jobs_hud.properties</code>.</li>
         <li>(deprecated) Legacy FPS HUD overlay — disabled in <code>project_ooga</code>. The standalone FPS overlay mod (original template) handles FPS display.</li>
       </ul>
       <h3 id="features-not-in-release">Not in this release</h3>
       <ul>
-        <li>Only wallet + command bootstrap + passive payouts are live—see <a href="#design-goals">Target feature set</a> for the full design (transfers, guilds, social, jobs).</li>
-        <li>Missing today: <code>/pay</code>, granular mod/plugin permission layers (beyond vanilla gamemaster for <code>/money set</code>), ledger, friends, PM, guild claims/protections, job trees, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
+        <li>Only wallet + command bootstrap + passive payouts + jobs MVP are live—see <a href="#design-goals">Target feature set</a> for the broader civ stack (transfers, guilds, social, deep professions).</li>
+        <li>Missing today: <code>/pay</code>, granular mod/plugin permission layers (beyond vanilla gamemaster for <code>/money set</code>), ledger, friends, PM, guild claims/protections, deeper job trees/perks, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
       </ul>
     </div>
 
@@ -519,11 +520,11 @@
         <tr><td>Java runtime</td><td><code>25</code> or newer</td></tr>
       </tbody>
     </table>
-    <p><strong>Install note:</strong> Put the mod on the machine that <strong>hosts the world</strong> (single-player = your own game; multiplayer = the host’s <code>mods</code> folder). Players only need the client JAR if they want the optional FPS overlay—money and commands work from the world host.</p>
+    <p><strong>Install note:</strong> Put the mod on the machine that <strong>hosts the world</strong> (single-player = your own game; multiplayer = the host’s <code>mods</code> folder). Players only need the client JAR if they want the jobs HUD overlay or <code>/otter</code> GUI extras—money and commands still run from the world host.</p>
 
     <h2 id="commands">Slash commands (in-game chat)</h2>
     <p><strong>Simple explanation:</strong> Press your <strong>chat</strong> key (often <strong>T</strong>), type a line that starts with <strong><code>/</code></strong> (for example <code>/money</code>), press <strong>Enter</strong>. That works while you are <strong>playing inside a world</strong>—single-player or multiplayer. You are not using a separate “server program” window; “server” in modding just means <q>the part of Minecraft that remembers money and runs the command.</q></p>
-    <p>Try <code>/otter</code> first — on a client with this mod installed it opens a <strong>stylized in-game menu</strong> (tabbed: Home · Wallet · Rewards · Civ · Help) with one-click buttons to run <code>/money</code> or open config files. On vanilla clients it prints a short chat help list instead.</p>
+    <p>Try <code>/otter</code> first — on a client with this mod installed it opens a <strong>stylized in-game menu</strong> (tabbed: Home · Wallet · Jobs · Rewards · Civ · Help) with one-click buttons to run <code>/money</code>, preview the jobs HUD, join a job, or open config files. On vanilla clients it prints a short chat help list instead.</p>
     <p id="join-messages">Players also see <strong>automatic system messages when they connect</strong> (not a slash command). The <strong>first</strong> time your account is seen on <strong>this world save</strong>, you get three lines: Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a pointer to passive rewards / <code>rewards.json</code>. <strong>Later joins</strong> get a gold/aqua <q>welcome back ~</q><em>name</em> line and a condensed command reminder—stored per save as <code>project_ooga:join_attendance</code> (overworld saved data), separate from <code>wallet.properties</code>.</p>
 
     <dl>
@@ -535,6 +536,9 @@
 
       <dt><span class="cmd">/money set &lt;player&gt; &lt;amount&gt;</span></dt>
       <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). Requires Minecraft <strong>gamemaster</strong>-level command permission (OP-equivalent for cheat-style commands)—see <a href="#command-permissions">below</a>. Future builds may expose explicit mod nodes / LuckPerms-style checks.</dd>
+
+      <dt><span class="cmd">/job</span>, <span class="cmd">/job list</span>, <span class="cmd">/job join &lt;slug&gt;</span>, <span class="cmd">/job leave</span></dt>
+      <dd>Pick one active job at a time (<code>miner</code>, <code>lumberjack</code>, <code>farmer</code>, <code>fighter</code>). The jobs HUD bar uses that active selection and only renders while a job is active.</dd>
     </dl>
 
     <h3 id="command-permissions">Who can run which command (today)</h3>
@@ -665,8 +669,9 @@
     <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
     <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>
     <div class="note">New (2026-05-12): Crash safety: all config writes (<code>wallet.properties</code>, <code>jobs.properties</code>, <code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>) now use an atomic write pattern — content goes to a <code>.tmp</code> sibling file, fsyncs, then atomically renames to the target. If the game crashes mid-write, the previous file is untouched. A stale <code>.tmp</code> leftover is cleaned and logged on the next <code>load()</code>. Previous-good copies are preserved as <code>.bak</code> files as additional insurance. See <code>DOCS/ARCHITECTURE.md</code> amendment for full detail.</div>
-    <h3 id="config-hud"><code>config/fpsmod/hud.properties</code> <strong>(deprecated)</strong></h3>
-    <p>Client-only: <code>showFpsHud=true|false</code> for the legacy FPS overlay. Read failures default to visible HUD for the session.</p>
+    <h3 id="config-hud"><code>config/project_ooga/jobs_hud.properties</code></h3>
+    <p><strong>Client-only jobs HUD config:</strong> <code>visible=true|false</code>, <code>offsetX</code>, <code>offsetY</code>, and <code>scale</code>. The file is written when you use the <code>/otter</code> → <strong>Jobs</strong> controls. Default behavior: visible, centered, 12 px above the vanilla XP bar, scale <code>1.0</code>.</p>
+    <p class="note"><strong>Deprecated:</strong> the old FPS-only config remains at <code>config/fpsmod/hud.properties</code> for the standalone FPS overlay lineage, but Project OOGA no longer registers that overlay.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
     <p class="lead">Rough delivery spine (M0–M6)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
@@ -685,10 +690,12 @@
         <tr><td>M6</td><td>Stabilization, balance, PostgreSQL migration path, RC hardening</td></tr>
       </tbody>
     </table>
-    <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, and the FPS HUD stub.</div>
+    <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, and the first jobs/HUD slice.</div>
 
     <h2 id="client">Client features (detail)</h2>
-    <p><strong>Deprecated:</strong> The legacy FPS counter and overlay toggle from the repository's original template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). The standalone FPS overlay mod handles FPS display; no overlay code from Project OOGA registers on the HUD layer.</p>
+    <p><strong>Jobs HUD:</strong> Project OOGA draws a compact jobs bar above vanilla XP whenever the local player has an active job and the HUD is enabled. The <code>/otter</code> → <strong>Jobs</strong> tab now includes a preview of that bar, direct join buttons for all four jobs, and the usual visibility / offset / scale controls so you can see what the overlay is supposed to look like before closing the menu.</p>
+    <p><strong>Scaling behavior:</strong> the bar width is now content-aware. Longer labels such as <code>LUMBERJACK</code> and larger XP strings no longer overrun the right-hand text at default settings; the HUD expands when it has room, truncates safely only when it must, and clamps back on-screen after offsets are applied.</p>
+    <p><strong>Deprecated:</strong> The legacy FPS counter and overlay toggle from the repository's original template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). The standalone FPS overlay mod handles FPS display; Project OOGA's client UX is the jobs HUD + civ menu.</p>
 
     <h2 id="limits">Operational limits</h2>
     <ul>
@@ -737,15 +744,15 @@
     <div class="note">Reliability targets: no main-thread blocking I/O on hot gameplay paths; deterministic transaction updates with rollback-safe boundaries; explicit error paths for all state-mutating operations.</div>
 
     <h2 id="installation">Installation</h2>
-    <p>Client install is optional (FPS HUD only). Server install enables economy commands and passive payouts.</p>
+    <p>Client install is optional (jobs HUD + <code>/otter</code> GUI extras). Server install enables economy commands, jobs progression, and passive payouts.</p>
     <ol>
       <li>Install <strong>Fabric Loader <code>&gt;= 0.19.2</code></strong> for Minecraft <code>26.1.2</code>. The <a href="https://fabricmc.net/use/installer/">Fabric installer</a> handles this.</li>
       <li>Drop <strong>Fabric API</strong> (<code>0.146.1+26.1.2</code> or compatible) into your <code>mods/</code> folder.</li>
       <li>Drop the mod JAR (<code>project-ooga-1.0.0.jar</code>) into <code>mods/</code>.</li>
-      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>wallet.properties</code>); the FPS HUD overlay is deprecated (handled by the standalone FPS mod).</li>
+      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>wallet.properties</code>) and, on clients using the jobs HUD, <code>config/project_ooga/jobs_hud.properties</code>.</li>
       <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, then restart.</li>
     </ol>
-    <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets and payouts. Other players only need the JAR on their PC if they want the optional FPS HUD.</div>
+    <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets, jobs, and payouts. Other players only need the JAR on their PC if they want the jobs HUD and the richer <code>/otter</code> client UI.</div>
 
     <h2 id="building">Building from source</h2>
     <p>Requires JDK 25+ and Git. The repo uses the Gradle wrapper—no separate Gradle install needed.</p>

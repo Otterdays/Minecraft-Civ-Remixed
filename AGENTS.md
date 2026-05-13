@@ -83,6 +83,8 @@ Cursor provides specialized subagents via the **Task** tool. Use them for parall
 
 Launch multiple subagents **in parallel** when tasks are independent (e.g., reviewing code in one while searching docs in another).
 
+**Cost control:** do **not** pass an explicit `model` to subagents unless the user explicitly asks for one. For future custom subagents under **`.cursor/agents/`**, default to `model: inherit` so they follow the parent chat's `Auto` selection. Rules can steer but do not hard-force built-in Cursor subagent models, so if credits matter keep the main chat on `Auto` and leave Max Mode off.
+
 ### Built-in tools to prefer
 
 - **Grep** / **Glob** / **SemanticSearch** over shell `grep`/`find` commands.

@@ -1,0 +1,13 @@
+---
+description: Keep Cursor subagents on inherited or Auto cost-safe models
+alwaysApply: true
+---
+
+# Subagent cost control
+
+When launching Cursor subagents/tasks:
+
+- Prefer inherited model behavior and treat that as the default `Auto` path.
+- Do **not** request an explicit paid, premium, or Opus model unless the user explicitly asks.
+- If a custom subagent is added under `.cursor/agents/`, set `model: inherit` unless the user asked for a specific model.
+- Rules can steer but do not hard-enforce built-in Cursor subagent model choice; if credits matter, keep the main chat model on `Auto` and leave Max Mode off.
