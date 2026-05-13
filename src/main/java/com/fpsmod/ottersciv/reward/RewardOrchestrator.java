@@ -88,13 +88,10 @@ public final class RewardOrchestrator {
         long payout = Math.max(0L, jobsHooks.multiplyPayout(player, preCtx, basePayout));
 
         wallets.addBalance(player.getUUID(), payout, player.getName().getString());
-        jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
-
         if (rules.announceRewards) {
-            player.sendSystemMessage(
-                net.minecraft.network.chat.Component.literal("+" + payout + " (mining)")
-            );
+            sendCoinMessage(player, payout);
         }
+        jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
     }
 
     private long resolvedBlockReward(BlockState state) {
@@ -153,16 +150,23 @@ public final class RewardOrchestrator {
         long payout = Math.max(0L, jobsHooks.multiplyPayout(killer, preCtx, basePayout));
 
         wallets.addBalance(killer.getUUID(), payout, killer.getName().getString());
+        if (rules.announceRewards) {
+            sendCoinMessage(killer, payout);
+        }
         jobsHooks.onEconomyReward(
             killer,
             new RewardContext(RewardReason.MOB_KILL, payout, null, type)
         );
+    }
 
-        if (rules.announceRewards) {
-            killer.sendSystemMessage(
-                net.minecraft.network.chat.Component.literal("+" + payout + " (combat)")
-            );
-        }
+    static String coinMessageText(long payout) {
+        return "+" + payout + " coins";
+    }
+
+    private static void sendCoinMessage(ServerPlayer player, long payout) {
+        player.sendSystemMessage(
+            net.minecraft.network.chat.Component.literal(coinMessageText(payout))
+        );
     }
 
     private long resolvedEntityReward(ServerLevel level, EntityType<?> type) {

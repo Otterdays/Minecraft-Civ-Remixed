@@ -177,20 +177,41 @@ public class JobsService implements JobsHooks {
         rememberPlayerName(player.getUUID(), player.getName().getString());
         JobState s = stateOf(player.getUUID());
         if (s.active() == null) return;
+        Job active = s.active();
         Job matched = matchedJob(ctx);
-        if (matched != s.active()) return;
-        int prevLevel = s.levelOf(s.active());
-        long newXp = s.addXp(s.active(), JobsConfig.XP_PER_EVENT);
+        if (matched != active) return;
+        int prevLevel = s.levelOf(active);
+        long newXp = s.addXp(active, JobsConfig.XP_PER_EVENT);
         int newLevel = JobsConfig.levelForXp(newXp);
         persist();
         statusListener.accept(player);
+        player.sendSystemMessage(
+            net.minecraft.network.chat.Component.literal(
+                progressMessageText(active, newLevel, newXp)
+            )
+        );
         if (newLevel > prevLevel) {
             player.sendSystemMessage(
                 net.minecraft.network.chat.Component.literal(
-                    "[" + s.active().slug() + "] level up → " + newLevel
+                    "[" + active.slug() + "] level up → " + newLevel
                 )
             );
         }
+    }
+
+    static String progressMessageText(Job job, int level, long totalXp) {
+        if (job == null) {
+            return "";
+        }
+        if (level >= JobsConfig.MAX_LEVEL) {
+            return "[" + job.slug() + "] +" + JobsConfig.XP_PER_EVENT + " xp · MAX";
+        }
+        long floor = JobsConfig.xpForLevel(level);
+        long ceil = JobsConfig.xpForLevel(level + 1);
+        long inLevel = Math.max(0L, totalXp - floor);
+        long range = Math.max(1L, ceil - floor);
+        return "[" + job.slug() + "] +" + JobsConfig.XP_PER_EVENT + " xp · Lvl "
+            + level + " · " + inLevel + "/" + range;
     }
 
     @Nullable

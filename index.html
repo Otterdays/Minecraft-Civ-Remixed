@@ -538,7 +538,7 @@
       <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). Requires Minecraft <strong>gamemaster</strong>-level command permission (OP-equivalent for cheat-style commands)—see <a href="#command-permissions">below</a>. Future builds may expose explicit mod nodes / LuckPerms-style checks.</dd>
 
       <dt><span class="cmd">/job</span>, <span class="cmd">/job list</span>, <span class="cmd">/job join &lt;slug&gt;</span>, <span class="cmd">/job leave</span></dt>
-      <dd>Pick one active job at a time (<code>miner</code>, <code>lumberjack</code>, <code>farmer</code>, <code>fighter</code>). The jobs HUD bar uses that active selection and only renders while a job is active.</dd>
+      <dd>Pick one active job at a time (<code>miner</code>, <code>lumberjack</code>, <code>farmer</code>, <code>fighter</code>). The jobs HUD bar uses that active selection and only renders while a job is active. Reward chat is split into a money line (<code>+N coins</code>) and, when the action matches your active job, a separate job XP/progress line.</dd>
     </dl>
 
     <h3 id="command-permissions">Who can run which command (today)</h3>
@@ -620,7 +620,7 @@
         <tr><td><code>skipCreative</code></td><td>Skip rewards for creative-mode players</td><td><code>true</code></td></tr>
         <tr><td><code>skipSpectator</code></td><td>Skip rewards for spectator-mode players</td><td><code>true</code></td></tr>
         <tr><td><code>dimensionBlacklist</code></td><td>Array of dimension resource locations to disable rewards in</td><td><code>[]</code> (none)</td></tr>
-        <tr><td><code>announceRewards</code></td><td>If true, sends the earning player system messages such as <code>+1 (mining)</code> or <code>+5 (combat)</code></td><td><code>true</code></td></tr>
+        <tr><td><code>announceRewards</code></td><td>If true, sends the earning player a money message such as <code>+1 coins</code>. Matching active jobs also emit a separate XP/progress line (for example <code>[miner] +5 xp · Lvl 0 · 5/100</code>) and a level-up line when a threshold is crossed.</td><td><code>true</code></td></tr>
         <tr><td><code>blockRewards</code></td><td>Optional object <code>{ "minecraft:block_id": &lt;amount&gt;, … }</code>; per-break payout for that block id (wins over tag). <code><a href="#config-block-values">block_values.json</a></code> patches on load after these keys.</td><td><code>{}</code></td></tr>
         <tr><td><code>entityRewards</code></td><td>Optional object <code>{ "minecraft:entity_type": &lt;amount&gt;, … }</code>; per-kill payout (wins over entity tag). Patched afterward by <code><a href="#config-entity-values">entity_values.json</a></code>.</td><td><code>{}</code></td></tr>
       </tbody>
