@@ -695,6 +695,7 @@
     <h2 id="client">Client features (detail)</h2>
     <p><strong>Jobs HUD:</strong> Project OOGA draws a compact jobs bar above vanilla XP whenever the local player has an active job and the HUD is enabled. The <code>/otter</code> → <strong>Jobs</strong> tab now includes a preview of that bar, direct join buttons for all four jobs, and the usual visibility / offset / scale controls so you can see what the overlay is supposed to look like before closing the menu.</p>
     <p><strong>Scaling behavior:</strong> the bar width is now content-aware. Longer labels such as <code>LUMBERJACK</code> and larger XP strings no longer overrun the right-hand text at default settings; the HUD expands when it has room, truncates safely only when it must, and clamps back on-screen after offsets are applied.</p>
+    <p><strong>Small-window fallback:</strong> if the game window / GUI viewport gets too cramped for the full <code>/otter</code> panel, the client now swaps to a compact prompt instead of trying to cram the full menu on-screen. That prompt tells the player to enlarge the window or lower Minecraft GUI Scale and still exposes quick buttons for <code>/money</code>, <code>/job</code>, and <code>/job list</code>.</p>
     <p><strong>Deprecated:</strong> The legacy FPS counter and overlay toggle from the repository's original template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). The standalone FPS overlay mod handles FPS display; Project OOGA's client UX is the jobs HUD + civ menu.</p>
 
     <h2 id="limits">Operational limits</h2>
@@ -704,6 +705,7 @@
       <li><code>/money set</code> is intentionally narrow: vanilla gamemaster permission only until a plugin-friendly permission layer ships (see <a href="#command-permissions">command permissions</a>).</li>
       <li>Tag-based payouts do not imply “worldgen-only” blocks; duplication farming is deferred to roadmap hardening.</li>
       <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
+      <li><code>/otter</code> uses a compact fallback prompt on very small GUI viewports instead of rendering the full panel half-clipped. If you hit that state, enlarge the game window or lower Minecraft GUI Scale, then reopen <code>/otter</code>.</li>
     </ul>
 
     <h2 id="architecture">Architecture</h2>

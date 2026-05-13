@@ -42,6 +42,9 @@
 [AMENDED 2026-05-12 — jobs MVP]:
 - **Jobs/professions M2 first slice shipped.** Fixed-set: miner / lumberjack / farmer / fighter. One active slot. XP only on matching block-break / mob-kill events; level curve `100 * L^1.5` cap 50; payout multiplier `1.0 + L/50`. Commands `/job`, `/job list|join|leave|stats`. Persistence `config/otters_civ_revived/jobs.properties` (UUID.active=<slug>, UUID.xp.<slug>=N). Bundled tags `otters_civ_revived:job/{miner,lumberjack,farmer}_blocks` + `fighter_mobs` (singular `tags/block/` · `tags/entity_type/` dirs). New package `com.fpsmod.jobs`; `JobsHooks` interface gained `multiplyPayout` stage; `RewardOrchestrator` calls it pre-`addBalance`. Lessons + paths in `DOCS/LOCATIONS.md` + `DOCS/ARCHITECTURE.md`.
 
+[AMENDED 2026-05-13 — reward chat semantics]:
+- **Reward chat is now split cleanly by system.** Economy payouts announce as **`+N coins`** (instead of the older hardcoded `(mining)` / `(combat)` labels). Jobs progression is a separate line and only fires when the action matches the player's active job, e.g. **`[lumberjack] +5 xp · Lvl 0 · 30/100`**. Level-up remains its own follow-up line on threshold crossings. This avoids falsely implying that a global block reward also counted as miner XP.
+
 [AMENDED 2026-05-12]:
 - **`currency_blocks` tag expanded to ~260+ blocks** (was ~23). Covers all breakable vanilla block categories: stone/brick variants, ores, dirt/sand/gravel/clay, logs/leaves/planks, wool, all 16-color sets (terracotta/glazed/concrete/concrete_powder/stained_glass), sandstone, nether set, end blocks, copper permutations, ore storage blocks, organics, sculk, utility blocks. Source: `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json`. Uses `#minecraft:` tags for logs/leaves/planks/wool/dirt/sand/ice/coral_blocks; individual entries elsewhere. All default to flat `blockReward` (1) — operators tune in `block_values.json`.
 

@@ -102,6 +102,11 @@ Use this as the first stop for quick discovery.
 - **Wiring:** `FpsMod.onInitialize` builds `JobsService.createDefault()`, hands it to `OttersCivGameplay.register(wallets, rules, jobsHooks)`, registers `JobCommand`, calls `jobsService.refresh(server)` from `onLogicalServerFullyStarted`.
 - **Test:** `src/test/java/com/fpsmod/jobs/JobsConfigTest.java` (curve monotonicity + round-trip + multiplier clamp + state add/active).
 
+[AMENDED 2026-05-13 — reward chat flow]:
+- **Economy message source:** `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java` now owns only the money line and formats it as **`+N coins`** via `coinMessageText(...)`, sent immediately after `wallets.addBalance(...)`.
+- **Jobs progress message source:** `src/main/java/com/fpsmod/jobs/JobsService.java` now owns the job-side line via `progressMessageText(...)`, emitting **`[job] +5 xp · Lvl X · inLevel/range`** only when the reward event matches the player's active job. Level-up remains a separate follow-up line.
+- **Why this split matters:** block rewards from the shared `currency_blocks` tag can still pay coins even when they do **not** match the active job (for example, a miner breaking a rewarded log). The new chat flow avoids falsely labeling that as miner XP.
+
 [AMENDED 2026-05-11 — root-cause pass]:
 - **Bundled-tag resource paths are SINGULAR (MC 1.21+ requirement):**
   - `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json` (NOT `tags/blocks/`)

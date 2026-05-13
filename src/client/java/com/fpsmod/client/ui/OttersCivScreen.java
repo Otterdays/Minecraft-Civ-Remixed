@@ -76,13 +76,13 @@ public final class OttersCivScreen extends Screen {
     private static final int PANEL_H = 268;
     private static final int SIDEBAR_W = 132;
     private static final int TAB_H = 28;
+    private static final int COMFORT_MIN_W = PANEL_W + 120;
+    private static final int COMFORT_MIN_H = PANEL_H + 80;
     private static final long ANIM_MS = 180L;
 
     private final long openedAt = System.currentTimeMillis();
     private Tab active = Tab.HOME;
     private final List<Rect> hotspots = new ArrayList<>();
-    private int lastMouseX;
-    private int lastMouseY;
 
     public OttersCivScreen() {
         super(Component.literal("Otters Civ. Revived"));
@@ -100,9 +100,6 @@ public final class OttersCivScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(g, mouseX, mouseY, partialTick);
 
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
-
         float t = Mth.clamp((System.currentTimeMillis() - openedAt) / (float) ANIM_MS, 0f, 1f);
         float eased = easeOutCubic(t);
         int yOffset = (int) ((1f - eased) * 14f);
@@ -111,6 +108,11 @@ public final class OttersCivScreen extends Screen {
         int py = (this.height - PANEL_H) / 2 + yOffset;
 
         hotspots.clear();
+
+        if (isCompactFallbackNeeded()) {
+            renderCompactFallback(g, yOffset, mouseX, mouseY);
+            return;
+        }
 
         // Drop shadow.
         g.fill(px + 3, py + 6, px + PANEL_W + 3, py + PANEL_H + 6, 0x66000000);
@@ -160,6 +162,48 @@ public final class OttersCivScreen extends Screen {
         g.text(f, "OTTERS CIV.", x, y, ACCENT_GOLD, false);
         g.text(f, "REVIVED", x, y + 10, ACCENT_AQUA, false);
         g.fill(x + 62, y + 5, x + 66, y + 9, ACCENT_GOLD);
+    }
+
+    private boolean isCompactFallbackNeeded() {
+        return this.width < COMFORT_MIN_W || this.height < COMFORT_MIN_H;
+    }
+
+    private void renderCompactFallback(GuiGraphicsExtractor g, int yOffset, int mouseX, int mouseY) {
+        int cardW = Math.min(360, Math.max(120, this.width - 24));
+        int cardH = cardW >= 320 ? 190 : 214;
+        int px = (this.width - cardW) / 2;
+        int py = (this.height - cardH) / 2 + yOffset;
+
+        g.fill(px + 3, py + 6, px + cardW + 3, py + cardH + 6, 0x66000000);
+        roundedFill(g, px, py, px + cardW, py + cardH, PANEL_BG);
+        g.fill(px + 1, py + 1, px + cardW - 1, py + 2, ACCENT_GOLD);
+        outlineRect(g, px, py, px + cardW, py + cardH, PANEL_BORDER);
+
+        sectionHeading(g, px + 12, py + 12, "Window Too Small");
+        body(g, px + 12, py + 28, "/otter needs more room to stay usable.", TEXT_PRIMARY);
+        body(g, px + 12, py + 42, "Current GUI: " + this.width + " x " + this.height, TEXT_MUTED);
+        body(g, px + 12, py + 56, "Recommended: at least " + COMFORT_MIN_W + " x " + COMFORT_MIN_H, TEXT_MUTED);
+        body(g, px + 12, py + 76, "Try one of these:", TEXT_PRIMARY);
+        body(g, px + 20, py + 90, "1. Enlarge the game window.", TEXT_MUTED);
+        body(g, px + 20, py + 102, "2. Lower Minecraft GUI Scale.", TEXT_MUTED);
+        body(g, px + 12, py + 122, "Quick commands still work:", TEXT_PRIMARY);
+
+        int btnY = py + 142;
+        int gap = 8;
+        if (cardW >= 320) {
+            int btnW = (cardW - 24 - gap * 2) / 3;
+            renderButton(g, px + 12, btnY, btnW, 22, "/money", "action:money", mouseX, mouseY);
+            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 22, "/job", "jobs:cmd_stats", mouseX, mouseY);
+            renderButton(g, px + 12 + (btnW + gap) * 2, btnY, btnW, 22, "/job list", "jobs:cmd_list", mouseX, mouseY);
+        } else {
+            int btnW = (cardW - 24 - gap) / 2;
+            renderButton(g, px + 12, btnY, btnW, 22, "/money", "action:money", mouseX, mouseY);
+            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 22, "/job", "jobs:cmd_stats", mouseX, mouseY);
+            renderButton(g, px + 12, btnY + 28, cardW - 24, 22, "/job list", "jobs:cmd_list", mouseX, mouseY);
+        }
+
+        String hint = "ESC to close";
+        g.text(this.font, hint, px + cardW - 12 - this.font.width(hint), py + cardH - 14, TEXT_DIM, false);
     }
 
     private void renderTab(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, Tab tab, boolean selected, boolean hover) {
