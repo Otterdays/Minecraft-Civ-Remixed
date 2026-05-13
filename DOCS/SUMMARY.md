@@ -27,6 +27,9 @@
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
 
+[AMENDED 2026-05-12]:
+- **`currency_blocks` tag expanded to ~260+ blocks** (was ~23). Covers all breakable vanilla block categories: stone/brick variants, ores, dirt/sand/gravel/clay, logs/leaves/planks, wool, all 16-color sets (terracotta/glazed/concrete/concrete_powder/stained_glass), sandstone, nether set, end blocks, copper permutations, ore storage blocks, organics, sculk, utility blocks. Source: `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json`. Uses `#minecraft:` tags for logs/leaves/planks/wool/dirt/sand/ice/coral_blocks; individual entries elsewhere. All default to flat `blockReward` (1) — operators tune in `block_values.json`.
+
 [AMENDED 2026-05-11 — root cause]:
 - **Three stacked bugs**, all proven by live log diagnostic ("registry holds 374 bound tags total" → tags load fine, ours just don't exist):
   1. Bundled tag dirs were **plural** (`tags/blocks/`, `tags/entity_types/`); MC 1.21+ loads only **singular** (`tags/block/`, `tags/entity_type/`). Moved files.

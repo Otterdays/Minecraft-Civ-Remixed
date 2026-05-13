@@ -67,6 +67,9 @@ Use this as the first stop for quick discovery.
 
 ## Otters Civ. / economy (server gameplay)
 
+[AMENDED 2026-05-12]:
+- **`currency_blocks` tag massively expanded (~260+ blocks).** Source file: `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json`. Covers: all stone/brick/polished/chiseled variants, ores via `#minecraft:*_ores` + nether_quartz_ore + ancient_debris, dirt/sand/gravel/clay via `#minecraft:dirt`/`#minecraft:sand`, all wood via `#minecraft:logs`/`#minecraft:leaves`/`#minecraft:planks`, bamboo blocks, all 16 colors of wool (`#minecraft:wool`) / terracotta / glazed terracotta / concrete / concrete powder / stained glass, sandstone, bricks, prismarine, full nether set, end blocks, `#minecraft:ice`, snow, `#minecraft:coral_blocks`, amethyst, all copper oxidation+waxed+grate+bulb permutations, raw ore + mineral storage blocks, glass, organic (melon/pumpkin/hay/kelp/honey/bone/sponge/mushroom), sculk family, and common utility blocks. All default to `blockReward` (1); operators tune per-block amounts in `block_values.json`.
+
 [AMENDED 2026-05-11]:
 - Runtime wallet path: **`config/otters_civ_revived/wallet.properties`** (`FileWalletStore`); migrate-from legacy **`config/fpsmod/wallet.properties`** once if present. Optional **`# Name:`** plaintext lines precede **`uuid=balance`**; persist via **`WalletService`** (`WalletLedger` load/save).
 
@@ -89,6 +92,31 @@ Use this as the first stop for quick discovery.
 - Commands: `src/main/java/com/fpsmod/command/OtterCommand.java`, `MoneyCommand.java` (`/money set` · `Permission.HasCommandLevel(GAMEMASTERS)`); wallet: `src/main/java/com/fpsmod/economy/`
 - Shipped datapack tags: `src/main/resources/data/otters_civ_revived/tags/`
 
+### Quick-path file index (economy / rewards)
+
+For fast agent discovery — the files you need for any reward/economy task:
+
+| What | Path |
+|------|------|
+| **Block tag (source of truth for which blocks pay)** | `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json` |
+| **Entity tag (source of truth for which mobs pay)** | `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` |
+| **Reward rules model** | `src/main/java/com/fpsmod/ottersciv/config/RewardRules.java` |
+| **Reward config loader + merge logic** | `src/main/java/com/fpsmod/ottersciv/config/RewardRulesLoader.java` |
+| **Tag → payout expansion** | `src/main/java/com/fpsmod/ottersciv/config/RewardTagExpansion.java` |
+| **Kill-side tag checks** | `src/main/java/com/fpsmod/ottersciv/config/KillRewardTagChecks.java` |
+| **Reward orchestrator (runtime)** | `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java` |
+| **Wallet service** | `src/main/java/com/fpsmod/economy/WalletService.java` |
+| **Wallet persistence** | `src/main/java/com/fpsmod/economy/FileWalletStore.java` |
+| **`/money` command** | `src/main/java/com/fpsmod/command/MoneyCommand.java` |
+| **`/otter` command (server)** | `src/main/java/com/fpsmod/command/OtterCommand.java` |
+| **`/otter` GUI (client)** | `src/client/java/com/fpsmod/client/ui/OttersCivScreen.java` |
+| **`/otter` client cmd reg** | `src/client/java/com/fpsmod/client/OtterClientCommand.java` |
+| **Join welcome** | `src/main/java/com/fpsmod/ottersciv/JoinWelcome.java` |
+| **Join attendance (per-save)** | `src/main/java/com/fpsmod/ottersciv/JoinAttendanceSavedData.java` |
+| **Gameplay wiring** | `src/main/java/com/fpsmod/ottersciv/OttersCivGameplay.java` |
+| **Tests** | `src/test/java/com/fpsmod/ottersciv/config/RewardRulesLoaderTest.java` |
+| **Runtime config dir** | `config/otters_civ_revived/` (rewards.json, block_values.json, entity_values.json, wallet.properties) |
+
 ## Output paths
 
 - Main mod jar: `BUILT/libs/project-ooga-1.0.0.jar` (Gradle `mod_version`; older docs may cite `fps-mod-1.0.0.jar`—prefer `gradle.properties`)
@@ -101,6 +129,14 @@ Use this as the first stop for quick discovery.
 - UI/HUD-only changes: `src/client/java/com/fpsmod/client/`
 - Cross-cutting metadata changes: `fabric.mod.json` + `gradle.properties` + `README.md`
 - Version upgrades: keep `gradle.properties`, `gradle/wrapper/gradle-wrapper.properties` (when bumping Gradle), and this README’s compatibility table aligned.
+
+## Reference / research assets
+
+| What | Path |
+|------|------|
+| **MC block list reference URL** | `WEB-SOURCES-FOR-MC-INFO/BLOCKS_WEBSITE.md` |
+
+Any web sources saved for Minecraft data (block lists, entity lists, etc.) live under **`WEB-SOURCES-FOR-MC-INFO/`** — check before web-searching.
 
 ## Git / upstream
 

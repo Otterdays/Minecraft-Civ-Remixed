@@ -58,6 +58,9 @@ Read failures → default **show** (`true`). Write failures logged; in-memory to
 - No frame-by-frame FPS; not a profiler.
 - No dedicated server / datapack logic — **`environment`: `client`** in `fabric.mod.json`.
 
+[AMENDED 2026-05-12]:
+- **Bundled `currency_blocks` tag expanded to ~260+ blocks** — covers essentially every breakable vanilla block category (stone, bricks, ores, dirt/sand, logs/leaves/planks, wool, all 16-color sets, sandstone, nether, end, copper, ore storage, glass, organics, sculk, utility blocks). Operators tune per-block values in `block_values.json` after the tag prefill.
+
 [AMENDED 2026-05-10]:
 - The **released mod** uses **`environment`: `*`** in `fabric.mod.json` so server-side economy and Otters Civ. rewards run; the HUD sections above describe the **optional client-only FPS overlay**. Server civ gameplay (wallet, `/money`, `/otter`, `rewards.json` with optional `blockRewards`/`entityRewards` plus optional `block_values.json`/`entity_values.json`, join chat) lives in README and Otters Civ. packages — not in this HUD-only subsection.
 
