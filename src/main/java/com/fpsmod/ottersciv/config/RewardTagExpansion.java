@@ -1,6 +1,6 @@
 package com.fpsmod.ottersciv.config;
 
-import com.fpsmod.FpsMod;
+import com.fpsmod.OogaMod;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -58,7 +58,7 @@ public final class RewardTagExpansion {
     ) {
         LinkedHashMap<String, Long> out = new LinkedHashMap<>();
         if (tagKey == null) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] {} tag expansion skipped: tag id failed to parse", label);
+            OogaMod.LOGGER.warn("[otters_civ_revived] {} tag expansion skipped: tag id failed to parse", label);
             return out;
         }
         long amount = Math.max(0L, perEntry);
@@ -67,7 +67,7 @@ public final class RewardTagExpansion {
         try {
             members = registry.getTagOrEmpty(tagKey);
         } catch (RuntimeException e) {
-            FpsMod.LOGGER.error(
+            OogaMod.LOGGER.error(
                 "[otters_civ_revived] Could not query {} registry for tag {}; expansion aborted",
                 label,
                 tagKey.location(),
@@ -91,7 +91,7 @@ public final class RewardTagExpansion {
 
         if (out.isEmpty()) {
             long boundTagCount = registry.getTags().count();
-            FpsMod.LOGGER.warn(
+            OogaMod.LOGGER.warn(
                 "[otters_civ_revived] {} tag {} resolved 0 entries (registry holds {} bound tags total). "
                     + "Tag id may be misspelled, datapack not loaded, or tags not yet bound on this registry.",
                 label,
@@ -99,7 +99,7 @@ public final class RewardTagExpansion {
                 boundTagCount
             );
         } else {
-            FpsMod.LOGGER.info(
+            OogaMod.LOGGER.info(
                 "[otters_civ_revived] {} tag {} resolved {} entries (each defaulting to {})",
                 label,
                 tagKey.location(),

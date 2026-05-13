@@ -1,6 +1,6 @@
 package com.fpsmod.client;
 
-import com.fpsmod.FpsMod;
+import com.fpsmod.OogaMod;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -10,6 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+/**
+ * @deprecated Legacy HUD config — unused since {@link FpsHudOverlay} is disabled.
+ */
+@Deprecated(since = "1.0.0", forRemoval = true)
 final class FpsHudConfig {
     private static final String KEY_SHOW = "showFpsHud";
 
@@ -17,7 +21,7 @@ final class FpsHudConfig {
 
     FpsHudConfig() {
         this.file = FabricLoader.getInstance().getConfigDir()
-            .resolve(FpsMod.MOD_ID)
+            .resolve(OogaMod.MOD_ID)
             .resolve("hud.properties");
     }
 
@@ -30,7 +34,7 @@ final class FpsHudConfig {
         try (Reader reader = Files.newBufferedReader(file)) {
             props.load(reader);
         } catch (IOException e) {
-            FpsMod.LOGGER.warn("{} ⚠️ Failed to read HUD config, using defaults.", FpsMod.MOD_ID, e);
+            OogaMod.LOGGER.warn("{} ⚠️ Failed to read HUD config, using defaults.", OogaMod.MOD_ID, e);
             return defaultValue;
         }
 
@@ -41,7 +45,7 @@ final class FpsHudConfig {
         try {
             Files.createDirectories(file.getParent());
         } catch (IOException e) {
-            FpsMod.LOGGER.warn("{} ⚠️ Failed to create config directory.", FpsMod.MOD_ID, e);
+            OogaMod.LOGGER.warn("{} ⚠️ Failed to create config directory.", OogaMod.MOD_ID, e);
             return;
         }
 
@@ -50,7 +54,7 @@ final class FpsHudConfig {
         try (Writer writer = Files.newBufferedWriter(file)) {
             props.store(writer, "FPS HUD settings");
         } catch (IOException e) {
-            FpsMod.LOGGER.warn("{} ⚠️ Failed to write HUD config.", FpsMod.MOD_ID, e);
+            OogaMod.LOGGER.warn("{} ⚠️ Failed to write HUD config.", OogaMod.MOD_ID, e);
         }
     }
 }

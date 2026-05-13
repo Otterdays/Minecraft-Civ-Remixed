@@ -1,6 +1,6 @@
 package com.fpsmod.client;
 
-import com.fpsmod.FpsMod;
+import com.fpsmod.OogaMod;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -11,8 +11,15 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Util;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
+/**
+ * @deprecated Legacy FPS overlay from the original template mod. Disabled in
+ * {@link com.fpsmod.FpsModClient} to avoid conflicts with the standalone
+ * FPS overlay mod. Kept only as reference; do not re-enable without verifying
+ * no other mod in the pack uses the same {@code fpsmod} mod ID.
+ */
+@Deprecated(since = "1.0.0", forRemoval = true)
 public final class FpsHudOverlay {
-    private static final Identifier OVERLAY_ID = Identifier.fromNamespaceAndPath(FpsMod.MOD_ID, "fps_overlay");
+    private static final Identifier OVERLAY_ID = Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "fps_overlay");
     private static final int PAD = 6;
 
     private static final FpsHudConfig CONFIG = new FpsHudConfig();
@@ -76,7 +83,7 @@ public final class FpsHudOverlay {
         }
         showHud = enabled;
         CONFIG.saveShowHud(showHud);
-        FpsMod.LOGGER.info("{} 🔁 FPS HUD {}", FpsMod.MOD_ID, showHud ? "enabled" : "disabled");
+        OogaMod.LOGGER.info("{} 🔁 FPS HUD {}", OogaMod.MOD_ID, showHud ? "enabled" : "disabled");
     }
 
     public static void toggleHud() {

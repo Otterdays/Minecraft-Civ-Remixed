@@ -46,7 +46,7 @@ public class WalletService {
         }
     }
 
-    private void persist() {
+    private synchronized void persist() {
         walletStore.save(Map.copyOf(balances), Map.copyOf(displayHints));
     }
 

@@ -17,8 +17,8 @@ public final class OttersCivGameplay {
     }
 
     /** Otters Civ. Revived gameplay rewards (wired from main mod initializer). */
-    public static RewardOrchestrator register(WalletService wallets, RewardRules rules) {
-        RewardOrchestrator orchestrator = new RewardOrchestrator(wallets, rules, JobsHooks.NO_OP);
+    public static RewardOrchestrator register(WalletService wallets, RewardRules rules, JobsHooks jobsHooks) {
+        RewardOrchestrator orchestrator = new RewardOrchestrator(wallets, rules, jobsHooks);
 
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, entity) -> {
             if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) {

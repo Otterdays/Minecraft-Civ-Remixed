@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod fpsmod): wallet, /money, /otter, join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
-  <title>Otters Civ. Revived (fpsmod) — Command &amp; feature reference</title>
+  <meta name="description" content="Otters Civ. Revived (Fabric mod project_ooga): wallet, /money, /otter, /job, join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
+  <title>Otters Civ. Revived (project_ooga) — Command &amp; feature reference</title>
   <style>
     :root {
       --text: #202122;
@@ -389,7 +389,7 @@
       <div class="shell">
         <main id="main">
     <h1 id="top">Otters Civ. Revived</h1>
-    <p class="tagline">Unofficial reference for the Fabric mod <strong>Otters Civ. Revived</strong>. <strong>Codename (team / repo):</strong> <strong>Project OOGA</strong>. Technical mod id: <code>fpsmod</code>. Repository title: Minecraft Civ Remixed.</p>
+    <p class="tagline">Unofficial reference for the Fabric mod <strong>Otters Civ. Revived</strong>. <strong>Codename (team / repo):</strong> <strong>Project OOGA</strong>. Technical mod id: <code>project_ooga</code> (changed from <code>fpsmod</code> to avoid mod ID conflict with standalone FPS overlay mod). Repository title: Minecraft Civ Remixed.</p>
 
     <table class="infobox">
       <caption>Mod summary</caption>
@@ -398,7 +398,7 @@
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
-        <tr><th>Namespaces</th><td>Otters Civ. economy: <code>otters_civ_revived</code> (<code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>)</td></tr>
+        <tr><th>Namespaces</th><td>Otters Civ. economy: <code>otters_civ_revived</code> (<code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>) — deprecated</td></tr>
         <tr><th>Economy store</th><td><code>config/otters_civ_revived/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
         <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
@@ -419,7 +419,7 @@
         <tbody>
           <tr><th scope="row"><strong>Otters Civ. Revived</strong></th><td>Name on the tin for players.</td></tr>
           <tr><th scope="row"><strong>Project OOGA</strong></th><td>Our internal nickname for the repo and design docs.</td></tr>
-          <tr><th scope="row"><code>fpsmod</code></th><td>The mod’s technical ID inside the jar (future rename).</td></tr>
+          <tr><th scope="row"><code>project_ooga</code></th><td>The mod’s technical ID inside the jar (was <code>fpsmod</code>; changed to avoid conflict with the standalone FPS overlay mod).</td></tr>
           <tr><th scope="row">Server / host</th><td>The running game that owns your save—single-player counts; “server” is not “only rented hardware.”</td></tr>
           <tr><th scope="row">Tag</th><td>A datapack-defined group of blocks or mob types (<code>blockTag</code>, <code>entityTag</code>).</td></tr>
           <tr><th scope="row"><code>blockRewards</code>, <code>entityRewards</code></th><td>Optional JSON maps: pay <em>this</em> exact block or mob type a fixed amount (overrides tag fallbacks when listed).</td></tr>
@@ -443,7 +443,7 @@
       </ul>
       <h3 id="features-client">Client</h3>
       <ul>
-        <li>Optional legacy FPS HUD (readout + GUI toggle); <code>config/fpsmod/hud.properties</code>.</li>
+        <li>(deprecated) Legacy FPS HUD overlay — disabled in <code>project_ooga</code>. The standalone FPS overlay mod (original template) handles FPS display.</li>
       </ul>
       <h3 id="features-not-in-release">Not in this release</h3>
       <ul>
@@ -524,7 +524,7 @@
     <h2 id="commands">Slash commands (in-game chat)</h2>
     <p><strong>Simple explanation:</strong> Press your <strong>chat</strong> key (often <strong>T</strong>), type a line that starts with <strong><code>/</code></strong> (for example <code>/money</code>), press <strong>Enter</strong>. That works while you are <strong>playing inside a world</strong>—single-player or multiplayer. You are not using a separate “server program” window; “server” in modding just means <q>the part of Minecraft that remembers money and runs the command.</q></p>
     <p>Try <code>/otter</code> first — on a client with this mod installed it opens a <strong>stylized in-game menu</strong> (tabbed: Home · Wallet · Rewards · Civ · Help) with one-click buttons to run <code>/money</code> or open config files. On vanilla clients it prints a short chat help list instead.</p>
-    <p id="join-messages">Players also see <strong>automatic system messages when they connect</strong> (not a slash command). The <strong>first</strong> time your account is seen on <strong>this world save</strong>, you get three lines: Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a pointer to passive rewards / <code>rewards.json</code>. <strong>Later joins</strong> get a gold/aqua <q>welcome back ~</q><em>name</em> line and a condensed command reminder—stored per save as <code>fpsmod:join_attendance</code> (overworld saved data), separate from <code>wallet.properties</code>.</p>
+    <p id="join-messages">Players also see <strong>automatic system messages when they connect</strong> (not a slash command). The <strong>first</strong> time your account is seen on <strong>this world save</strong>, you get three lines: Otters Civ. Revived branding, <code>/otter</code>, <code>/money</code>, and a pointer to passive rewards / <code>rewards.json</code>. <strong>Later joins</strong> get a gold/aqua <q>welcome back ~</q><em>name</em> line and a condensed command reminder—stored per save as <code>project_ooga:join_attendance</code> (overworld saved data), separate from <code>wallet.properties</code>.</p>
 
     <dl>
       <dt><span class="cmd">/otter</span></dt>
@@ -546,7 +546,7 @@
     <p class="lead">Think “bank file on disk”: one number per player UUID, updated when you earn or an admin sets your balance.</p>
     <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/otters_civ_revived/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
     <p>On disk the wallet is UTF‑8 text: optional <code># Name: …</code> hint lines precede each <code>uuid=balance</code> line (same semantics as Java <code>.properties</code> for the key=value part). Loader accepts older files without name lines. Comments on write explain the format; malformed balance lines log a warning and are skipped when possible.</p>
-    <div class="note"><code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, and <code>wallet.properties</code> live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay still uses only <code>config/fpsmod/hud.properties</code>.</div>
+    <div class="note"><code>rewards.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, and <code>wallet.properties</code> live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay is <strong>deprecated</strong> (handled by the standalone FPS overlay mod).</div>
 
     <h2 id="rewards">Passive rewards</h2>
     <p class="lead">Breaking the right blocks and killing the right mobs silently adds coins. What “right” means is editable JSON—often via tags Datapacks already understand—with optional exceptions per exact block/mob ID.</p>
@@ -664,7 +664,8 @@
     <h3 id="config-wallet"><code>config/otters_civ_revived/wallet.properties</code></h3>
     <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
     <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>
-    <h3 id="config-hud"><code>config/fpsmod/hud.properties</code></h3>
+    <div class="note">New (2026-05-12): Crash safety: all config writes (<code>wallet.properties</code>, <code>jobs.properties</code>, <code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>) now use an atomic write pattern — content goes to a <code>.tmp</code> sibling file, fsyncs, then atomically renames to the target. If the game crashes mid-write, the previous file is untouched. A stale <code>.tmp</code> leftover is cleaned and logged on the next <code>load()</code>. Previous-good copies are preserved as <code>.bak</code> files as additional insurance. See <code>DOCS/ARCHITECTURE.md</code> amendment for full detail.</div>
+    <h3 id="config-hud"><code>config/fpsmod/hud.properties</code> <strong>(deprecated)</strong></h3>
     <p>Client-only: <code>showFpsHud=true|false</code> for the legacy FPS overlay. Read failures default to visible HUD for the session.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
@@ -687,12 +688,12 @@
     <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, and the FPS HUD stub.</div>
 
     <h2 id="client">Client features (detail)</h2>
-    <p>A legacy FPS counter and pause/inventory overlay toggle persists from the repository’s older template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). It is optional ornamentation for the owning client install and unrelated to civ economy semantics.</p>
+    <p><strong>Deprecated:</strong> The legacy FPS counter and overlay toggle from the repository's original template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). The standalone FPS overlay mod handles FPS display; no overlay code from Project OOGA registers on the HUD layer.</p>
 
     <h2 id="limits">Operational limits</h2>
     <ul>
       <li>One rewards config directory per launcher instance applies to integrated server usage; wallet file scope follows the same Fabric config root.</li>
-      <li><strong>Join onboarding vs welcome-back</strong> is tracked <strong>per world save</strong> (overworld saved data <code>fpsmod:join_attendance</code>), not in global <code>config/</code>—a <strong>new single-player world</strong> or <strong>new server map</strong> always gets the full first-join messages again for each player UUID.</li>
+      <li><strong>Join onboarding vs welcome-back</strong> is tracked <strong>per world save</strong> (overworld saved data <code>project_ooga:join_attendance</code>), not in global <code>config/</code>—a <strong>new single-player world</strong> or <strong>new server map</strong> always gets the full first-join messages again for each player UUID.</li>
       <li><code>/money set</code> is intentionally narrow: vanilla gamemaster permission only until a plugin-friendly permission layer ships (see <a href="#command-permissions">command permissions</a>).</li>
       <li>Tag-based payouts do not imply “worldgen-only” blocks; duplication farming is deferred to roadmap hardening.</li>
       <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
@@ -741,7 +742,7 @@
       <li>Install <strong>Fabric Loader <code>&gt;= 0.19.2</code></strong> for Minecraft <code>26.1.2</code>. The <a href="https://fabricmc.net/use/installer/">Fabric installer</a> handles this.</li>
       <li>Drop <strong>Fabric API</strong> (<code>0.146.1+26.1.2</code> or compatible) into your <code>mods/</code> folder.</li>
       <li>Drop the mod JAR (<code>project-ooga-1.0.0.jar</code>) into <code>mods/</code>.</li>
-      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>wallet.properties</code>); the FPS HUD alone uses <code>config/fpsmod/hud.properties</code> when toggled.</li>
+      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>wallet.properties</code>); the FPS HUD overlay is deprecated (handled by the standalone FPS mod).</li>
       <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, then restart.</li>
     </ol>
     <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets and payouts. Other players only need the JAR on their PC if they want the optional FPS HUD.</div>
@@ -770,7 +771,7 @@
     </dl>
     <dl>
       <dt>Changed</dt>
-      <dd><code>JoinWelcome</code>: first join per world save keeps the three-line onboarding; returning players get a styled welcome-back line plus a short <code>/otter</code> / <code>/money</code> tip (<code>JoinAttendanceSavedData</code>, id <code>fpsmod:join_attendance</code>).</dd>
+      <dd><code>JoinWelcome</code>: first join per world save keeps the three-line onboarding; returning players get a styled welcome-back line plus a short <code>/otter</code> / <code>/money</code> tip (<code>JoinAttendanceSavedData</code>, id <code>project_ooga:join_attendance</code>).</dd>
       <dd><code>/money set</code> requires <code>Permission.HasCommandLevel(GAMEMASTERS)</code> (vanilla gamemaster / OP band); <code>/money</code> read stays open. Planned: mod-specific permission apparatus—see <code>DOCS/ROADMAP.md</code>.</dd>
       <dd>Wallet file path: <code>config/otters_civ_revived/wallet.properties</code> (Otters Civ. config); legacy <code>config/fpsmod/wallet.properties</code> auto-migrates on first load. <code>config/fpsmod/</code> is FPS HUD only (<code>hud.properties</code>). File may include optional <code># Name:</code> lines above each <code>uuid=balance</code>.</dd>
       <dd><code>fabric.mod.json</code> environment changed from <code>client</code> to <code>*</code> to enable server command registration.</dd>

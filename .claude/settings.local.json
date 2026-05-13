@@ -51,7 +51,16 @@
       "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p /tmp/inspect/net/minecraft/client/gui/screens/Screen.class)",
       "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p /tmp/inspect/net/minecraft/client/gui/screens/PauseScreen.class)",
       "Bash(unzip -qo /c/Users/home/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.1.2/minecraft-merged-deobf-26.1.2.jar net/minecraft/client/gui/screens/PauseScreen.class)",
-      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p -c /tmp/inspect/net/minecraft/client/gui/screens/PauseScreen.class)"
+      "Bash('/c/Program Files/Android/Android Studio/jbr/bin/javap.exe' -p -c /tmp/inspect/net/minecraft/client/gui/screens/PauseScreen.class)",
+      "Bash(./gradlew.bat test *)",
+      "Bash(unzip -o \"/c/Users/home/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-common-deobf/26.1.2/minecraft-common-deobf-26.1.2.jar\" \"net/minecraft/network/protocol/common/custom/CustomPacketPayload.class\" \"net/minecraft/network/codec/ByteBufCodecs.class\")",
+      "Bash(\"/c/Program Files/Java/jdk-25.0.2/bin/javap.exe\" -public /tmp/mc-inspect/net/minecraft/network/protocol/common/custom/CustomPacketPayload.class)",
+      "Bash(\"/c/Program Files/Java/jdk-25.0.2/bin/javap.exe\" -public /tmp/mc-inspect/net/minecraft/network/codec/ByteBufCodecs.class)",
+      "Bash(./gradlew.bat compileJava compileClientJava --no-daemon)",
+      "Bash(unzip -p \"/c/Users/home/.gradle/caches/modules-2/files-2.1/net.fabricmc.fabric-api/fabric-networking-api-v1/6.3.0+50a808ce4c/2ba716f3fff36dd84f6498e8c067545922ae370/fabric-networking-api-v1-6.3.0+50a808ce4c.jar\" \"net/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry.class\")",
+      "Bash(\"/c/Program Files/Java/jdk-25.0.2/bin/javap.exe\" -public /tmp/ptr2.class)",
+      "Bash(xargs -I{} unzip -p \"{}\" \"net/fabricmc/fabric/api/client/rendering/v1/hud/VanillaHudElements.class\")",
+      "Bash(\"/c/Program Files/Java/jdk-25.0.2/bin/javap.exe\" -public /tmp/vhe.class)"
     ]
   }
 }

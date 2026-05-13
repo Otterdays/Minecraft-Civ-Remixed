@@ -76,13 +76,16 @@ public final class RewardOrchestrator {
             return;
         }
 
-        long payout = resolvedBlockReward(state);
-        if (payout <= 0L) {
+        long basePayout = resolvedBlockReward(state);
+        if (basePayout <= 0L) {
             return;
         }
         if (!pastCooldown(lastBlockRewardMs, player.getUUID(), rules.blockCooldownMs)) {
             return;
         }
+
+        RewardContext preCtx = new RewardContext(RewardReason.BLOCK_BREAK, basePayout, state, null);
+        long payout = Math.max(0L, jobsHooks.multiplyPayout(player, preCtx, basePayout));
 
         wallets.addBalance(player.getUUID(), payout, player.getName().getString());
         jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
@@ -117,7 +120,7 @@ public final class RewardOrchestrator {
         if (!loggedInvalidBlockTag) {
             loggedInvalidBlockTag = true;
             if (rules.blockReward > 0L) {
-                com.fpsmod.FpsMod.LOGGER.warn(
+                com.fpsmod.OogaMod.LOGGER.warn(
                     "[otters_civ_revived] Invalid block tag {}; mining fallback via blockTag/blockReward disabled",
                     rules.blockTag
                 );
@@ -137,14 +140,17 @@ public final class RewardOrchestrator {
         }
 
         EntityType<?> type = victim.getType();
-        long payout = resolvedEntityReward(level, type);
-        if (payout <= 0L) {
+        long basePayout = resolvedEntityReward(level, type);
+        if (basePayout <= 0L) {
             return;
         }
 
         if (!pastCooldown(lastEntityRewardMs, killer.getUUID(), rules.entityCooldownMs)) {
             return;
         }
+
+        RewardContext preCtx = new RewardContext(RewardReason.MOB_KILL, basePayout, null, type);
+        long payout = Math.max(0L, jobsHooks.multiplyPayout(killer, preCtx, basePayout));
 
         wallets.addBalance(killer.getUUID(), payout, killer.getName().getString());
         jobsHooks.onEconomyReward(
@@ -182,7 +188,7 @@ public final class RewardOrchestrator {
         if (!loggedInvalidEntityTag) {
             loggedInvalidEntityTag = true;
             if (rules.entityReward > 0L) {
-                com.fpsmod.FpsMod.LOGGER.warn(
+                com.fpsmod.OogaMod.LOGGER.warn(
                     "[otters_civ_revived] Invalid entity tag {}; combat fallback via entityTag/entityReward disabled",
                     rules.entityTag
                 );

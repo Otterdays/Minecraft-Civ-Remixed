@@ -1,5 +1,12 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-12]:
+- **Mod ID changed** from `fpsmod` to `project_ooga` to avoid mod ID conflict with the standalone FPS overlay mod (the original template this project was forked from). Both mods can now coexist in the same modpack.
+- **FPS HUD overlay deprecated and disabled** (`FpsHudOverlay`, `FpsHudScreenButton`, `FpsHudConfig` in `src/client/java/com/fpsmod/client/`). The standalone FPS overlay mod handles FPS display.
+- Networking/saved-data namespaces updated: `fpsmod:job_status` → `project_ooga:job_status`, `fpsmod:join_attendance` → `project_ooga:join_attendance`.
+- Icon moved: `src/main/resources/assets/fpsmod/icon.png` → `src/main/resources/assets/project_ooga/icon.png`.
+- Package names remain `com.fpsmod.*` (internal only, do not cause mod ID conflicts).
+
 [AMENDED 2026-05-07]:
 - Repository moved to `https://github.com/Otterdays/Minecraft-Civ-Remixed`.
 - Project codename is now "Project OOGA".
@@ -72,6 +79,23 @@ Use this as the first stop for quick discovery.
 
 [AMENDED 2026-05-11]:
 - Runtime wallet path: **`config/otters_civ_revived/wallet.properties`** (`FileWalletStore`); migrate-from legacy **`config/fpsmod/wallet.properties`** once if present. Optional **`# Name:`** plaintext lines precede **`uuid=balance`**; persist via **`WalletService`** (`WalletLedger` load/save).
+
+[AMENDED 2026-05-12 — `/otter` all-inclusive UI]:
+- **`OttersCivScreen` (client)** carries every roadmap surface. Tab enum: `HOME / WALLET / JOBS / REWARDS / CIV / HELP`. Panel 480×268, sidebar 132. `Status` enum (LIVE/PARTIAL/SOON/FUTURE) + `drawBadge` + `drawCommandRow` + `drawMilestone` helpers. HOME paints a 7-segment M0–M6 strip; CIV stacks M3–M6 cards; WALLET/REWARDS/HELP enumerate shipped + roadmap commands with chips. Quick-action key `action:jobs` jumps to the JOBS tab from HOME.
+
+[AMENDED 2026-05-12 — jobs HUD bar]:
+- **Server→client sync:** `src/main/java/com/fpsmod/jobs/net/JobStatusPayload.java` (record, `CustomPacketPayload.createType("fpsmod:job_status")`, `StreamCodec.composite` codec), `JobsNetworking.java` (registers on `PayloadTypeRegistry.clientboundPlay()`, hooks `ServerPlayConnectionEvents.JOIN`, exposes `sendStatusFor`). `JobsService.setStatusListener(Consumer<ServerPlayer>)` keeps the service module networking-agnostic — `FpsMod.onInitialize` wires the listener after building both.
+- **Client side:** `src/client/java/com/fpsmod/client/jobs/` — `JobsClientState` (volatile latest payload), `JobsClientNetworking` (registers payload + receiver), `JobsHudConfig` (`config/fpsmod/jobs_hud.properties`: visible/offsetX/offsetY/scale; clamps 0.75–2.0 scale, ±400 px offsets), `JobsHudOverlay` (attaches after `VanillaHudElements.EXPERIENCE_LEVEL` — `EXPERIENCE_BAR` field does NOT exist in fabric-rendering-v1 of this release; available ids: HOTBAR, EXPERIENCE_LEVEL, INFO_BAR, etc.).
+- **UI controls:** `OttersCivScreen` JOBS tab — toggle/reset + X/Y/scale nudge buttons + `/job`, `/job list` shortcut buttons. Action keys prefixed `jobs:` route through `handleJobsAction(String)`.
+- **Fabric API method names (this version, do not regress):** `PayloadTypeRegistry.clientboundPlay()` / `serverboundPlay()` (not `playS2C`/`playC2S`); `ClientPlayNetworking.registerGlobalReceiver(TYPE, (payload, context) -> {})`; `ServerPlayNetworking.send(serverPlayer, payload)`.
+
+[AMENDED 2026-05-12 — jobs MVP]:
+- **Jobs package:** `src/main/java/com/fpsmod/jobs/` — `Job` enum (slug + tag id + Kind.BLOCK/ENTITY), `JobsConfig` (xp curve + multiplier, level cap 50), `JobState` (active slot + EnumMap XP), `JobsLedger` record, `JobsStore` interface, `FileJobsStore` (UUID-keyed properties at `config/otters_civ_revived/jobs.properties`), `JobsService` (impl of `JobsHooks` w/ `multiplyPayout` + `onEconomyReward`; per-job id-set cache refreshed on SERVER_STARTED + END_DATA_PACK_RELOAD).
+- **Command:** `src/main/java/com/fpsmod/command/JobCommand.java` — `/job`, `/job list|stats|leave`, `/job join <slug>` (brigadier suggestions over the 4 slugs).
+- **`JobsHooks` interface** (`com.fpsmod.ottersciv.reward.JobsHooks`) now has default `multiplyPayout(player, ctx, basePayout)` → returns base by default; `NO_OP` still safe for tests/no-jobs deployments. `RewardOrchestrator.onBlockBroken` / `onMobKilled` call the multiplier between payout-resolution and `wallets.addBalance`.
+- **Bundled job tags (singular dirs):** `src/main/resources/data/otters_civ_revived/tags/block/job/miner_blocks.json`, `lumberjack_blocks.json`, `farmer_blocks.json`; `tags/entity_type/job/fighter_mobs.json` (currently `#otters_civ_revived:currency_mobs`).
+- **Wiring:** `FpsMod.onInitialize` builds `JobsService.createDefault()`, hands it to `OttersCivGameplay.register(wallets, rules, jobsHooks)`, registers `JobCommand`, calls `jobsService.refresh(server)` from `onLogicalServerFullyStarted`.
+- **Test:** `src/test/java/com/fpsmod/jobs/JobsConfigTest.java` (curve monotonicity + round-trip + multiplier clamp + state add/active).
 
 [AMENDED 2026-05-11 — root-cause pass]:
 - **Bundled-tag resource paths are SINGULAR (MC 1.21+ requirement):**

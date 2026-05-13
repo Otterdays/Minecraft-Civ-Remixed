@@ -1,8 +1,11 @@
 package com.fpsmod;
 
+import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.jobs.JobsService;
+import com.fpsmod.jobs.net.JobsNetworking;
 import com.fpsmod.ottersciv.OttersCivGameplay;
 import com.fpsmod.ottersciv.config.RewardRules;
 import com.fpsmod.ottersciv.config.RewardRulesLoader;
@@ -15,10 +18,16 @@ import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FpsMod implements ModInitializer {
-    public static final String MOD_ID = "fpsmod";
+public class OogaMod implements ModInitializer {
+    /**
+     * Mod ID for Fabric Loader and logging. Changed from {@code fpsmod} to
+     * {@code project_ooga} so this mod does not conflict with the standalone FPS
+     * overlay mod it was originally forked from.
+     */
+    public static final String MOD_ID = "project_ooga";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static WalletService walletService;
+    private static JobsService jobsService;
     private static RewardOrchestrator ottersRewardGameplay;
     private static final String EMOJI_DEBUG = "🔍";
     private static final String EMOJI_OK = "✅";
@@ -42,10 +51,15 @@ public class FpsMod implements ModInitializer {
             + ", modVersion=" + modVersion);
 
         walletService = WalletService.createDefault();
+        jobsService = JobsService.createDefault();
         RewardRules bootstrapRules = RewardRulesLoader.loadBootstrapRewards();
-        ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules);
+        ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules, jobsService);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(FpsMod::onLogicalServerFullyStarted);
+        // Network wiring (server-side payload type + join sync + post-mutation push).
+        JobsNetworking.registerServer(jobsService);
+        jobsService.setStatusListener(player -> JobsNetworking.sendStatusFor(jobsService, player));
+
+        ServerLifecycleEvents.SERVER_STARTED.register(OogaMod::onLogicalServerFullyStarted);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
             (server, resourceManager, success) -> {
                 if (success) {
@@ -57,6 +71,7 @@ public class FpsMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             OtterCommand.register(dispatcher);
             MoneyCommand.register(dispatcher, walletService);
+            JobCommand.register(dispatcher, jobsService);
         });
 
         // Keep this startup heartbeat obvious so template users can quickly confirm load order.
@@ -79,6 +94,9 @@ public class FpsMod implements ModInitializer {
             if (ottersRewardGameplay != null) {
                 ottersRewardGameplay.replaceRules(finalized);
             }
+            if (jobsService != null) {
+                jobsService.refresh(server);
+            }
         } catch (RuntimeException e) {
             LOGGER.error("[otters_civ_revived] Reward config hydrate failed — mining/kill payouts may be incomplete.", e);
         }
@@ -86,5 +104,9 @@ public class FpsMod implements ModInitializer {
 
     public static WalletService walletService() {
         return walletService;
+    }
+
+    public static JobsService jobsService() {
+        return jobsService;
     }
 }

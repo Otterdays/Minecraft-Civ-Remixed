@@ -6,6 +6,11 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+/**
+ * @deprecated Companion to {@link FpsHudOverlay} — also disabled. The standalone
+ * FPS overlay mod provides its own toggle.
+ */
+@Deprecated(since = "1.0.0", forRemoval = true)
 public final class FpsHudScreenButton {
     private static final int X = 6;
     private static final int Y = 6;

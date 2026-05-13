@@ -1,5 +1,7 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-13]: Mod ID changed from `fpsmod` to `project_ooga` — resolves mod ID conflict with the standalone FPS overlay mod (the original template). Entrypoint classes renamed from `FpsMod`/`FpsModClient` to `OogaMod`/`ProjectOogaClient` (class name collision fix). Legacy FPS HUD deprecated and disabled — the standalone FPS overlay mod now handles FPS display. Networking namespaces: `project_ooga:job_status`, `project_ooga:join_attendance`. Jobs M2 first slice shipped (4 jobs, `/job` commands, XP/level, payout multiplier, HUD overlay). Crash-safe atomic file writes for all configs. See `DOCS/CHANGELOG.md` and repo `DOCS/` for full details below.
+
 [AMENDED 2026-05-11]: Canonical path restored under `DOCS/` (tooling & docs reference `DOCS/modrinth-description.md`). A parallel copy may exist under `DOCS/Ryan-Made-Docs/`; prefer this path for CI and automation.
 
 [AMENDED 2026-05-11]: README + `index.html` add a short **Words we use** gloss (player name vs **Project OOGA** vs `fpsmod`; “server” = whoever hosts the world; tags vs optional `blockRewards` / `entityRewards`). Modrinth listing content below is unchanged in behavior—see repo for the full glossary.

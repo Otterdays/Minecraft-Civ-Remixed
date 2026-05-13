@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "fpsmod",
+  "id": "project_ooga",
   "version": "${version}",
   "name": "Project OOGA: Civ Remixed",
-  "description": "Otters Civ. Revived — codename Project OOGA (id: fpsmod). Economy, payouts, chat /money /otter help. ARR + mod pack & video carve-outs — see LICENSE.",
+  "description": "Otters Civ. Revived — codename Project OOGA. Economy, payouts, jobs, chat /money /otter help. ARR + mod pack & video carve-outs — see LICENSE.",
   "authors": [
     "otterdays"
   ],
@@ -13,14 +13,14 @@
     "issues": "https://github.com/Otterdays/Minecraft-Civ-Remixed/issues"
   },
   "license": "LicenseRef-All-Rights-Reserved",
-  "icon": "assets/fpsmod/icon.png",
+  "icon": "assets/project_ooga/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.fpsmod.FpsMod"
+      "com.fpsmod.OogaMod"
     ],
     "client": [
-      "com.fpsmod.FpsModClient"
+      "com.fpsmod.ProjectOogaClient"
     ]
   },
   "depends": {

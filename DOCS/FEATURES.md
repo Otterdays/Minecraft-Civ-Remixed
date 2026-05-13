@@ -1,5 +1,8 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-13]:
+- **FPS HUD is fully deprecated and disabled.** Mod ID changed from `fpsmod` to `project_ooga`. Entrypoint classes renamed from `FpsMod`/`FpsModClient` to `OogaMod`/`ProjectOogaClient` (class name collision with standalone FPS overlay mod). The section below is kept for historical reference only — the standalone FPS overlay mod handles FPS display. See `DOCS/CHANGELOG.md` and `DOCS/ARCHITECTURE.md` for full details.
+
 [AMENDED 2026-05-07]:
 - Feature scope above documents the legacy FPS template module.
 - New target scope is the civ platform in `whitepaper.md`:

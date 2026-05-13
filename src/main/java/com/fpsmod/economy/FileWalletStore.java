@@ -1,9 +1,9 @@
 package com.fpsmod.economy;
 
-import com.fpsmod.FpsMod;
+import com.fpsmod.OogaMod;
+import com.fpsmod.io.AtomicFileWriter;
 import net.fabricmc.loader.api.FabricLoader;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,9 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileWalletStore implements WalletStore {
-    /** Otters Civ. economy config (same folder as {@code rewards.json}). */
     private static final String CONFIG_FOLDER = "otters_civ_revived";
-    /** Grandfathered FPS mod id folder—only {@code hud.properties} belongs there now. */
     private static final String LEGACY_CONFIG_FOLDER = "fpsmod";
     private static final String FILE_NAME = "wallet.properties";
 
@@ -32,30 +30,42 @@ public class FileWalletStore implements WalletStore {
     private final Path filePath;
 
     public FileWalletStore() {
-        Path configDir = FabricLoader.getInstance().getConfigDir().resolve(CONFIG_FOLDER);
-        this.filePath = configDir.resolve(FILE_NAME);
+        this(FabricLoader.getInstance().getConfigDir().resolve(CONFIG_FOLDER).resolve(FILE_NAME));
     }
 
-    /** If the new path is empty but a legacy {@code config/fpsmod/wallet.properties} exists, move it once. */
+    FileWalletStore(Path explicit) {
+        this.filePath = explicit;
+    }
+
     private void migrateLegacyWalletIfNeeded() {
         if (Files.exists(filePath)) {
             return;
         }
-        Path legacy =
-            FabricLoader.getInstance().getConfigDir().resolve(LEGACY_CONFIG_FOLDER).resolve(FILE_NAME);
+        Path legacy;
+        try {
+            legacy = FabricLoader.getInstance().getConfigDir()
+                .resolve(LEGACY_CONFIG_FOLDER).resolve(FILE_NAME);
+        } catch (RuntimeException e) {
+            // FabricLoader not available (e.g. test environment)
+            return;
+        }
         if (!Files.isRegularFile(legacy)) {
             return;
         }
         try {
+            byte[] content = Files.readAllBytes(legacy);
             Files.createDirectories(filePath.getParent());
-            Files.move(legacy, filePath);
-            FpsMod.LOGGER.info(
+            AtomicFileWriter.writeAtomically(filePath, w -> {
+                w.write(new String(content, StandardCharsets.UTF_8));
+            });
+            Files.delete(legacy);
+            OogaMod.LOGGER.info(
                 "[otters_civ_revived] Migrated {} to {} (economy config lives with Otters Civ., not FPS HUD)",
                 legacy,
                 filePath
             );
         } catch (IOException e) {
-            FpsMod.LOGGER.warn(
+            OogaMod.LOGGER.warn(
                 "[otters_civ_revived] Could not migrate legacy wallet from {} to {} — check permissions or move manually",
                 legacy,
                 filePath,
@@ -67,7 +77,7 @@ public class FileWalletStore implements WalletStore {
     private static Map<UUID, Long> parseLegacyPropertiesFormat(Path path) throws IOException {
         Map<UUID, Long> balances = new HashMap<>();
         java.util.Properties properties = new java.util.Properties();
-        try (java.io.InputStream inputStream = Files.newInputStream(path)) {
+        try (var inputStream = Files.newInputStream(path)) {
             properties.load(inputStream);
         }
         for (String key : properties.stringPropertyNames()) {
@@ -76,7 +86,7 @@ public class FileWalletStore implements WalletStore {
                 long balance = Long.parseLong(properties.getProperty(key));
                 balances.put(playerId, balance);
             } catch (IllegalArgumentException e) {
-                FpsMod.LOGGER.warn(
+                OogaMod.LOGGER.warn(
                     "[otters_civ_revived] Skipping invalid wallet entry key={} value={}",
                     key,
                     properties.getProperty(key)
@@ -123,6 +133,7 @@ public class FileWalletStore implements WalletStore {
 
     @Override
     public WalletLedger load() {
+        AtomicFileWriter.deleteStaleTemp(filePath);
         migrateLegacyWalletIfNeeded();
 
         if (!Files.exists(filePath)) {
@@ -137,7 +148,7 @@ public class FileWalletStore implements WalletStore {
             Map<UUID, Long> legacyBalances = parseLegacyPropertiesFormat(filePath);
             return new WalletLedger(legacyBalances, Map.of());
         } catch (IOException e) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] Failed to read wallet store at {}", filePath, e);
+            OogaMod.LOGGER.warn("[otters_civ_revived] Failed to read wallet store at {}", filePath, e);
             return WalletLedger.empty();
         }
     }
@@ -152,7 +163,7 @@ public class FileWalletStore implements WalletStore {
 
         try {
             Files.createDirectories(filePath.getParent());
-            try (BufferedWriter w = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
+            AtomicFileWriter.writeAtomicallyWithBackup(filePath, w -> {
                 w.write("# Project OOGA wallet balances");
                 w.newLine();
                 w.write("# UUID=balance is authoritative. Lines \"# Name: ...\" above an entry are plain-text hints.");
@@ -170,9 +181,9 @@ public class FileWalletStore implements WalletStore {
                     w.write(Long.toString(e.getValue()));
                     w.newLine();
                 }
-            }
+            });
         } catch (IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Failed to write wallet store at {}", filePath, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Failed to write wallet store at {}", filePath, e);
         }
     }
 

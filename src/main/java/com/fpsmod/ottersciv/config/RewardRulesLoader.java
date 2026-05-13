@@ -1,6 +1,7 @@
 package com.fpsmod.ottersciv.config;
 
-import com.fpsmod.FpsMod;
+import com.fpsmod.OogaMod;
+import com.fpsmod.io.AtomicFileWriter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -55,16 +56,16 @@ public final class RewardRulesLoader {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Failed to create config directory {}", dir, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Failed to create config directory {}", dir, e);
             return defaults;
         }
 
         if (!Files.exists(path)) {
             try {
                 writeDefaults(path, defaults);
-                FpsMod.LOGGER.info("[otters_civ_revived] Created default rewards config at {}", path);
+                OogaMod.LOGGER.info("[otters_civ_revived] Created default rewards config at {}", path);
             } catch (IOException e) {
-                FpsMod.LOGGER.error("[otters_civ_revived] Failed to write default rewards config", e);
+                OogaMod.LOGGER.error("[otters_civ_revived] Failed to write default rewards config", e);
             }
             return defaults;
         }
@@ -75,7 +76,7 @@ public final class RewardRulesLoader {
             sanitizeTags(loaded);
             return loaded;
         } catch (JsonParseException | IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Failed to read {}; using defaults", path, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Failed to read {}; using defaults", path, e);
             return RewardRules.defaults();
         }
     }
@@ -93,18 +94,18 @@ public final class RewardRulesLoader {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Failed to prepare config dir {}", dir, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Failed to prepare config dir {}", dir, e);
             return defaults;
         }
 
         if (!Files.exists(path)) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] finalize: missing {}; using coded defaults once", path);
+            OogaMod.LOGGER.warn("[otters_civ_revived] finalize: missing {}; using coded defaults once", path);
             loaded = RewardRules.defaults();
         } else {
             try (Reader reader = Files.newBufferedReader(path)) {
                 loaded = parseRewardsJson(reader, defaults, path.toAbsolutePath().normalize().toString());
             } catch (JsonParseException | IOException e) {
-                FpsMod.LOGGER.error(
+                OogaMod.LOGGER.error(
                     "[otters_civ_revived] finalize: failed reading {}; using defaults for this session",
                     path,
                     e
@@ -121,7 +122,7 @@ public final class RewardRulesLoader {
 
         ServerLevel level = server.overworld();
         if (level == null) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] finalize: overworld unavailable; tag expansion skipped");
+            OogaMod.LOGGER.warn("[otters_civ_revived] finalize: overworld unavailable; tag expansion skipped");
         }
 
         LinkedHashMap<String, Long> tier1Blocks = level == null ? new LinkedHashMap<>()
@@ -185,14 +186,14 @@ public final class RewardRulesLoader {
         if (!siblingHadKeys) {
             try {
                 persistSortedLongMapJson(siblingOut, merged);
-                FpsMod.LOGGER.info(
+                OogaMod.LOGGER.info(
                     "[otters_civ_revived] Prefilled {} {} entries ({}) — edit amounts without touching tags.",
                     merged.size(),
                     siblingOut.getFileName(),
                     label
                 );
             } catch (IOException e) {
-                FpsMod.LOGGER.error("[otters_civ_revived] Could not persist {}", siblingOut, e);
+                OogaMod.LOGGER.error("[otters_civ_revived] Could not persist {}", siblingOut, e);
             }
         }
 
@@ -212,7 +213,7 @@ public final class RewardRulesLoader {
             );
             return mapped != null ? mapped : Collections.emptyMap();
         } catch (JsonParseException | IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Could not parse {}; ignoring", file, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Could not parse {}; ignoring", file, e);
             return Collections.emptyMap();
         }
     }
@@ -223,7 +224,8 @@ public final class RewardRulesLoader {
             Files.createDirectories(parent);
         }
         TreeMap<String, Long> sorted = new TreeMap<>(merged);
-        Files.writeString(path, GSON.toJson(sorted) + System.lineSeparator());
+        String json = GSON.toJson(sorted) + System.lineSeparator();
+        AtomicFileWriter.writeAtomically(path, w -> w.write(json));
     }
 
     /**
@@ -249,7 +251,7 @@ public final class RewardRulesLoader {
             // When the whole JSON file is rejected (non-object), parseIdLongMap returns empty map.
             destination.putAll(overlay);
         } catch (JsonParseException | IOException e) {
-            FpsMod.LOGGER.error("[otters_civ_revived] Failed to read value overlay {}; ignoring", file, e);
+            OogaMod.LOGGER.error("[otters_civ_revived] Failed to read value overlay {}; ignoring", file, e);
         }
     }
 
@@ -258,7 +260,7 @@ public final class RewardRulesLoader {
         throws JsonParseException {
         JsonElement root = com.google.gson.JsonParser.parseReader(reader);
         if (root == null || !root.isJsonObject()) {
-            FpsMod.LOGGER.warn("[otters_civ_revived] rewards.json root must be an object; using defaults");
+            OogaMod.LOGGER.warn("[otters_civ_revived] rewards.json root must be an object; using defaults");
             return defaults;
         }
         JsonObject jo = root.getAsJsonObject();
@@ -319,7 +321,7 @@ public final class RewardRulesLoader {
             return canonical;
         }
         if (!elem.isJsonObject()) {
-            FpsMod.LOGGER.warn(
+            OogaMod.LOGGER.warn(
                 "[otters_civ_revived] {}: {} must be a JSON object; ignoring",
                 fileLabel,
                 fieldName
@@ -331,7 +333,7 @@ public final class RewardRulesLoader {
             String keyTrim = entry.getKey() != null ? entry.getKey().trim() : "";
             Identifier id = Identifier.tryParse(keyTrim);
             if (id == null) {
-                FpsMod.LOGGER.warn(
+                OogaMod.LOGGER.warn(
                     "[otters_civ_revived] {}: skipping invalid {} key \"{}\"",
                     fileLabel,
                     fieldName,
@@ -359,7 +361,7 @@ public final class RewardRulesLoader {
         } catch (NumberFormatException | UnsupportedOperationException | ClassCastException ignored) {
             // fall through
         }
-        FpsMod.LOGGER.warn("[otters_civ_revived] skipping non-numeric reward for key \"{}\"", keyForLog);
+        OogaMod.LOGGER.warn("[otters_civ_revived] skipping non-numeric reward for key \"{}\"", keyForLog);
         return 0L;
     }
 
@@ -415,6 +417,7 @@ public final class RewardRulesLoader {
     }
 
     private static void writeDefaults(Path path, RewardRules rules) throws IOException {
-        Files.writeString(path, GSON.toJson(rules) + System.lineSeparator());
+        String json = GSON.toJson(rules) + System.lineSeparator();
+        AtomicFileWriter.writeAtomically(path, w -> w.write(json));
     }
 }

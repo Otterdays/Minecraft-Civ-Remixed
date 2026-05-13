@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class FpsModTest {
+class OogaModTest {
     @Test
     void modIdStaysStableForMetadataAndLogging() {
-        assertEquals("fpsmod", FpsMod.MOD_ID);
+        assertEquals("project_ooga", OogaMod.MOD_ID);
     }
 }

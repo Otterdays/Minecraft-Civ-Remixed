@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
+import com.fpsmod.OogaMod;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -30,7 +31,7 @@ public final class JoinAttendanceSavedData extends SavedData {
 
     public static final SavedDataType<JoinAttendanceSavedData> TYPE =
         new SavedDataType<>(
-            Identifier.fromNamespaceAndPath("fpsmod", "join_attendance"),
+            Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "join_attendance"),
             JoinAttendanceSavedData::new,
             CODEC,
             DataFixTypes.SAVED_DATA_COMMAND_STORAGE

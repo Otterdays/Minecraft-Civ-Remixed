@@ -21,6 +21,8 @@ public final class OtterCommand {
         sendLine(source, "/otter — show this list");
         sendLine(source, "/money — show your wallet balance");
         sendLine(source, "/money set <player> <amount> — set balance (gamemaster / OP-band only; roadmap: custom permission nodes)");
+        sendLine(source, "/job — show your jobs/levels   /job list   /job join <name>   /job leave");
+        sendLine(source, "Jobs (MVP): miner · lumberjack · farmer · fighter. One active slot. XP from matching events. Payout ×1.0→×2.0 at lvl 0→50.");
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
         sendLine(source, "Mining + combat payouts: config/otters_civ_revived/rewards.json (tags + cooldowns + …)");

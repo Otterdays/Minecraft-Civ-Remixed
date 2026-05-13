@@ -2,11 +2,14 @@
 
 # SUMMARY
 
-## Project Snapshot (2026-05-07)
+## Project Snapshot (2026-05-13)
 - Codename: Project OOGA
 - Repository: `https://github.com/Otterdays/Minecraft-Civ-Remixed`
-- Current baseline: Fabric FPS template code still present
-- Strategic direction: all-in-one civ mod suite (factions/jobs/professions/economy/player shops)
+- Mod ID: `project_ooga` (changed from `fpsmod` to avoid conflict with standalone FPS overlay mod)
+- Entrypoint classes: `OogaMod` / `ProjectOogaClient` (renamed to avoid class name collision)
+- Shipping: economy wallet, mining/combat rewards, 4 jobs, join welcome, crash-safe persistence, in-game `/otter` hub, jobs HUD overlay
+- Legacy FPS HUD: **deprecated & disabled** (standalone FPS overlay mod handles display)
+- Docs parity: `index.html` (repo root) is the canonical offline reference
 
 ## Quick Links
 - Agent handbooks: **`AGENTS.md`** (Cursor / universal), **`CLAUDE.md`** (Claude Code shim → full detail in **`AGENTS.md`**)
@@ -26,6 +29,15 @@
 2. Jobs/professions progression loop.
 3. Factions and land-claim control boundary.
 4. Player-shop market loop and admin controls.
+
+[AMENDED 2026-05-12 — `/otter` covers full roadmap]:
+- **In-game hub surfaces every milestone.** HOME paints the M0–M6 progress strip (PARTIAL/PARTIAL/SHIPPED/PLANNED/PLANNED/FUTURE/FUTURE). Tabs: HOME · WALLET · JOBS · REWARDS · CIV · HELP. WALLET/REWARDS/HELP enumerate shipped + planned commands as `[chip] /cmd · note` rows (chips: LIVE/PARTIAL/SOON/FUTURE). CIV stacks 4 milestone cards (M3 Factions & Claims, M4 Player Shops, M5 Governance, M6 Stabilization & Scale). Panel 480×268.
+
+[AMENDED 2026-05-12 — jobs HUD]:
+- **In-game job bar.** Compact bar above vanilla XP showing icon + slug + level + XP fill (gold gradient). Server pushes `JobStatusPayload` on join/job-change/reward. Client mirror + HUD overlay. Operator-tunable via `/otter` → Jobs tab (visible toggle, X/Y nudge, scale ±, reset, `/job` shortcuts). Persistence `config/fpsmod/jobs_hud.properties`. BMP-only icons (⛏▲✿⚔) for unifont compatibility.
+
+[AMENDED 2026-05-12 — jobs MVP]:
+- **Jobs/professions M2 first slice shipped.** Fixed-set: miner / lumberjack / farmer / fighter. One active slot. XP only on matching block-break / mob-kill events; level curve `100 * L^1.5` cap 50; payout multiplier `1.0 + L/50`. Commands `/job`, `/job list|join|leave|stats`. Persistence `config/otters_civ_revived/jobs.properties` (UUID.active=<slug>, UUID.xp.<slug>=N). Bundled tags `otters_civ_revived:job/{miner,lumberjack,farmer}_blocks` + `fighter_mobs` (singular `tags/block/` · `tags/entity_type/` dirs). New package `com.fpsmod.jobs`; `JobsHooks` interface gained `multiplyPayout` stage; `RewardOrchestrator` calls it pre-`addBalance`. Lessons + paths in `DOCS/LOCATIONS.md` + `DOCS/ARCHITECTURE.md`.
 
 [AMENDED 2026-05-12]:
 - **`currency_blocks` tag expanded to ~260+ blocks** (was ~23). Covers all breakable vanilla block categories: stone/brick variants, ores, dirt/sand/gravel/clay, logs/leaves/planks, wool, all 16-color sets (terracotta/glazed/concrete/concrete_powder/stained_glass), sandstone, nether set, end blocks, copper permutations, ore storage blocks, organics, sculk, utility blocks. Source: `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json`. Uses `#minecraft:` tags for logs/leaves/planks/wool/dirt/sand/ice/coral_blocks; individual entries elsewhere. All default to flat `blockReward` (1) — operators tune in `block_values.json`.
