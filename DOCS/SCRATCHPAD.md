@@ -3,6 +3,7 @@
 # SCRATCHPAD
 
 ## Active Tasks (Newest First)
+- [2026-05-13] **Prism icon updated:** replaced the packaged mod icon at `src/main/resources/assets/project_ooga/icon.png` with the user-provided otter art from `images/Icon_optimized-edited.jpg` (converted to PNG so the jar resource path stays the same). Also corrected the stale Prism/MultiMC icon path note in `DOCS/LOCATIONS.md`.
 - [2026-05-13] **Coverage copy pass:** updated `DOCS/modrinth-description.md`, `README.md`, `index.html`, and `DOCS/SUMMARY.md` to state the reward-surface story more clearly: broad current vanilla block/living-entity coverage out of the box, with future blocks/mobs handled through the same tag + value-file model.
 - [2026-05-13] **Sulfur cube included:** added `minecraft:sulfur_cube` to both bundled entity tags as an optional `required: false` entry so the id is present for future reward/entity-value prefills without breaking the current runtime. Docs amended to stop claiming all upcoming-only ids are excluded.
 - [2026-05-13] **Broad entity reward prefill:** expanded the bundled default reward entity tag so `entity_values.json` now seeds from a much wider living-entity roster instead of only hostiles. Added `src/main/resources/data/otters_civ_revived/tags/entity_type/hostile_mobs.json` and repointed `job/fighter_mobs.json` there so fighter XP stays hostile-only while the economy reward sheet becomes much more editable out of the box. Updated join/help/docs wording from "hostile mobs" to broader "rewarded entities" where needed.

@@ -37,7 +37,7 @@ Use this as the first stop for quick discovery.
 ## Mod metadata + wiring
 
 - Mod metadata and entrypoints: `src/main/resources/fabric.mod.json` (`environment: client` → Mod Menu **Client** badge; `contact.issues` → Mod Menu **Issues** link; optional `suggests.modmenu` for nicer in-game mod list when Mod Menu is installed)
-- Prism/MultiMC mod icon asset: `src/main/resources/assets/fpsmod/icon.png`
+- Prism/MultiMC mod icon asset: `src/main/resources/assets/project_ooga/icon.png`
 - Readme-only cropped icon (not packaged in the mod JAR): `readme-assets/icon_modrinth_cropped.png`
 - Mod id constant: `FpsMod.MOD_ID` in `src/main/java/com/fpsmod/FpsMod.java`
 - Client entrypoint target class: `com.fpsmod.FpsModClient` in `fabric.mod.json`
