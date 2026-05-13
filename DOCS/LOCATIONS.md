@@ -98,7 +98,7 @@ Use this as the first stop for quick discovery.
 - **Jobs package:** `src/main/java/com/fpsmod/jobs/` — `Job` enum (slug + tag id + Kind.BLOCK/ENTITY), `JobsConfig` (xp curve + multiplier, level cap 50), `JobState` (active slot + EnumMap XP), `JobsLedger` record, `JobsStore` interface, `FileJobsStore` (UUID-keyed properties at `config/otters_civ_revived/jobs.properties`), `JobsService` (impl of `JobsHooks` w/ `multiplyPayout` + `onEconomyReward`; per-job id-set cache refreshed on SERVER_STARTED + END_DATA_PACK_RELOAD).
 - **Command:** `src/main/java/com/fpsmod/command/JobCommand.java` — `/job`, `/job list|stats|leave`, `/job join <slug>` (brigadier suggestions over the 4 slugs).
 - **`JobsHooks` interface** (`com.fpsmod.ottersciv.reward.JobsHooks`) now has default `multiplyPayout(player, ctx, basePayout)` → returns base by default; `NO_OP` still safe for tests/no-jobs deployments. `RewardOrchestrator.onBlockBroken` / `onMobKilled` call the multiplier between payout-resolution and `wallets.addBalance`.
-- **Bundled job tags (singular dirs):** `src/main/resources/data/otters_civ_revived/tags/block/job/miner_blocks.json`, `lumberjack_blocks.json`, `farmer_blocks.json`; `tags/entity_type/job/fighter_mobs.json` (currently `#otters_civ_revived:currency_mobs`).
+- **Bundled job tags (singular dirs):** `src/main/resources/data/otters_civ_revived/tags/block/job/miner_blocks.json`, `lumberjack_blocks.json`, `farmer_blocks.json`; `tags/entity_type/job/fighter_mobs.json` (currently `#otters_civ_revived:hostile_mobs`).
 - **Wiring:** `FpsMod.onInitialize` builds `JobsService.createDefault()`, hands it to `OttersCivGameplay.register(wallets, rules, jobsHooks)`, registers `JobCommand`, calls `jobsService.refresh(server)` from `onLogicalServerFullyStarted`.
 - **Test:** `src/test/java/com/fpsmod/jobs/JobsConfigTest.java` (curve monotonicity + round-trip + multiplier clamp + state add/active).
 
@@ -107,12 +107,18 @@ Use this as the first stop for quick discovery.
 - **Jobs progress message source:** `src/main/java/com/fpsmod/jobs/JobsService.java` now owns the job-side line via `progressMessageText(...)`, emitting **`[job] +5 xp · Lvl X · inLevel/range`** only when the reward event matches the player's active job. Level-up remains a separate follow-up line.
 - **Why this split matters:** block rewards from the shared `currency_blocks` tag can still pay coins even when they do **not** match the active job (for example, a miner breaking a rewarded log). The new chat flow avoids falsely labeling that as miner XP.
 
+[AMENDED 2026-05-13 — broad entity rewards]:
+- **Bundled reward entity tag expanded:** `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` now carries a broad current vanilla living-entity roster for reward prefills, so `entity_values.json` seeds much more like `block_values.json` instead of listing only hostiles.
+- **Hostile-only companion tag:** `src/main/resources/data/otters_civ_revived/tags/entity_type/hostile_mobs.json` preserves the combat-only grouping. `tags/entity_type/job/fighter_mobs.json` now points at `#otters_civ_revived:hostile_mobs`, so the fighter job remains hostile-focused even though the economy reward surface is broader.
+
 [AMENDED 2026-05-11 — root-cause pass]:
 - **Bundled-tag resource paths are SINGULAR (MC 1.21+ requirement):**
   - `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json` (NOT `tags/blocks/`)
   - `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` (NOT `tags/entity_types/`)
+  - `src/main/resources/data/otters_civ_revived/tags/entity_type/hostile_mobs.json`
   Minecraft's `TagLoader` silently ignores plural directory names — confirmed by enumerating `data/minecraft/tags/` in the deobf jar (`block`, `entity_type`, `damage_type`, `enchantment`, `fluid`, etc. — all singular).
 - **Default `entityTag` is `otters_civ_revived:currency_mobs`** (our bundled tag with explicit hostile-mob ids). Vanilla has **no** `minecraft:hostile` entity-type tag in 1.21+; do not change the default back to that.
+- [AMENDED 2026-05-13]: `currency_mobs` is now the broad default reward-entity tag. Use bundled `otters_civ_revived:hostile_mobs` when you specifically want the hostile-only subset (the fighter job now does).
 
 [AMENDED 2026-05-11]:
 - **Tag expansion lookup path (do not regress):** **`RewardTagExpansion`** queries **`BuiltInRegistries.X.getTagOrEmpty(TagKey)`** on the **static** registry — not `level.registryAccess().lookupOrThrow(...).get(TagKey)`. In MC 26.1.2 (1.21.11 internal mappings) the `RegistryAccess.Frozen` view returns `Optional.empty()` for every tag (verified at runtime against vanilla `minecraft:hostile`). `TagLoader` binds datapack tags onto static `BuiltInRegistries` during resource reload; that's the only reliable enumeration source for the prefill.
@@ -133,7 +139,8 @@ For fast agent discovery — the files you need for any reward/economy task:
 | What | Path |
 |------|------|
 | **Block tag (source of truth for which blocks pay)** | `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json` |
-| **Entity tag (source of truth for which mobs pay)** | `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` |
+| **Entity tag (source of truth for which entities pay by default)** | `src/main/resources/data/otters_civ_revived/tags/entity_type/currency_mobs.json` |
+| **Hostile-only entity tag (fighter job / combat-only setups)** | `src/main/resources/data/otters_civ_revived/tags/entity_type/hostile_mobs.json` |
 | **Reward rules model** | `src/main/java/com/fpsmod/ottersciv/config/RewardRules.java` |
 | **Reward config loader + merge logic** | `src/main/java/com/fpsmod/ottersciv/config/RewardRulesLoader.java` |
 | **Tag → payout expansion** | `src/main/java/com/fpsmod/ottersciv/config/RewardTagExpansion.java` |

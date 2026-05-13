@@ -16,7 +16,7 @@ public final class OtterCommand {
     }
 
     private static int runHelp(CommandSourceStack source) {
-        sendLine(source, "Otters Civ. Revived (technical mod id: fpsmod)");
+        sendLine(source, "Otters Civ. Revived (technical mod id: project_ooga)");
         sendLine(source, "--- Commands ---");
         sendLine(source, "/otter — show this list");
         sendLine(source, "/money — show your wallet balance");
@@ -26,7 +26,7 @@ public final class OtterCommand {
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
         sendLine(source, "Mining + combat payouts: config/otters_civ_revived/rewards.json (tags + cooldowns + …)");
-        sendLine(source, "block_values.json / entity_values.json list every tagged block/hostile mob with default payouts;");
+        sendLine(source, "block_values.json / entity_values.json list every tagged block/rewarded entity with default payouts;");
         sendLine(source, "filled from blockTag & entityTag on SERVER_STARTED + END_DATA_PACK_RELOAD when files have no ids yet.");
         sendLine(source, "--- Adding custom blocks/mobs ---");
         sendLine(source, "1) Edit block_values.json / entity_values.json: add \"namespace:id\": amount lines. /reload.");

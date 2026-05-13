@@ -1,6 +1,6 @@
 {
   "replace": false,
   "values": [
-    "#otters_civ_revived:currency_mobs"
+    "#otters_civ_revived:hostile_mobs"
   ]
 }

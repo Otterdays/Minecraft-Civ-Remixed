@@ -60,6 +60,13 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - Per-block and per-entity payouts are supported
 - Reward behavior is configurable with JSON files
 
+### Coverage
+
+- Every current vanilla block is covered by the editable reward surface
+- Every current vanilla living entity is covered by the editable reward surface
+- Future blocks and mobs are covered by the same tag + value-file system
+- The reward setup is built to stay expandable instead of hardcoded
+
 ### Jobs
 
 - One active job at a time
@@ -91,6 +98,7 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - Economy, rewards, and persistence run on the host/server side
 - Installing the mod on the client adds the jobs HUD and richer `/otter` UI
 - The mod ID is `project_ooga`
+- Reward coverage is broad now and future-proof by design
 
 ---
 
@@ -128,5 +136,5 @@ If you want to do something outside those boundaries, ask first.
 
 ## Short version
 
-Otters Civ. Revived turns a Fabric world into the start of a real civ server with money, jobs, configurable rewards, and simple in-game tools players can use immediately.
+Otters Civ. Revived turns a Fabric world into the start of a real civ server with money, jobs, configurable rewards, and simple in-game tools players can use immediately, with reward coverage for every current vanilla block and living entity and a setup that is ready for future additions too.
 

@@ -58,7 +58,7 @@ public final class JoinWelcome {
         );
         player.sendSystemMessage(
             Component.literal(
-                "Earn money from mining payout blocks and killing hostile mobs "
+                "Earn money from mining payout blocks and killing rewarded entities "
                     + "(config/otters_civ_revived: rewards.json; optional block_values.json / entity_values.json)."
             )
         );

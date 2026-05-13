@@ -45,6 +45,10 @@
 [AMENDED 2026-05-13 — reward chat semantics]:
 - **Reward chat is now split cleanly by system.** Economy payouts announce as **`+N coins`** (instead of the older hardcoded `(mining)` / `(combat)` labels). Jobs progression is a separate line and only fires when the action matches the player's active job, e.g. **`[lumberjack] +5 xp · Lvl 0 · 30/100`**. Level-up remains its own follow-up line on threshold crossings. This avoids falsely implying that a global block reward also counted as miner XP.
 
+[AMENDED 2026-05-13 — entity reward surface widened]:
+- **`entity_values.json` now prefills from a broad bundled living-entity list instead of just hostiles.** `otters_civ_revived:currency_mobs` now covers the current vanilla living-entity roster used for editable reward defaults (still excluding `player`), so operators get a much fuller per-entity payout sheet on first run. New companion tag **`otters_civ_revived:hostile_mobs`** preserves the hostile-only grouping for the fighter job and for combat-only setups. Per user request, `minecraft:sulfur_cube` is also present as an optional `required: false` future-safe tag entry so newer runtimes can pick it up without breaking older ones.
+- **Public docs now call out the coverage model clearly.** Current vanilla block + living-entity reward surfaces are broad by default, and the same tag/value-file model is the intended path for future blocks and mobs rather than one-off hardcoding.
+
 [AMENDED 2026-05-12]:
 - **`currency_blocks` tag expanded to ~260+ blocks** (was ~23). Covers all breakable vanilla block categories: stone/brick variants, ores, dirt/sand/gravel/clay, logs/leaves/planks, wool, all 16-color sets (terracotta/glazed/concrete/concrete_powder/stained_glass), sandstone, nether set, end blocks, copper permutations, ore storage blocks, organics, sculk, utility blocks. Source: `src/main/resources/data/otters_civ_revived/tags/block/currency_blocks.json`. Uses `#minecraft:` tags for logs/leaves/planks/wool/dirt/sand/ice/coral_blocks; individual entries elsewhere. All default to flat `blockReward` (1) — operators tune in `block_values.json`.
 

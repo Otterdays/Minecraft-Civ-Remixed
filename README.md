@@ -28,7 +28,7 @@
 
 **Project OOGA** is the nickname we use in docs and Discord-style talk; players still see **Otters Civ. Revived**.
 
-Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends **join system messages** (full onboarding the first time you connect to that save; a shorter **welcome back ~name** line when you've played there before), and can **pay you** when you mine certain blocks or defeat certain mobs. Long-term: land claims, jobs, shops - see **`DOCS/ROADMAP.md`**.
+Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends **join system messages** (full onboarding the first time you connect to that save; a shorter **welcome back ~name** line when you've played there before), and can **pay you** when you mine configured blocks or defeat configured entities. Long-term: land claims, jobs, shops - see **`DOCS/ROADMAP.md`**.
 
 ### Words we use
 
@@ -50,7 +50,7 @@ One-line version: **wallet + chat commands + jobs + optional mining/kill payouts
 | Area | What you get |
 |------|----------------|
 | **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/otters_civ_revived/wallet.properties` (legacy `config/fpsmod/wallet.properties` migrates once on load) |
-| **Payouts** | Tag-driven mining & combat rewards; **per-block** / **per-entity-type** amounts via inline `blockRewards` / `entityRewards` **or** dedicated **`block_values.json`** / **`entity_values.json`** next to **`rewards.json`** (merged; sibling files override same keys after load) |
+| **Payouts** | Tag-driven mining & combat rewards; **per-block** / **per-entity-type** amounts via inline `blockRewards` / `entityRewards` **or** dedicated **`block_values.json`** / **`entity_values.json`** next to **`rewards.json`** (merged; sibling files override same keys after load). Current vanilla block + living-entity coverage is broad out of the box, and the same tag/value-file system is designed to absorb future additions cleanly. |
 | **Onboarding** | System chat on join: **first visit per save** - three lines; **returning** - short **welcome back ~name** + `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
 | **Client extra** | Jobs HUD overlay (icon + level + XP bar); legacy FPS HUD is **deprecated & disabled** (standalone FPS overlay mod handles display) |
 
