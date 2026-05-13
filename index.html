@@ -373,11 +373,11 @@
               <li><a href="#config-entity-values"><code>entity_values.json</code></a></li>
               <li><a href="#add-custom-payouts">Add your own blocks &amp; mobs</a></li>
               <li><a href="#config-wallet"><code>wallet.properties</code></a></li>
-              <li><a href="#config-hud"><code>hud.properties</code></a></li>
+              <li><a href="#config-hud"><code>jobs_hud.properties</code></a></li>
             </ul>
           </li>
           <li><a href="#roadmap-milestones">Roadmap (M0–M6)</a></li>
-          <li><a href="#client">Client (FPS HUD)</a></li>
+          <li><a href="#client">Client (Jobs HUD)</a></li>
           <li><a href="#limits">Operational limits</a></li>
           <li><a href="#architecture">Architecture</a></li>
           <li><a href="#installation">Installation</a></li>
@@ -560,14 +560,14 @@
     <p>Which blocks and mobs pay is <em>not</em> hard-coded in that JSON as a block list. The config points at <strong>tag identifiers</strong>; the tag contents come from Minecraft’s tag system (vanilla + mod + user datapacks).</p>
     <ul>
       <li><code>blockTag</code> — block tag id (e.g. <code>otters_civ_revived:currency_blocks</code>). Used for the fallback <code>blockReward</code> when that block’s registry id is not listed in <code>blockRewards</code>. Point it at any valid block tag.</li>
-      <li><code>entityTag</code> — entity type tag id (default <code>minecraft:hostile</code>). Used for <code>entityReward</code> fallback when the mob’s id is missing from <code>entityRewards</code>. Your own datapack tags are fine.</li>
+      <li><code>entityTag</code> — entity type tag id (default <code>otters_civ_revived:currency_mobs</code>). Used for <code>entityReward</code> fallback when the mob’s id is missing from <code>entityRewards</code>. Your own datapack tags are fine.</li>
       <li><strong>Membership</strong> — The mod ships tag JSON under <code>data/otters_civ_revived/tags/…</code> inside the JAR. Server owners can add world/server <strong>datapacks</strong> to merge extra entries into those tags or define new tags, then set <code>blockTag</code> / <code>entityTag</code> to those ids in <code>rewards.json</code>.</li>
       <li><strong>Per-block / per-mob payouts</strong> — Objects <code>blockRewards</code> and <code>entityRewards</code> in <code>rewards.json</code> map registry ids (e.g. <code>"minecraft:diamond_ore": 40</code>, <code>"minecraft:zombie": 2</code>) to whole-number payouts. Keys are validated and normalized at load; invalid ids are skipped with a server log warning.</li>
       <li><strong>Dedicated value files</strong> — <code>block_values.json</code> / <code>entity_values.json</code> beside <code>rewards.json</code> normally contain <strong>one line per rewarded block/hostile mob</strong>; Otters Civ. seeds them automatically on <strong><code>SERVER_STARTED</code></strong> whenever a sibling file parses to zero keys (<code>{}</code>, invalid JSON counts as zero). Rows default to whichever <code>blockTag</code> / <code>entityTag</code> resolves to plus flat <code>blockReward</code> / <code>entityReward</code>. Inline <code>blockRewards</code> / <code>entityRewards</code> overrides win on shared keys.</li>
       <li><strong>Fallback amounts</strong> — Once maps are merged, if the broken block’s id is not listed, the payout is <code>blockReward</code> only when that block matches <code>blockTag</code>. Same pattern for kills: merged <code>entityRewards</code> wins, otherwise <code>entityReward</code> when the victim’s type matches <code>entityTag</code>. Listed ids pay their configured amount even without tag membership.</li>
     </ul>
 
-    <p>Other keys in <code>rewards.json</code>: <code>enabled</code>, optional <code>blockRewards</code> / <code>entityRewards</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code target <code>otters_civ_revived:currency_blocks</code> and <code>#minecraft:hostile</code>; sibling value files populate from those tags automatically the first time the server starts with empty maps.</p>
+    <p>Other keys in <code>rewards.json</code>: <code>enabled</code>, optional <code>blockRewards</code> / <code>entityRewards</code>, per-action cooldowns, skip creative/spectator, <code>dimensionBlacklist</code> (dimension ids), <code>announceRewards</code>. Defaults shipped in code target <code>otters_civ_revived:currency_blocks</code> and <code>otters_civ_revived:currency_mobs</code>; sibling value files populate from those tags automatically the first time the server starts with empty maps.</p>
     <p>Kill credit in this build favors direct player hits; bows, tridents, and other indirect kills are not credited yet.</p>
 
     <h3 id="bundled-tags">Bundled datapack tags (default JAR)</h3>
@@ -598,7 +598,7 @@
       <li><strong>Utility:</strong> <code>crafting_table</code>, <code>furnace</code>, <code>blast_furnace</code>, <code>smoker</code>, workstations (loom, cartography, fletching, smithing, stonecutter, grindstone), <code>composter</code>, <code>barrel</code>, <code>bookshelf</code>, <code>chiseled_bookshelf</code>, <code>enchanting_table</code>, anvils, <code>brewing_stand</code>, <code>lectern</code>, <code>bell</code>, <code>beacon</code>, <code>conduit</code>, <code>note_block</code>, <code>jukebox</code>, <code>target</code>, <code>tnt</code>, <code>cobweb</code></li>
     </ul>
     <h4><code>otters_civ_revived:currency_mobs</code></h4>
-    <p>The shipped entity-type tag currently includes only <code>#minecraft:hostile</code>. The default config’s <code>entityTag</code> is still the literal id <code>minecraft:hostile</code>; you may point <code>entityTag</code> at <code>otters_civ_revived:currency_mobs</code> in <code>rewards.json</code> if you want a single customization surface that matches the datapack folder name.</p>
+    <p>The shipped entity-type tag is <code>otters_civ_revived:currency_mobs</code>. It contains an explicit hostile-mob list because vanilla 1.21+ does not provide a usable umbrella <code>minecraft:hostile</code> entity-type tag.</p>
 
     <h2 id="config-reference">All config files (quick reference)</h2>
     <p class="lead">Everything below mirrors what the jar writes if you omit a field—the table is authoritative for spelling and defaults.</p>
@@ -629,7 +629,7 @@
     <p class="lead">Whole-file map: block registry id (<code>namespace:path</code>) → non‑negative payout. On Fabric’s logical-server <strong>started</strong> callback, Otters Civ. expands whatever <code>blockTag</code> points at (including nested datapack references like <code>#minecraft:diamond_ores</code>), assigns each matched block flat <code>blockReward</code>, unions inline <code>blockRewards</code> from <code>rewards.json</code>, and—only while this file parses to zero keys—persists sorted UTF‑8 JSON you can skim like a spreadsheet.</p>
     <p>If this file already has keys, startup only merges—it never wipes your edits. Broken JSON logs an error and is treated empty (then regenerated if still “no sibling keys”).</p>
     <h3 id="config-entity-values"><code>config/otters_civ_revived/entity_values.json</code></h3>
-    <p class="lead">Same pattern for entity type ids (<code>#minecraft:hostile</code> resolves to dozens of vanilla mobs) using flat <code>entityReward</code> defaults when prefilling.</p>
+    <p class="lead">Same pattern for entity type ids using flat <code>entityReward</code> defaults when prefilling from <code>otters_civ_revived:currency_mobs</code>.</p>
     <p>Again: regenerated only while the sibling file has no surviving keys—existing operator files remain authoritative overlays.</p>
     <div class="note"><strong>If the sibling files persist as <code>{ }</code>:</strong> the mod prefills on both <code>SERVER_STARTED</code> and <code>END_DATA_PACK_RELOAD</code>, so running <code>/reload</code> (or deleting the empty files and restarting) re-fills them. <code>logs/latest.log</code> will print <code>[otters_civ_revived] block tag … resolved N entries</code> on success, or a warning with the registry's total bound-tag count if the tag id can't be resolved (typo, missing datapack, etc.).</div>
 
@@ -771,7 +771,7 @@
       <dt>Added</dt>
       <dd><code>/otter</code> command — in-game synopsis and config pointers.</dd>
       <dd><code>/money</code> and <code>/money set &lt;player&gt; &lt;amount&gt;</code> — wallet read and admin bootstrap.</dd>
-      <dd>Passive rewards: mining payout for <code>otters_civ_revived:currency_blocks</code>; kill payout for <code>#minecraft:hostile</code> (direct melee only).</dd>
+      <dd>Passive rewards: mining payout for <code>otters_civ_revived:currency_blocks</code>; kill payout for <code>otters_civ_revived:currency_mobs</code> (direct melee only).</dd>
       <dd><code>WalletStore</code>, <code>FileWalletStore</code>, <code>WalletService</code> — persistence layer.</dd>
       <dd><code>RewardOrchestrator</code> + <code>JobsHooks</code> stub for future professions.</dd>
       <dd>Config: <code>config/otters_civ_revived/rewards.json</code> (created on first run).</dd>

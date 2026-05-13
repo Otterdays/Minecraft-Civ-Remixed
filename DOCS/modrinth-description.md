@@ -1,85 +1,132 @@
-<!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
+## Otters Civ. Revived
 
-[AMENDED 2026-05-13]: Mod ID changed from `fpsmod` to `project_ooga` — resolves mod ID conflict with the standalone FPS overlay mod (the original template). Entrypoint classes renamed from `FpsMod`/`FpsModClient` to `OogaMod`/`ProjectOogaClient` (class name collision fix). Legacy FPS HUD deprecated and disabled — the standalone FPS overlay mod now handles FPS display. Networking namespaces: `project_ooga:job_status`, `project_ooga:join_attendance`. Jobs M2 first slice shipped (4 jobs, `/job` commands, XP/level, payout multiplier, HUD overlay). Crash-safe atomic file writes for all configs. See `DOCS/CHANGELOG.md` and repo `DOCS/` for full details below.
-
-[AMENDED 2026-05-11]: Canonical path restored under `DOCS/` (tooling & docs reference `DOCS/modrinth-description.md`). A parallel copy may exist under `DOCS/Ryan-Made-Docs/`; prefer this path for CI and automation.
-
-[AMENDED 2026-05-11]: README + `index.html` add a short **Words we use** gloss (player name vs **Project OOGA** vs `fpsmod`; “server” = whoever hosts the world; tags vs optional `blockRewards` / `entityRewards`). Modrinth listing content below is unchanged in behavior—see repo for the full glossary.
-
-[AMENDED 2026-05-11]: **Wallet path** — `config/otters_civ_revived/wallet.properties` (economy beside `rewards.json`); `config/fpsmod/` HUD-only (`hud.properties`). Legacy fpsmod wallet file auto-migrates once.
-
-[AMENDED 2026-05-11]: **Permissions:** `/money` anyone; **`/money set`** needs vanilla gamemaster / OP-band (`PermissionLevel.GAMEMASTERS`). Roadmap appendix **Permissions apparatus (planned)** covers future LuckPerms-style nodes.
-
-[AMENDED 2026-05-11]: **Join UX:** **first** session on **this world save** → three onboarding system-chat lines. **Returning** players get a gold/aqua **welcome back ~** _(display name)_ line and a shorter `/otter` / `/money` refresher (**`fpsmod:join_attendance`** in overworld saved data). The **Join message** bullet below still describes the onboarding side for first-time connect copy.
-
-
-# Otters Civ. Revived
-
-
--is the player-facing name for this Fabric civ remix (repo/codename Project OOGA): one mod aimed at the loops people actually play (earn, belong, trade, defend).
-
-What’s new...? Civilization building gameplay on the server.
-
- What’s included today
-
-- **Join message** — when you connect, a few system-chat lines identify Otters Civ. Revived on the server and point you at **`/otter`** and **`/money`**.
-- **`/otter`** — in-game list of this mod’s commands (economy + where reward config lives).
-- **`/money`** — show your wallet balance on the server.
-- **`/money set <player> <amount>`** — set a player’s balance (**operators / vanilla gamemaster band** today; richer permission nodes planned—see repo **`DOCS/ROADMAP.md`**).
-- **Persistent wallets** — balances stored server-side (`config/otters_civ_revived/wallet.properties`; older `config/fpsmod/wallet.properties` moves there on first load).
-[AMENDED 2026-05-10]: **Per-id payouts** live beside **`rewards.json`**: **`block_values.json`** / **`entity_values.json`**. Logical-server **startup** expands **tag payouts** (`blockTag`, `entityTag`) into those maps when unparsed/unseeded yet, merges inline overrides + operator edits.
-
-- **Mining & combat payouts (Otters Civ.)** — breaking blocks tagged by **`blockTag`** and killing mobs typed by **`entityTag`** pays coins; turnkey JSON lists (**`block_values.json`/`entity_values.json`**) populate from tags at first **`SERVER_STARTED`**, tweak every id’s amount there (or stash sparse overrides inline in **`rewards.json`**). Fallback tag logic still catches brand-new mods/blocks absent from persisted JSON until you rerun with an empty sibling file again. Tune `config/otters_civ_revived/rewards.json` plus those value files (**rewards.json**: cooldowns, skips, blacklist, announcements). Ranged/indirect kills do not pay in this v1 (direct player hit only).
-- **Legacy client HUD** — optional FPS readout + screen toggle from the original template; grandfathered extra, not core product.
-
-## Roadmap
-
-*Order is approximate; milestones match the project roadmap.*
-
-**Economy & integrity (near-term)**  
-- Mod-specific permission **nodes** (beyond vanilla **`/money set`** gamemaster gate) for admin money ops.  
-- **`/pay`** — player-to-player transfers.  
-- **`/otter money set | add | take`** — consolidated admin wallet commands.  
-- Immutable **transaction log** for every balance change; anti-spam caps and clearer player feedback where it matters.
-
-**Foundation**  
-- Versioned persistence layer, migrations, and SQLite-backed storage (replacing flat wallet files for authoritative state long-term).  
-- Audit-friendly operator tooling as the ledger grows.
-
-**Jobs & professions**  
-- **`/job join | leave | info`** and **`/profession info`**.  
-- Event-driven payouts (mining, farming, hunting, crafting) with cooldowns / anti-farm checks; progression that persists across restarts.
-
-**Factions & claims**  
-- **`/f create | invite | join | leave | promote | demote`** (and related grouping).  
-- Chunk claims with protection flags, faction treasury hooks, role checks.
-
-**Player shops**  
-- Listings, buy/sell flows, GUI-first shop screens, taxes and listing limits so markets stay playable.
-
-**Later / polish**  
-- Diplomacy, territory projects, governance knobs.  
-- Hardening, balance passes, optional PostgreSQL backend for heavy servers.
-
-If you install today, you’re on the foundation track—watch the changelog as each slice lands.
+A lightweight Fabric civ and economy mod for Minecraft that gives your world a stronger multiplayer backbone without burying you in setup.
 
 ---
 
+## What you get
 
-<details>
-<summary>Spoiler</summary>
+- Persistent money per world
+- `/otter` in-game hub
+- `/money` balance command
+- Admin `/money set <player> <amount>`
+- Join onboarding for first-time players
+- Welcome-back message for returning players
+- Configurable mining rewards
+- Configurable combat rewards
+- Four starter jobs:
+  - `miner`
+  - `lumberjack`
+  - `farmer`
+  - `fighter`
+- Jobs HUD overlay with in-game controls
 
-License
+---
 
-Copyright is **all rights reserved**. The bundled { LICENSE }
-https://github.com/Otterdays/Minecraft-Civ-Remixed/blob/main/LICENSE) (same file in the jar) adds **narrow allowances** without turning the project open source:
+## Why it is useful
 
-- **Videos, streams, reviews, montages, tutorials** that show gameplay with this mod are fine (including monetized platforms).
-- **Mod packs**: you may include the **official, unmodified** release JAR obtained from Modrinth or another channel the author designates—**no modified or rebuilt jars**, no shady repacks.
-- **No reproduction** of substantial source/materials beyond those carve-outs; forks and redistribution of custom builds still need explicit permission.
+- Fast setup
+- Easy to understand
+- Easy to tune
+- Good foundation for a civ-style server
+- Works for singleplayer-hosted worlds and multiplayer servers
 
-If in doubt, open an issue before redistributing anything beyond an unmodified pack binary.
+---
 
+## Commands
 
-</details>
+- `/otter`
+- `/money`
+- `/money set <player> <amount>`
+- `/job`
+- `/job list`
+- `/job join <job>`
+- `/job leave`
+
+---
+
+## Current features
+
+### Economy
+
+- Money is saved server-side per world
+- Wallets persist across restarts
+- Rewards can be tuned with config files
+
+### Rewards
+
+- Breaking configured blocks can pay coins
+- Killing configured mobs can pay coins
+- Per-block and per-entity payouts are supported
+- Reward behavior is configurable with JSON files
+
+### Jobs
+
+- One active job at a time
+- Earn job XP from matching actions
+- Level up over time
+- Jobs HUD shows job, level, and progress
+
+### Player UX
+
+- New players get quick onboarding chat messages
+- Returning players get a shorter reminder
+- `/otter` gives players a cleaner in-game reference point
+
+---
+
+## Config files
+
+- `config/otters_civ_revived/rewards.json`
+- `config/otters_civ_revived/block_values.json`
+- `config/otters_civ_revived/entity_values.json`
+- `config/otters_civ_revived/wallet.properties`
+- `config/project_ooga/jobs_hud.properties`
+
+---
+
+## Good to know
+
+- Fabric API is required
+- Economy, rewards, and persistence run on the host/server side
+- Installing the mod on the client adds the jobs HUD and richer `/otter` UI
+- The mod ID is `project_ooga`
+
+---
+
+## Planned next
+
+- Factions and land claims
+- Player shops
+- Better admin economy controls
+- Deeper civ systems
+- More progression and server tooling
+
+---
+
+## Usage and content policy
+
+You are allowed to:
+
+- Use the mod in singleplayer
+- Use the mod on multiplayer servers
+- Include it in videos, streams, reviews, showcases, and tutorials
+- Include the official unmodified release in modpacks
+
+You are not allowed to:
+
+- Reverse engineer it
+- Crack it
+- Fork it
+- Reupload modified builds
+- Redistribute repacks or altered versions
+- Repost the source or bundled materials as your own
+
+If you want to do something outside those boundaries, ask first.
+
+---
+
+## Short version
+
+Otters Civ. Revived turns a Fabric world into the start of a real civ server with money, jobs, configurable rewards, and simple in-game tools players can use immediately.
 
