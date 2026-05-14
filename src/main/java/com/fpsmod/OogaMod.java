@@ -5,6 +5,9 @@ import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.guilds.GuildConfigLoader;
+import com.fpsmod.jobs.JobsConfigLoader;
+import com.fpsmod.persistence.PersistenceService;
 import com.fpsmod.guilds.GuildProtection;
 import com.fpsmod.guilds.GuildService;
 import com.fpsmod.guilds.net.GuildNetworking;
@@ -31,6 +34,7 @@ public class OogaMod implements ModInitializer {
      */
     public static final String MOD_ID = "project_ooga";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    private static PersistenceService persistence;
     private static WalletService walletService;
     private static JobsService jobsService;
     private static GuildService guildService;
@@ -56,9 +60,11 @@ public class OogaMod implements ModInitializer {
             + ", minecraft=" + gameVersion
             + ", modVersion=" + modVersion);
 
-        walletService = WalletService.createDefault();
-        jobsService = JobsService.createDefault();
-        guildService = GuildService.createDefault(walletService);
+        persistence = new PersistenceService();
+        persistence.initialize();
+        walletService = new WalletService(persistence.walletStore(), persistence.transactionLog());
+        jobsService = new JobsService(persistence.jobsStore(), JobsConfigLoader.loadOrCreate());
+        guildService = new GuildService(persistence.guildStore(), walletService, GuildConfigLoader.loadOrCreate());
         GuildProtection.register(guildService);
         RewardRules bootstrapRules = RewardRulesLoader.loadBootstrapRewards();
         ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules, jobsService);
