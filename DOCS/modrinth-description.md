@@ -2,7 +2,7 @@
 
 ## Otters Civ. Revived
 
-A lightweight Fabric civ and economy mod for Minecraft. It gives a world persistent money, atomic player transfers, configurable block and entity rewards, server-authoritative jobs progression, guild land control, and an in-game civ hub so players and operators can use the systems without digging through code.
+Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a simple civilization-style server. It adds money that players can earn and trade, rewards for mining and fighting, jobs that give people different roles, guilds that can claim land together, and easy in-game menus so players and server hosts can understand and use the mod without needing programming knowledge.
 
 ---
 
@@ -249,4 +249,4 @@ If you want to do something outside those boundaries, ask first.
 
 ## Short version
 
-Otters Civ. Revived turns a Fabric world into the start of a real civ server: persistent SQLite-backed money, atomic player transfers, an immutable `wallet_ledger` audit trail, configurable mining/combat rewards with broad vanilla coverage, a fully server-authoritative jobs catalog with a shipped 5-job starter pack, and guilds with chunk claims/protection — usable from day one in singleplayer or multiplayer.
+Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a lightweight civilization server with a persistent SQLite-backed economy, safe player-to-player transfers and audit logs, configurable mining and combat rewards across a broad vanilla surface, a fully server-defined jobs system with a shipped five-job starter pack, guilds with land claims and protections, and in-game menus plus a handbook that make it usable from day one in singleplayer or multiplayer.
