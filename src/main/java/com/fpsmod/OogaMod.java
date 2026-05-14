@@ -1,9 +1,12 @@
 package com.fpsmod;
 
+import com.fpsmod.command.GuildCommand;
 import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.guilds.GuildService;
+import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.jobs.JobsService;
 import com.fpsmod.jobs.net.JobsNetworking;
 import com.fpsmod.ottersciv.OttersCivGameplay;
@@ -28,6 +31,7 @@ public class OogaMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static WalletService walletService;
     private static JobsService jobsService;
+    private static GuildService guildService;
     private static RewardOrchestrator ottersRewardGameplay;
     private static final String EMOJI_DEBUG = "🔍";
     private static final String EMOJI_OK = "✅";
@@ -52,14 +56,19 @@ public class OogaMod implements ModInitializer {
 
         walletService = WalletService.createDefault();
         jobsService = JobsService.createDefault();
+        guildService = GuildService.createDefault(walletService);
         RewardRules bootstrapRules = RewardRulesLoader.loadBootstrapRewards();
         ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules, jobsService);
 
         // Network wiring (server-side payload type + join sync + post-mutation push).
         JobsNetworking.registerServer(jobsService);
         jobsService.setStatusListener(player -> JobsNetworking.sendStatusFor(jobsService, player));
+        GuildNetworking.registerServer(guildService);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(OogaMod::onLogicalServerFullyStarted);
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            onLogicalServerFullyStarted(server);
+            GuildNetworking.broadcastClaims(guildService, server);
+        });
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
             (server, resourceManager, success) -> {
                 if (success) {
@@ -72,6 +81,7 @@ public class OogaMod implements ModInitializer {
             OtterCommand.register(dispatcher);
             MoneyCommand.register(dispatcher, walletService);
             JobCommand.register(dispatcher, jobsService);
+            GuildCommand.register(dispatcher, guildService);
         });
 
         // Keep this startup heartbeat obvious so template users can quickly confirm load order.
@@ -113,5 +123,9 @@ public class OogaMod implements ModInitializer {
 
     public static JobsService jobsService() {
         return jobsService;
+    }
+
+    public static GuildService guildService() {
+        return guildService;
     }
 }

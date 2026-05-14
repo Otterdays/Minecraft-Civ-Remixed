@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod project_ooga): wallet, /money, /otter, /job, join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod project_ooga): wallet, /money, /otter, /job, /guild (guilds with chunk claims, invites, ranks, home TP), join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
   <title>Otters Civ. Revived (project_ooga) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -373,7 +373,7 @@
               <li><a href="#config-block-values"><code>block_values.json</code></a></li>
               <li><a href="#config-entity-values"><code>entity_values.json</code></a></li>
               <li><a href="#add-custom-payouts">Add your own blocks &amp; mobs</a></li>
-              <li><a href="#config-jobs-store"><code>jobs.properties</code></a></li>
+              <li><a href="#config-jobs-store"><code>jobs_state.json</code></a></li>
               <li><a href="#config-wallet"><code>wallet.properties</code></a></li>
               <li><a href="#config-hud"><code>jobs_hud.properties</code></a></li>
             </ul>
@@ -400,7 +400,7 @@
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
-        <tr><th>Namespaces</th><td>Otters Civ. economy/jobs: <code>otters_civ_revived</code> (<code>rewards.json</code>, <code>jobs.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>jobs.properties</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>) — deprecated</td></tr>
+        <tr><th>Namespaces</th><td>Otters Civ. economy/jobs: <code>otters_civ_revived</code> (<code>rewards.json</code>, <code>jobs.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>jobs_state.json</code>, <code>wallet.properties</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>) — deprecated</td></tr>
         <tr><th>Economy store</th><td><code>config/otters_civ_revived/wallet.properties</code></td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
         <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
@@ -441,17 +441,17 @@
         <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
         <li>Combat: pay on kills that match <code>entityTag</code> (default: a broad bundled vanilla living-entity list), with optional per-mob amounts in <code>entityRewards</code>; this build only credits direct melee—not bows or tridents yet.</li>
         <li>Tune everything in <code>config/otters_civ_revived/rewards.json</code> (cooldowns, gamemode skips, dimensions, chat announcements, tag ids, per-id maps).</li>
-        <li><code>/job</code>, <code>/job list</code>, <code>/job join &lt;slug&gt;</code>, and <code>/job leave</code> drive the first jobs slice (miner, lumberjack, farmer, fighter). The jobs HUD only appears while you have an active job selected, and operators can retarget the shipped job tags plus tune leveling in <code>config/otters_civ_revived/jobs.json</code>.</li>
+        <li><code>/job</code>, <code>/job list</code>, <code>/job info &lt;id&gt;</code>, <code>/job join &lt;id&gt;</code>, and <code>/job leave [id]</code> now operate on the live server job catalog. Operators define that catalog in <code>config/otters_civ_revived/jobs.json</code>: arbitrary job ids, display metadata, triggers, progression, boosts, and single-vs-multi activation rules.</li>
       </ul>
       <h3 id="features-client">Client</h3>
       <ul>
-        <li>Jobs HUD overlay — compact bar above vanilla XP showing icon, job slug, level, and XP progress. Tune it from <code>/otter</code> → <strong>Jobs</strong> (preview, show/hide, X/Y nudges, scale, reset, one-click join buttons, and a shortcut that opens <code>jobs.json</code>). Client config lives at <code>config/project_ooga/jobs_hud.properties</code>.</li>
+        <li>Jobs HUD overlay — compact bar above vanilla XP showing the server-synced icon, label, level, and XP progress for your primary active job. Tune it from <code>/otter</code> → <strong>Jobs</strong> (preview, show/hide, X/Y nudges, scale, catalog paging, join/leave/info buttons, and a host-only shortcut that opens <code>jobs.json</code>). Client config lives at <code>config/project_ooga/jobs_hud.properties</code>.</li>
         <li>(deprecated) Legacy FPS HUD overlay — disabled in <code>project_ooga</code>. The standalone FPS overlay mod (original template) handles FPS display.</li>
       </ul>
       <h3 id="features-not-in-release">Not in this release</h3>
       <ul>
-        <li>Only wallet + command bootstrap + passive payouts + jobs MVP are live—see <a href="#design-goals">Target feature set</a> for the broader civ stack (transfers, guilds, social, deep professions).</li>
-        <li>Missing today: <code>/pay</code>, granular mod/plugin permission layers (beyond vanilla gamemaster for <code>/money set</code>), ledger, friends, PM, guild claims/protections, deeper job trees/perks, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
+        <li>Wallet + commands + passive payouts + jobs MVP + guilds &amp; chunk claims are live—see <a href="#design-goals">Target feature set</a> for the broader civ stack (transfers, shops, governance).</li>
+        <li>Missing today: <code>/pay</code>, granular mod/plugin permission layers (beyond vanilla gamemaster for <code>/money set</code>), ledger, friends, PM, deeper job trees/perks, shops, SQLite—see <code>DOCS/ROADMAP.md</code>.</li>
       </ul>
     </div>
 
@@ -470,11 +470,11 @@
         <li><strong>Friends lists</strong> — player-curated lists for social features (invites, trust, or soft permissions—exact UX TBD).</li>
         <li><strong>Private messaging</strong> — direct messages between players separate from public chat (design target).</li>
       </ul>
-      <h3 id="design-goals-guilds">Guilds &amp; territory</h3>
+      <h3 id="design-goals-guilds">Guilds &amp; territory (shipped M3)</h3>
       <ul>
-        <li><strong>Guilds</strong> — organized groups with membership, roles, and a treasury hook consistent with the economy layer.</li>
-        <li><strong>Chunk claims</strong> — assign chunks (or regions) to a guild; overlap and raid rules configurable.</li>
-        <li><strong>Protections</strong> — enforce build/break/container use inside claimed space; outsiders handled via diplomacy/war-style rules (design target).</li>
+        <li><strong>Guilds</strong> — <code>/guild create &lt;name&gt;</code> ($250), invite/join/leave/kick with officer roles (promote/demote). Guild home teleport (<code>/guild sethome</code> / <code>/guild home</code>). See <code>/guild help</code> in-game.</li>
+        <li><strong>Chunk claims</strong> — <code>/guild claim</code> / <code>/guild unclaim</code> ($100 per claim, max 16 per guild). ASCII map via <code>/guild map</code> + client-side GUI overlay (top-right, 30s auto-hide). Config via <code>config/otters_civ_revived/guilds.json</code>.</li>
+        <li><strong>Protections</strong> — enforce build/break/container use inside claimed space; outsiders handled via diplomacy/war-style rules (design target, M4+).</li>
       </ul>
       <h3 id="design-goals-jobs">Jobs, professions &amp; traits</h3>
       <ul>
@@ -483,7 +483,7 @@
         <li><strong>Traits &amp; levels</strong> — per-job progression (levels, perks, or trait lines)—integrates with the mod’s planned <code>JobsHooks</code> pipeline for stacking modifiers on rewards.</li>
       </ul>
     </div>
-    <div class="note">Current releases implement only wallets, <code>/money</code>, join tips, tag-based mining/combat grants with optional per-id payout maps, and a no-op jobs hook. Guilds, messaging, friends, <code>/pay</code>, and profession trees are not yet in the JAR.</div>
+    <div class="note">Current releases implement wallets, <code>/money</code>, join tips, tag-based mining/combat grants, jobs (4 shipped jobs, custom configurable jobs catalog), guilds (create/invite/join/leave/kick/ranks, chunk claims, home TP, ASCII + GUI chunk map). Messaging, friends, <code>/pay</code>, and profession trees are not yet in the JAR.</div>
 
     <nav class="contents" aria-label="Contents">
       <strong>Contents</strong>
@@ -539,20 +539,50 @@
       <dt><span class="cmd">/money set &lt;player&gt; &lt;amount&gt;</span></dt>
       <dd>Replace that player’s saved balance with <code>amount</code> (<code class="cmd">≥ 0</code>). Requires Minecraft <strong>gamemaster</strong>-level command permission (OP-equivalent for cheat-style commands)—see <a href="#command-permissions">below</a>. Future builds may expose explicit mod nodes / LuckPerms-style checks.</dd>
 
-      <dt><span class="cmd">/job</span>, <span class="cmd">/job list</span>, <span class="cmd">/job join &lt;slug&gt;</span>, <span class="cmd">/job leave</span></dt>
-      <dd>Pick one active job at a time (<code>miner</code>, <code>lumberjack</code>, <code>farmer</code>, <code>fighter</code>). The jobs HUD bar uses that active selection and only renders while a job is active. Reward chat is split into a money line (<code>+N coins</code>) and, when the action matches your active job, a separate job XP/progress line. Operators tune the shared level curve and per-job tag/xp overrides in <code>config/otters_civ_revived/jobs.json</code>.</dd>
+      <dt><span class="cmd">/job</span>, <span class="cmd">/job list</span>, <span class="cmd">/job info &lt;id&gt;</span>, <span class="cmd">/job join &lt;id&gt;</span>, <span class="cmd">/job leave [id]</span>, <span class="cmd">/job stats</span></dt>
+      <dd>Operate on the live server job catalog defined in <code>jobs.json</code>. Depending on the server's activation policy, you can have one active job or multiple active jobs at once. Reward chat is split into a money line (<code>+N coins</code>) and separate job XP/progress lines whenever one of your active jobs matches the gameplay event. The HUD uses the server-synced primary active job for its label/icon/level display.</dd>
+
+      <dt><span class="cmd">/guild create &lt;name&gt;</span></dt>
+      <dd>Create a new guild. Costs $250 from your wallet. Name: 3–24 chars, alphanumeric + underscores.</dd>
+
+      <dt><span class="cmd">/guild invite &lt;player&gt;</span></dt>
+      <dd>Invite a player to your guild (officer+). They accept with <code>/guild join</code>.</dd>
+
+      <dt><span class="cmd">/guild leave</span>, <span class="cmd">/guild kick &lt;player&gt;</span></dt>
+      <dd>Leave or kick. Owners use <code>/guild disband</code> instead of leave.</dd>
+
+      <dt><span class="cmd">/guild promote &lt;player&gt;</span>, <span class="cmd">/guild demote &lt;player&gt;</span></dt>
+      <dd>Owner-only. Promote/demote between member and officer rank. Officers can invite and claim land.</dd>
+
+      <dt><span class="cmd">/guild claim</span>, <span class="cmd">/guild unclaim</span></dt>
+      <dd>Claim or unclaim the chunk you stand in ($100 per claim, max 16 per guild). Officer+.</dd>
+
+      <dt><span class="cmd">/guild map</span></dt>
+      <dd>Shows an ASCII chunk-claim map in chat (9×9 grid, radius 4). Also toggles a 30-second client GUI overlay in the top-right corner.</dd>
+
+      <dt><span class="cmd">/guild sethome</span>, <span class="cmd">/guild home</span></dt>
+      <dd>Set guild teleport point (officer+) and teleport to it (any member).</dd>
+
+      <dt><span class="cmd">/guild info</span>, <span class="cmd">/guild list</span></dt>
+      <dd>Show your guild details or list all guilds on the server.</dd>
+
+      <dt><span class="cmd">/guild disband</span></dt>
+      <dd>Owner-only. Dissolves the guild and refunds claim costs.</dd>
+
+      <dt><span class="cmd">/guild reload</span></dt>
+      <dd>Gamemaster-only. Reloads <code>guilds.json</code> config.</dd>
     </dl>
 
     <h3 id="command-permissions">Who can run which command (today)</h3>
-    <p><strong>Open to players:</strong> <code>/otter</code> (help only), <code>/money</code> with no arguments (read your balance in chat), and the full <code>/job</code> self-service set (<code>/job</code>, <code>/job list</code>, <code>/job join &lt;slug&gt;</code>, <code>/job leave</code>, <code>/job stats</code>). Passive mining/kill payouts have no slash command—they follow <code>rewards.json</code> plus optional <code>block_values.json</code> / <code>entity_values.json</code> (merged at startup).</p>
-    <p><strong>Gamemaster / OP band only:</strong> <code>/money set &lt;player&gt; &lt;amount&gt;</code> checks <code>CommandSourceStack.permissions()</code> for <code class="cmd">Permission.HasCommandLevel(GAMEMASTERS)</code>—same tier vanilla uses for many built-in cheats. Dedicated console and suitably permissioned integrations still work as the server configures them.</p>
+    <p><strong>Open to players:</strong> <code>/otter</code> (help only), <code>/money</code> with no arguments (read your balance in chat), the self-service <code>/job</code> set (<code>/job</code>, <code>/job list</code>, <code>/job info &lt;id&gt;</code>, <code>/job join &lt;id&gt;</code>, <code>/job leave [id]</code>, <code>/job stats</code>), and most <code>/guild</code> commands (create, invite, join, leave, claim, unclaim, map, sethome, home, info, list). Passive mining/kill payouts have no slash command—they follow <code>rewards.json</code> plus optional <code>block_values.json</code> / <code>entity_values.json</code> (merged at startup).</p>
+    <p><strong>Gamemaster / OP band only:</strong> <code>/money set &lt;player&gt; &lt;amount&gt;</code>, <code>/job reload</code>, <code>/job validate</code>, and <code>/guild reload</code> check <code>CommandSourceStack.permissions()</code> for <code class="cmd">Permission.HasCommandLevel(GAMEMASTERS)</code>—same tier vanilla uses for many built-in cheats. Dedicated console and suitably permissioned integrations still work as the server configures them.</p>
     <p class="lead"><strong>Future:</strong> a dedicated Otters Civ. permission apparatus (explicit string ids, optional Fabric Permissions API / server plugins, non-OP econ moderators). Sketched under <strong>Permissions apparatus (planned)</strong> in <code>DOCS/ROADMAP.md</code> and M1’s admin-permission backlog.</p>
 
     <h2 id="economy">Economy &amp; persistence</h2>
     <p class="lead">Think “bank file on disk”: one number per player UUID, updated when you earn or an admin sets your balance.</p>
     <p>Balances are keyed by player UUID and held in memory at runtime with writes to <code>config/otters_civ_revived/wallet.properties</code>. Administrative <code>/money set</code> performs a full replace of the stored balance for that UUID; gameplay rewards call <strong>additive</strong> credit paths.</p>
     <p>On disk the wallet is UTF‑8 text: optional <code># Name: …</code> hint lines precede each <code>uuid=balance</code> line (same semantics as Java <code>.properties</code> for the key=value part). Loader accepts older files without name lines. Comments on write explain the format; malformed balance lines log a warning and are skipped when possible.</p>
-    <div class="note"><code>rewards.json</code>, <code>jobs.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, plus <code>jobs.properties</code> / <code>wallet.properties</code> live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay is <strong>deprecated</strong> (handled by the standalone FPS overlay mod).</div>
+    <div class="note"><code>rewards.json</code>, <code>jobs.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, plus <code>jobs_state.json</code> / <code>wallet.properties</code> live under <code>config/otters_civ_revived/</code>. The grandfathered FPS overlay is <strong>deprecated</strong> (handled by the standalone FPS overlay mod).</div>
 
     <h2 id="rewards">Passive rewards</h2>
     <p class="lead">Breaking the right blocks and killing the right mobs silently adds coins. What “right” means is editable JSON—often via tags Datapacks already understand—with optional exceptions per exact block/mob ID.</p>
@@ -630,25 +660,25 @@
       </tbody>
     </table>
     <h3 id="config-jobs-json"><code>config/otters_civ_revived/jobs.json</code></h3>
-    <p class="lead">Jobs progression tuning. The four shipped slugs stay fixed for UI/save compatibility, but this file now controls the shared level math and each job's tag target.</p>
+    <p class="lead">Server-authoritative jobs catalog. This file now defines the live jobs roster itself: arbitrary job ids, display metadata, triggers, progression, boosts, and activation policy.</p>
     <table class="data-table" aria-label="jobs.json fields">
       <thead>
         <tr><th>Field</th><th>Role</th><th>Default</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>maxLevel</code></td><td>Level cap used for job progression and payout scaling</td><td><code>50</code></td></tr>
-        <tr><td><code>xpBase</code></td><td>Base term in the cumulative curve <code>xpBase * level^xpExponent</code></td><td><code>100.0</code></td></tr>
-        <tr><td><code>xpExponent</code></td><td>Exponent used by the cumulative XP curve</td><td><code>1.5</code></td></tr>
-        <tr><td><code>multiplierTopBonus</code></td><td>Extra payout bonus spread from level 0 to <code>maxLevel</code>; final multiplier is <code>1.0 + multiplierTopBonus</code> at cap</td><td><code>1.0</code> (cap = <code>x2.0</code>)</td></tr>
-        <tr><td><code>xpPerEvent</code></td><td>Default XP granted when a rewarded action matches the active job</td><td><code>5</code></td></tr>
-        <tr><td><code>jobs.miner.tagId</code></td><td>Block tag used for the miner job</td><td><code>otters_civ_revived:job/miner_blocks</code></td></tr>
-        <tr><td><code>jobs.lumberjack.tagId</code></td><td>Block tag used for the lumberjack job</td><td><code>otters_civ_revived:job/lumberjack_blocks</code></td></tr>
-        <tr><td><code>jobs.farmer.tagId</code></td><td>Block tag used for the farmer job</td><td><code>otters_civ_revived:job/farmer_blocks</code></td></tr>
-        <tr><td><code>jobs.fighter.tagId</code></td><td>Entity-type tag used for the fighter job</td><td><code>otters_civ_revived:job/fighter_mobs</code></td></tr>
-        <tr><td><code>jobs.&lt;slug&gt;.xpPerEvent</code></td><td>Optional per-job XP override; when omitted, the top-level <code>xpPerEvent</code> applies</td><td><code>null</code> (inherit)</td></tr>
+        <tr><td><code>global.enabled</code></td><td>Master switch for the jobs engine</td><td><code>true</code></td></tr>
+        <tr><td><code>global.activationPolicy</code></td><td><code>single</code> or <code>multi</code> active-job mode</td><td><code>single</code></td></tr>
+        <tr><td><code>global.maxActiveJobs</code></td><td>Maximum simultaneous active jobs when policy is <code>multi</code></td><td><code>1</code></td></tr>
+        <tr><td><code>global.defaultProgression</code></td><td>Fallback progression block applied to jobs that do not override it</td><td>Power curve: <code>maxLevel=50</code>, <code>xpPerEvent=5</code>, <code>xpBase=100.0</code>, <code>xpExponent=1.5</code></td></tr>
+        <tr><td><code>global.defaultBoosts</code></td><td>Fallback money / XP boost block applied to jobs that do not override it</td><td>Identity boosts (<code>x1.0</code>, <code>+0</code>)</td></tr>
+        <tr><td><code>jobs[].id</code></td><td>Stable server job id used by commands, state, and networking</td><td><code>miner</code>, <code>lumberjack</code>, <code>farmer</code>, <code>fighter</code> in defaults</td></tr>
+        <tr><td><code>jobs[].displayName</code>, <code>shortLabel</code>, <code>iconGlyph</code>, <code>iconKey</code></td><td>Player-facing metadata for chat, HUD, and <code>/otter</code></td><td>Derived from bundled defaults</td></tr>
+        <tr><td><code>jobs[].triggers[]</code></td><td>Event matchers: <code>eventType</code>, <code>tagIds</code>, explicit <code>ids</code>, dimension/tool filters, cooldowns, and <code>requireEconomyReward</code></td><td>Bundled jobs each ship one default trigger</td></tr>
+        <tr><td><code>jobs[].progression</code></td><td>Per-job XP settings: <code>xpPerEvent</code>, <code>maxLevel</code>, power curve fields, or optional explicit <code>levelThresholds</code></td><td>Inherits <code>global.defaultProgression</code> when omitted</td></tr>
+        <tr><td><code>jobs[].boosts</code></td><td>Per-job money and XP boosts, including base values and optional level tables for multipliers / flat bonuses</td><td>Inherits <code>global.defaultBoosts</code> when omitted</td></tr>
       </tbody>
     </table>
-    <p>Edits load on normal startup and on <code>/reload</code> because the jobs service refreshes during both <code>SERVER_STARTED</code> and <code>END_DATA_PACK_RELOAD</code>. Invalid or blank job tag ids fall back to the shipped defaults for that slug.</p>
+    <p>Edits load on normal startup and on <code>/reload</code> because the jobs service refreshes during both <code>SERVER_STARTED</code> and <code>END_DATA_PACK_RELOAD</code>. Clients do <em>not</em> read this file directly on dedicated servers; the server compiles the catalog and syncs the result to them.</p>
     <h3 id="config-block-values"><code>config/otters_civ_revived/block_values.json</code></h3>
     <p class="lead">Whole-file map: block registry id (<code>namespace:path</code>) → non‑negative payout. On Fabric’s logical-server <strong>started</strong> callback, Otters Civ. expands whatever <code>blockTag</code> points at (including nested datapack references like <code>#minecraft:diamond_ores</code>), assigns each matched block flat <code>blockReward</code>, unions inline <code>blockRewards</code> from <code>rewards.json</code>, and—only while this file parses to zero keys—persists sorted UTF‑8 JSON you can skim like a spreadsheet.</p>
     <p>This is the editable block surface operators work from: broad enough for the current vanilla game, while still using normal tag-based plumbing so future blocks can be folded in without redesigning the reward system.</p>
@@ -690,21 +720,21 @@
       </li>
     </ol>
     <p><strong>Precedence (high → low) when a block breaks or mob dies:</strong> sibling value file entry → <code>rewards.json</code> inline map entry → tag membership with flat reward → no payout. So <em>any</em> explicit per-id line in either JSON beats tag-wide fallback.</p>
-    <h3 id="config-jobs-store"><code>config/otters_civ_revived/jobs.properties</code></h3>
-    <p><strong>Player jobs ledger:</strong> this is the persisted state file, not the tuning file. It stores one active job slot plus per-job XP totals as <code>&lt;uuid&gt;.active=&lt;slug&gt;</code> and <code>&lt;uuid&gt;.xp.&lt;slug&gt;=&lt;amount&gt;</code>, with optional plain-text <code># Name: ...</code> hints above each UUID group for operators.</p>
-    <p>Use <code>jobs.json</code> to change the curve or tag targets. This file is what the game writes back as players join jobs, gain XP, or switch roles.</p>
+    <h3 id="config-jobs-store"><code>config/otters_civ_revived/jobs_state.json</code></h3>
+    <p><strong>Player jobs ledger:</strong> this is the persisted state file, not the tuning file. It stores active job ids plus per-job XP totals in JSON under each player UUID, with optional name hints for operators.</p>
+    <p>Use <code>jobs.json</code> to change the live catalog. This file is what the game writes back as players join jobs, gain XP, or switch roles. Older <code>jobs.properties</code> ledgers migrate once on load into <code>jobs_state.json</code>.</p>
 
     <h3 id="config-wallet"><code>config/otters_civ_revived/wallet.properties</code></h3>
     <p><strong>Who is who:</strong> Each entry is still <code>uuid=balance</code> (that pair is authoritative). When the mod knows your in-game display name, it writes the line above as <code># Name: SomePlayer</code> so operators can skim the file—safe to edit comments; only the <code>uuid=balance</code> line sets money. Names refresh on join, <code>/money</code>, <code>/money set</code>, mining, and combat payouts.</p>
     <p>Created automatically when balances exist. Older builds kept this under <code>config/fpsmod/</code>; that file moves here once and logs <code>[otters_civ_revived] Migrated…</code>. Prefer <code>/money set</code> for balance edits unless you keep backups.</p>
-    <div class="note">New (2026-05-12): Crash safety: all config writes (<code>wallet.properties</code>, <code>jobs.properties</code>, <code>rewards.json</code>, <code>jobs.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>) now use an atomic write pattern — content goes to a <code>.tmp</code> sibling file, fsyncs, then atomically renames to the target. If the game crashes mid-write, the previous file is untouched. A stale <code>.tmp</code> leftover is cleaned and logged on the next <code>load()</code>. Previous-good copies are preserved as <code>.bak</code> files as additional insurance. See <code>DOCS/ARCHITECTURE.md</code> amendment for full detail.</div>
+    <div class="note">New (2026-05-12): Crash safety: all config writes (<code>wallet.properties</code>, <code>jobs_state.json</code>, <code>rewards.json</code>, <code>jobs.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>) now use an atomic write pattern — content goes to a <code>.tmp</code> sibling file, fsyncs, then atomically renames to the target. If the game crashes mid-write, the previous file is untouched. A stale <code>.tmp</code> leftover is cleaned and logged on the next <code>load()</code>. Previous-good copies are preserved as <code>.bak</code> files as additional insurance. See <code>DOCS/ARCHITECTURE.md</code> amendment for full detail.</div>
     <h3 id="config-hud"><code>config/project_ooga/jobs_hud.properties</code></h3>
     <p><strong>Client-only jobs HUD config:</strong> <code>visible=true|false</code>, <code>offsetX</code>, <code>offsetY</code>, and <code>scale</code>. The file is written when you use the <code>/otter</code> → <strong>Jobs</strong> controls. Default behavior: visible, centered, 12 px above the vanilla XP bar, scale <code>1.0</code>.</p>
     <p class="note"><strong>Deprecated:</strong> the old FPS-only config remains at <code>config/fpsmod/hud.properties</code> for the standalone FPS overlay lineage, but Project OOGA no longer registers that overlay.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
     <p class="lead">Rough delivery spine (M0–M6)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
-    <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include the richer permission <strong>apparatus</strong> beyond vanilla gamemaster for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, faction commands (<code>/f …</code>), player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
+    <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. Near-term backlog items explicitly called out in the roadmap include the richer permission <strong>apparatus</strong> beyond vanilla gamemaster for <code>/money set</code>, <code>/pay</code>, <code>/ooga money set|add|take</code>, SQLite-backed persistence with migrations, immutable transaction logs, player shops GUI, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
     <table class="data-table" aria-label="Milestone overview">
       <thead>
         <tr><th>Milestone</th><th>Theme</th></tr>
@@ -713,16 +743,17 @@
         <tr><td>M0</td><td>Foundation and data integrity (persistence abstraction, SQLite baseline, migrations, audit framework)</td></tr>
         <tr><td>M1</td><td>Economy MVP (transfers, admin money ops, fees/sinks, full transaction ledger)</td></tr>
         <tr><td>M2</td><td>Jobs &amp; professions MVP (<code>/job …</code>, event rewards, progression)</td></tr>
-        <tr><td>M3</td><td>Factions &amp; claims MVP (chunk claims, protections, treasury)</td></tr>
+        <tr><td>M3</td><td>✅ Guilds &amp; claims MVP (<code>/guild</code>, chunk claims, home TP, officer ranks, ASCII + GUI chunk map)</td></tr>
         <tr><td>M4</td><td>Player shops MVP (listings, escrow, Screen Handler UI, tax)</td></tr>
         <tr><td>M5</td><td>Civ governance (diplomacy states, territory projects, regional bonuses)</td></tr>
         <tr><td>M6</td><td>Stabilization, balance, PostgreSQL migration path, RC hardening</td></tr>
       </tbody>
     </table>
-    <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, and the first jobs/HUD slice.</div>
+    <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, jobs/HUD slice, and guilds &amp; claims (M3). M4+ remain planned.</div>
 
     <h2 id="client">Client features (detail)</h2>
-    <p><strong>Jobs HUD:</strong> Project OOGA draws a compact jobs bar above vanilla XP whenever the local player has an active job and the HUD is enabled. The <code>/otter</code> → <strong>Jobs</strong> tab now includes a preview of that bar, direct join buttons for all four jobs, and the usual visibility / offset / scale controls so you can see what the overlay is supposed to look like before closing the menu.</p>
+    <p><strong>Jobs HUD:</strong> Project OOGA draws a compact jobs bar above vanilla XP whenever the local player has an active job and the HUD is enabled. The <code>/otter</code> → <strong>Jobs</strong> tab now includes a preview of that bar, paged join/leave/info controls driven by the synced server catalog, and the usual visibility / offset / scale controls so you can see what the overlay is supposed to look like before closing the menu.</p>
+    <p><strong>Guild chunk map overlay:</strong> Running <code>/guild map</code> toggles a 30-second GUI chunk-map overlay in the top-right corner of the screen. A 9×9 grid shows claimed chunks (green) vs unclaimed (dark gray), with your position highlighted (aqua). Claim data is streamed from the server on join and whenever chunks are claimed/unclaimed.</p>
     <p><strong>Scaling behavior:</strong> the bar width is now content-aware. Longer labels such as <code>LUMBERJACK</code> and larger XP strings no longer overrun the right-hand text at default settings; the HUD expands when it has room, truncates safely only when it must, and clamps back on-screen after offsets are applied.</p>
     <p><strong>Small-window fallback:</strong> if the game window / GUI viewport gets too cramped for the full <code>/otter</code> panel, the client now swaps to a compact prompt instead of trying to cram the full menu on-screen. That prompt tells the player to enlarge the window or lower Minecraft GUI Scale and still exposes quick buttons for <code>/money</code>, <code>/job</code>, and <code>/job list</code>.</p>
     <p><strong>Deprecated:</strong> The legacy FPS counter and overlay toggle from the repository's original template (<code>FpsHudOverlay</code> / HUD config under <code>config/fpsmod/</code>). The standalone FPS overlay mod handles FPS display; Project OOGA's client UX is the jobs HUD + civ menu.</p>
@@ -731,14 +762,14 @@
     <ul>
       <li>One rewards config directory per launcher instance applies to integrated server usage; wallet file scope follows the same Fabric config root.</li>
       <li><strong>Join onboarding vs welcome-back</strong> is tracked <strong>per world save</strong> (overworld saved data <code>project_ooga:join_attendance</code>), not in global <code>config/</code>—a <strong>new single-player world</strong> or <strong>new server map</strong> always gets the full first-join messages again for each player UUID.</li>
-      <li><code>/money set</code> is intentionally narrow: vanilla gamemaster permission only until a plugin-friendly permission layer ships (see <a href="#command-permissions">command permissions</a>).</li>
+      <li><code>/money set</code> and <code>/guild reload</code> are intentionally narrow: vanilla gamemaster permission only until a plugin-friendly permission layer ships (see <a href="#command-permissions">command permissions</a>).</li>
       <li>Tag-based payouts do not imply “worldgen-only” blocks; duplication farming is deferred to roadmap hardening.</li>
-      <li>Future professions may subscribe via the <code>JobsHooks</code> extension seam (currently no-op).</li>
+      <li>Remote clients render jobs from server-synced catalog/status payloads; opening <code>jobs.json</code> from <code>/otter</code> is only available when the local machine also hosts the world.</li>
       <li><code>/otter</code> uses a compact fallback prompt on very small GUI viewports instead of rendering the full panel half-clipped. If you hit that state, enlarge the game window or lower Minecraft GUI Scale, then reopen <code>/otter</code>.</li>
     </ul>
 
     <h2 id="architecture">Architecture</h2>
-    <p>Project OOGA is structured as five domain layers built on top of the Fabric baseline. The current JAR only activates the economy surface; the layers below are the planned target shape.</p>
+    <p>Project OOGA is structured as five domain layers built on top of the Fabric baseline. The current JAR activates the economy, jobs, and guilds/claims surfaces; the layers below are the planned target shape.</p>
     <table class="data-table" aria-label="Architecture layers">
       <thead>
         <tr><th>Layer</th><th>Responsibility</th></tr>
@@ -757,9 +788,9 @@
         <tr><th>Table</th><th>Key fields</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>player_profile</code></td><td>wallet balance, profession/job state, faction reference</td></tr>
-        <tr><td><code>faction_profile</code></td><td>members, rank/roles, treasury, diplomacy state</td></tr>
-        <tr><td><code>claim_record</code></td><td>chunk ownership, permission flags</td></tr>
+        <tr><td><code>player_profile</code></td><td>wallet balance, profession/job state, guild reference</td></tr>
+        <tr><td><code>guild_profile</code></td><td>✅ members, rank/roles, treasury, home position</td></tr>
+        <tr><td><code>claim_record</code></td><td>✅ chunk ownership (guild ID, dimension, coords, timestamp)</td></tr>
         <tr><td><code>shop_record</code></td><td>listings, stock, pricing, tax, transaction references</td></tr>
         <tr><td><code>transaction_log</code></td><td>immutable event-style economy audit entries</td></tr>
       </tbody>
@@ -780,8 +811,8 @@
       <li>Install <strong>Fabric Loader <code>&gt;= 0.19.2</code></strong> for Minecraft <code>26.1.2</code>. The <a href="https://fabricmc.net/use/installer/">Fabric installer</a> handles this.</li>
       <li>Drop <strong>Fabric API</strong> (<code>0.146.1+26.1.2</code> or compatible) into your <code>mods/</code> folder.</li>
       <li>Drop the mod JAR (<code>project-ooga-1.0.0.jar</code>) into <code>mods/</code>.</li>
-      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>jobs.json</code>, <code>wallet.properties</code>; <code>jobs.properties</code> appears once job state exists) and, on clients using the jobs HUD, <code>config/project_ooga/jobs_hud.properties</code>.</li>
-      <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, or <code>config/otters_civ_revived/jobs.json</code> to retarget job tags / leveling, then restart or run <code>/reload</code>.</li>
+      <li>Start the server (or client). Otters Civ. creates <code>config/otters_civ_revived/</code> (<code>rewards.json</code>, <code>jobs.json</code>, <code>wallet.properties</code>; <code>jobs_state.json</code> appears once job state exists) and, on clients using the jobs HUD, <code>config/project_ooga/jobs_hud.properties</code>.</li>
+      <li>Optionally edit <code>config/otters_civ_revived/rewards.json</code> to tune payout amounts, tags, and cooldowns, or <code>config/otters_civ_revived/jobs.json</code> to define the live jobs catalog, then restart or run <code>/reload</code>.</li>
     </ol>
     <div class="note">Java 25+ is required. The host of the world (single-player PC or multiplayer host) needs this mod installed for wallets, jobs, and payouts. Other players only need the JAR on their PC if they want the jobs HUD and the richer <code>/otter</code> client UI.</div>
 

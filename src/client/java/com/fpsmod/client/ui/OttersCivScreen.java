@@ -34,8 +34,9 @@ public final class OttersCivScreen extends Screen {
         HOME("Home", "Overview & roadmap"),
         WALLET("Wallet", "Money & ledger"),
         JOBS("Jobs", "Profession & HUD bar"),
+        GUILDS("Guilds", "Groups & claims"),
         REWARDS("Rewards", "Payouts & tuning"),
-        CIV("Civ", "Factions · shops · gov"),
+        CIV("Civ", "Shops · gov · future"),
         HELP("Help", "Commands & docs");
 
         final String label;
@@ -246,7 +247,8 @@ public final class OttersCivScreen extends Screen {
             case WALLET -> renderWallet(g, x, y, w, h, mouseX, mouseY);
             case REWARDS -> renderRewards(g, x, y, w, h, mouseX, mouseY);
             case JOBS -> renderJobs(g, x, y, w, h, mouseX, mouseY);
-            case CIV -> renderCiv(g, x, y, w, h);
+            case GUILDS -> renderGuilds(g, x, y, w, h, mouseX, mouseY);
+            case CIV -> renderCiv(g, x, y, w, h, mouseX, mouseY);
             case HELP -> renderHelp(g, x, y, w, h);
         }
     }
@@ -263,7 +265,7 @@ public final class OttersCivScreen extends Screen {
             Status.PARTIAL, // M0 Foundation — partial (wallet/rewards persist; no audit log/migrations yet)
             Status.PARTIAL, // M1 Economy MVP — /money + /money set live; /pay, /ooga still planned
             Status.SHIPPED, // M2 Jobs MVP — 4 jobs, XP, HUD bar shipped
-            Status.PLANNED, // M3 Factions & Claims
+            Status.SHIPPED, // M3 Factions & Claims
             Status.PLANNED, // M4 Player Shops
             Status.FUTURE,  // M5 Governance
             Status.FUTURE   // M6 Scale & PostgreSQL
@@ -291,7 +293,8 @@ public final class OttersCivScreen extends Screen {
         renderButton(g, x,           qaY,      bw, 22, "Open Wallet",     "action:wallet",      mouseX, mouseY);
         renderButton(g, x + bw + 8,  qaY,      bw, 22, "Jobs & HUD",      "action:jobs",        mouseX, mouseY);
         renderButton(g, x,           qaY + 28, bw, 22, "Reward Configs",  "action:rewards",     mouseX, mouseY);
-        renderButton(g, x + bw + 8,  qaY + 28, bw, 22, "Run /money",      "action:money",       mouseX, mouseY);
+        renderButton(g, x + bw + 8,  qaY + 28, bw, 22, "Guild & Claims",  "tab:GUILDS",        mouseX, mouseY);
+        renderButton(g, x,           qaY + 56, bw, 22, "Run /money",      "action:money",       mouseX, mouseY);
     }
 
     /** Small colored chip with label — used for milestone badges. */
@@ -478,7 +481,63 @@ public final class OttersCivScreen extends Screen {
         }
     }
 
-    private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    private void renderGuilds(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
+        var info = com.fpsmod.client.guilds.GuildClientState.guildInfo();
+        if (info == null) {
+            sectionHeading(g, x, y, "Guilds");
+            body(g, x, y + 14, "You are not in a guild.", TEXT_MUTED);
+            body(g, x, y + 28, "Create one with /guild create <name> ($250).", TEXT_PRIMARY);
+            body(g, x, y + 40, "Or accept an invite with /guild join.", TEXT_PRIMARY);
+            renderButton(g, x, y + 58, w - 2, 20, "Create guild (costs $250)", "guild:quick_create", mouseX, mouseY);
+            return;
+        }
+
+        int cardY = y;
+        sectionHeading(g, x, cardY, info.name);
+        cardY += 14;
+
+        // Status row
+        int rowY = cardY;
+        drawBadge(g, x, rowY, info.open ? "OPEN" : "INVITE", info.open ? 0xFF22C55E : 0xFFE9B949);
+        drawBadge(g, x + 56, rowY, info.role.toUpperCase(), 0xFF67E8F9);
+        cardY += 14;
+
+        // Stats
+        body(g, x, cardY, "Owner: " + info.owner.substring(0, Math.min(8, info.owner.length())) + "…", TEXT_MUTED);
+        cardY += 10;
+        body(g, x, cardY, "Members: " + info.memberCount + "/" + info.maxMembers + "  ·  Claims: " + info.claimCount + "/" + info.maxClaims + "  ·  Balance: $" + info.balance, TEXT_PRIMARY);
+        cardY += 10;
+        body(g, x, cardY, "Home: " + (info.hasHome ? "set" : "not set") + "  ·  Description: " + (info.description.isEmpty() ? "(none)" : info.description), TEXT_MUTED);
+        cardY += 16;
+
+        // Quick action buttons
+        int bw = (w - 8) / 3;
+        int bh = 20;
+        int gap = 4;
+        renderButton(g, x,              cardY, bw, bh, "Invite",       "guild:invite",      mouseX, mouseY);
+        renderButton(g, x + bw + gap,    cardY, bw, bh, "Claim chunk",  "guild:claim",       mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Chunk map", "guild:map",         mouseX, mouseY);
+        cardY += bh + gap;
+
+        renderButton(g, x,              cardY, bw, bh, "Set home",     "guild:sethome",     mouseX, mouseY);
+        renderButton(g, x + bw + gap,    cardY, bw, bh, "Go home",      "guild:home",        mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Guild info", "guild:info",       mouseX, mouseY);
+        cardY += bh + gap;
+
+        renderButton(g, x,              cardY, bw, bh, "Promote",      "guild:promote",     mouseX, mouseY);
+        renderButton(g, x + bw + gap,    cardY, bw, bh, "Demote",       "guild:demote",      mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Kick",     "guild:kick",        mouseX, mouseY);
+        cardY += bh + gap;
+
+        renderButton(g, x,              cardY, bw, bh, "Leave guild",  "guild:leave",       mouseX, mouseY);
+        renderButton(g, x + bw + gap,    cardY, bw, bh, "Unclaim",     "guild:unclaim",     mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Open config", "guild:config",   mouseX, mouseY);
+
+        // Legend
+        body(g, x, cardY + 26, "Claimed chunks near you are shown in green on the GUI overlay.", TEXT_DIM);
+    }
+
+    private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Civilization Roadmap");
         body(g, x, y + 14, "M3 → M6 — full execution order in DOCS/ROADMAP.md.", TEXT_MUTED);
 
@@ -487,9 +546,9 @@ public final class OttersCivScreen extends Screen {
         int cardGap = 4;
 
         drawMilestone(g, x, cardY, w, cardH,
-            "M3  Factions & Claims",
-            "/f create|invite|join|leave|promote|demote · chunk claims · faction treasury",
-            Status.PLANNED);
+            "M3  Guilds & Claims",
+            "/guild create|invite|join|leave|kick|promote|demote · chunk claims · guild home",
+            Status.SHIPPED);
         cardY += cardH + cardGap;
 
         drawMilestone(g, x, cardY, w, cardH,
@@ -508,6 +567,12 @@ public final class OttersCivScreen extends Screen {
             "M6  Stabilization & Scale",
             "Telemetry · adversarial soak · SQLite → PostgreSQL migration · RC",
             Status.FUTURE);
+
+        // Quick actions for M3
+        int btnY = cardY + cardH + 8;
+        int bw = (w - 6) / 2;
+        renderButton(g, x, btnY, bw, 20, "Guilds panel", "tab:GUILDS", mouseX, mouseY);
+        renderButton(g, x + bw + 6, btnY, bw, 20, "Open guilds config", "guild:config", mouseX, mouseY);
     }
 
     private void drawMilestone(GuiGraphicsExtractor g, int x, int y, int w, int h, String title, String detail, Status status) {
@@ -533,12 +598,14 @@ public final class OttersCivScreen extends Screen {
         drawCommandRow(g, x, row + 48, "/job list",                       "jobs catalog",                    Status.SHIPPED);
         drawCommandRow(g, x, row + 60, "/job join <slug> · /job leave",   "pick or clear a job",            Status.SHIPPED);
 
-        // Planned commands.
-        drawCommandRow(g, x, row + 76, "/pay <player> <amount>",          "M1 transfer",                     Status.PLANNED);
-        drawCommandRow(g, x, row + 88, "/ooga money add|take",            "M1 admin grant/burn",             Status.PLANNED);
-        drawCommandRow(g, x, row +100, "/profession info",                "M2 progression view",             Status.PLANNED);
-        drawCommandRow(g, x, row +112, "/f create|invite|join|...",       "M3 factions",                     Status.PLANNED);
-        drawCommandRow(g, x, row +124, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
+        // Shipped M3 guilds.
+        drawCommandRow(g, x, row + 76, "/guild create <name>",            "M3 create ($250)",                Status.SHIPPED);
+        drawCommandRow(g, x, row + 88, "/guild invite|join|leave|kick",   "M3 membership",                   Status.SHIPPED);
+        drawCommandRow(g, x, row +100, "/guild claim|unclaim|map",        "M3 chunk claims ($100)",          Status.SHIPPED);
+        drawCommandRow(g, x, row +112, "/guild promote|demote",           "M3 officer ranks",                Status.SHIPPED);
+        drawCommandRow(g, x, row +124, "/guild sethome|home",             "M3 guild teleport",               Status.SHIPPED);
+        drawCommandRow(g, x, row +136, "/pay <player> <amount>",          "M1 transfer",                     Status.PLANNED);
+        drawCommandRow(g, x, row +148, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
 
         body(g, x, row + 142, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
     }
@@ -608,6 +675,10 @@ public final class OttersCivScreen extends Screen {
             handleJobsAction(key.substring(5));
             return;
         }
+        if (key.startsWith("guild:")) {
+            handleGuildAction(key.substring(6));
+            return;
+        }
         switch (key) {
             case "action:wallet"             -> active = Tab.WALLET;
             case "action:jobs"               -> active = Tab.JOBS;
@@ -618,6 +689,25 @@ public final class OttersCivScreen extends Screen {
             case "action:open_rewards"       -> openClientConfigFile("otters_civ_revived", "rewards.json");
             case "action:open_block_values"  -> openClientConfigFile("otters_civ_revived", "block_values.json");
             case "action:open_entity_values" -> openClientConfigFile("otters_civ_revived", "entity_values.json");
+            default -> { /* no-op */ }
+        }
+    }
+
+    private void handleGuildAction(String op) {
+        switch (op) {
+            case "info"          -> runCommand("guild info");
+            case "config"        -> openClientConfigFile("otters_civ_revived", "guilds.json");
+            case "quick_create"  -> runCommand("guild create");
+            case "invite"        -> runCommand("guild invite");
+            case "claim"         -> runCommand("guild claim");
+            case "unclaim"       -> runCommand("guild unclaim");
+            case "map"           -> runCommand("guild map");
+            case "sethome"       -> runCommand("guild sethome");
+            case "home"          -> runCommand("guild home");
+            case "promote"       -> runCommand("guild promote");
+            case "demote"        -> runCommand("guild demote");
+            case "kick"          -> runCommand("guild kick");
+            case "leave"         -> runCommand("guild leave");
             default -> { /* no-op */ }
         }
     }
@@ -662,8 +752,9 @@ public final class OttersCivScreen extends Screen {
 
     private void runCommand(String cmd) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand(cmd);
+        var player = mc.player;
+        if (player != null && player.connection != null) {
+            player.connection.sendCommand(cmd);
         }
         this.onClose();
     }
@@ -698,7 +789,7 @@ public final class OttersCivScreen extends Screen {
     private static void showClientNotice(String message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc != null && mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(message), false);
+            mc.player.sendSystemMessage(Component.literal(message));
         }
     }
 

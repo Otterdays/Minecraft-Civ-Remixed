@@ -96,7 +96,7 @@ public final class JobCommand {
                     + " · +" + job.progression.xpPerEvent + " xp/event"
             );
         }
-        send(source, "Use /job join <name> to activate. /job info <name> shows full detail.");
+        send(source, "Use /job join <id> to activate. /job info <id> shows full detail.");
         return 1;
     }
 

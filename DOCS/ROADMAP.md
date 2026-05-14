@@ -2,6 +2,9 @@
 
 # ROADMAP - Project OOGA
 
+[AMENDED 2026-05-14]:
+- **Jobs implementation now exceeds the original M2 starter assumption.** The runtime jobs engine is server-authoritative and fully data-driven from `config/otters_civ_revived/jobs.json`: arbitrary job ids, triggers, progression, boosts, and single-vs-multi activation policy. Current follow-on work for M2 should treat the dynamic jobs engine as the new baseline and focus on balance, abuse controls, and deeper profession content rather than reintroducing fixed-role assumptions.
+
 [AMENDED 2026-05-07]: Checklist-first execution format added below. Use this section as the
 primary tracker. Existing sections remain as detailed reference.
 

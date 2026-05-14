@@ -102,6 +102,12 @@ Use this as the first stop for quick discovery.
 - **Wiring:** `OogaMod.onInitialize` builds `JobsService.createDefault()`, hands it to `OttersCivGameplay.register(wallets, rules, jobsHooks)`, registers `JobCommand`, and calls `jobsService.refresh(server)` from `onLogicalServerFullyStarted`.
 - **Test:** `src/test/java/com/fpsmod/jobs/JobsConfigTest.java` (curve monotonicity + round-trip + multiplier clamp + state add/active).
 
+[AMENDED 2026-05-14 — fully configurable jobs]:
+- **Jobs package runtime shape:** `src/main/java/com/fpsmod/jobs/` now centers on data classes and compiled catalog flow, not enum slugs. Key files: `Job`, `JobTrigger`, `JobProgression`, `JobBoosts`, `JobEventType`, `JobEventContext`, `CompiledJobCatalog`, `JobCatalogSnapshot`, `JobStatusSnapshotData`, `JobsConfig`, `JobsConfigLoader`, `JobState`, `JobsLedger`, `JobsStore`, `FileJobsStore`, `JobsService`.
+- **Persistence:** `FileJobsStore` now writes JSON player state to `config/otters_civ_revived/jobs_state.json` (active job ids + per-job XP + optional name hints) and performs one-time migration from legacy `jobs.properties`.
+- **Networking:** `src/main/java/com/fpsmod/jobs/net/` now includes `JobCatalogPayload`, `JobStatusPayload`, and `JobsNetworking`; the server sends both catalog metadata and local-player status snapshots.
+- **Client mirrors:** `src/client/java/com/fpsmod/client/jobs/` now includes `JobsClientCatalog` alongside `JobsClientState`, `JobsClientNetworking`, `JobsHudConfig`, and `JobsHudOverlay`. `/otter` Jobs UI in `src/client/java/com/fpsmod/client/ui/OttersCivScreen.java` renders from those synced snapshots.
+
 [AMENDED 2026-05-13 — reward chat flow]:
 - **Economy message source:** `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java` now owns only the money line and formats it as **`+N coins`** via `coinMessageText(...)`, sent immediately after `wallets.addBalance(...)`.
 - **Jobs progress message source:** `src/main/java/com/fpsmod/jobs/JobsService.java` now owns the job-side line via `progressMessageText(...)`, emitting **`[job] +5 xp · Lvl X · inLevel/range`** only when the reward event matches the player's active job. Level-up remains a separate follow-up line.
@@ -156,7 +162,15 @@ For fast agent discovery — the files you need for any reward/economy task:
 | **Join attendance (per-save)** | `src/main/java/com/fpsmod/ottersciv/JoinAttendanceSavedData.java` |
 | **Gameplay wiring** | `src/main/java/com/fpsmod/ottersciv/OttersCivGameplay.java` |
 | **Tests** | `src/test/java/com/fpsmod/ottersciv/config/RewardRulesLoaderTest.java` |
-| **Runtime config dir** | `config/otters_civ_revived/` (rewards.json, block_values.json, entity_values.json, wallet.properties) |
+| **Guild service** | `src/main/java/com/fpsmod/guilds/GuildService.java` |
+| **Guild persistence** | `src/main/java/com/fpsmod/guilds/FileGuildStore.java` (`config/otters_civ_revived/guilds_data.json`) |
+| **Guild config (operator tuning)** | `src/main/java/com/fpsmod/guilds/GuildConfig.java` (`config/otters_civ_revived/guilds.json`) |
+| **`/guild` command** | `src/main/java/com/fpsmod/command/GuildCommand.java` |
+| **Guild networking (server)** | `src/main/java/com/fpsmod/guilds/net/GuildNetworking.java`, `ClaimsPayload.java`, `MapTogglePayload.java` |
+| **Guild networking (client)** | `src/client/java/com/fpsmod/client/guilds/GuildClientNetworking.java` |
+| **Chunk map overlay (client)** | `src/client/java/com/fpsmod/client/guilds/GuildChunkOverlay.java` |
+| **Guild client state** | `src/client/java/com/fpsmod/client/guilds/GuildClientState.java` |
+| **Runtime config dir** | `config/otters_civ_revived/` (rewards.json, block_values.json, entity_values.json, wallet.properties, guilds.json, guilds_data.json) |
 
 ## Output paths
 

@@ -3,6 +3,7 @@ package com.fpsmod.jobs;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,27 +16,30 @@ class JobsServiceTest {
 
     private static final UUID ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final JobsConfig CONFIG = JobsConfig.defaults();
+    private static final String MINER = "miner";
+    private static final String FIGHTER = "fighter";
+    private static final String LUMBERJACK = "lumberjack";
 
     @Test
     void joinJobSetsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
         JobsService svc = new JobsService(store, CONFIG);
-        svc.joinJob(ID, Job.MINER, null);
+        svc.joinJob(ID, MINER, null);
         // null player is fine for these tests since we don't trigger status listener side-effects
 
-        assertEquals(Job.MINER, svc.stateOf(ID).active());
+        assertEquals(MINER, svc.stateOf(ID).primaryActiveJobId());
         assertEquals(1, store.saveCount);
 
         JobsLedger reloaded = store.load();
-        assertEquals(Job.MINER, reloaded.states().get(ID).active());
+        assertEquals(MINER, reloaded.states().get(ID).primaryActiveJobId());
     }
 
     @Test
     void joinJobIdempotentReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
         JobsService svc = new JobsService(store, CONFIG);
-        assertTrue(svc.joinJob(ID, Job.FIGHTER, null));
-        assertFalse(svc.joinJob(ID, Job.FIGHTER, null));
+        assertTrue(svc.joinJob(ID, FIGHTER, null));
+        assertFalse(svc.joinJob(ID, FIGHTER, null));
         assertEquals(1, store.saveCount);  // second join didn't persist
     }
 
@@ -43,37 +47,37 @@ class JobsServiceTest {
     void leaveJobClearsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
         JobsService svc = new JobsService(store, CONFIG);
-        svc.joinJob(ID, Job.LUMBERJACK, null);
+        svc.joinJob(ID, LUMBERJACK, null);
         assertEquals(1, store.saveCount);
 
-        svc.leaveJob(ID, null);
+        svc.leaveJob(ID, null, null);
         assertEquals(2, store.saveCount);
-        assertNull(svc.stateOf(ID).active());
+        assertNull(svc.stateOf(ID).primaryActiveJobId());
     }
 
     @Test
     void leaveJobWhenInactiveReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
         JobsService svc = new JobsService(store, CONFIG);
-        assertFalse(svc.leaveJob(ID, null));
+        assertFalse(svc.leaveJob(ID, null, null));
         assertEquals(0, store.saveCount);
     }
 
     @Test
-    void xpPersistedOnEconomyReward() {
+    void statusSnapshotReflectsXp() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
         JobsService svc = new JobsService(store, CONFIG);
-        svc.joinJob(ID, Job.MINER, null);
-        assertEquals(0L, svc.stateOf(ID).getXp(Job.MINER));
+        svc.joinJob(ID, MINER, null);
+        assertEquals(0L, svc.stateOf(ID).getXp(MINER));
 
-        svc.onEconomyReward(null, null);
-        // null ctx means no job matching, so no XP
-        assertEquals(0L, svc.stateOf(ID).getXp(Job.MINER));
+        Job miner = svc.jobById(MINER);
+        assertNotNull(miner);
+        long xp = svc.stateOf(ID).addXp(MINER, miner.progression.xpPerEvent);
+        assertEquals(miner.progression.xpPerEvent, xp);
 
-        // We can't easily test the full RewardContext flow without Minecraft classes,
-        // but we verify the XP-add path directly:
-        long xp = svc.stateOf(ID).addXp(Job.MINER, CONFIG.xpPerEvent(Job.MINER));
-        assertEquals(CONFIG.xpPerEvent(Job.MINER), xp);
+        JobStatusSnapshotData snapshot = svc.statusSnapshot(ID);
+        assertEquals(List.of(MINER), snapshot.activeJobIds);
+        assertTrue(snapshot.progress.stream().anyMatch(entry -> MINER.equals(entry.jobId) && entry.xp == xp));
     }
 
     /**
@@ -86,7 +90,7 @@ class JobsServiceTest {
         JobsService svc = new JobsService(store, CONFIG);
 
         svc.rememberPlayerName(ID, "TestPlayer");
-        svc.joinJob(ID, Job.MINER, null);
+        svc.joinJob(ID, MINER, null);
 
         JobsLedger reloaded = store.load();
         assertEquals("TestPlayer", reloaded.displayHints().get(ID));
@@ -99,7 +103,7 @@ class JobsServiceTest {
 
         JobState s = svc.stateOf(ID);
         assertNotNull(s);
-        assertNull(s.active());
-        assertEquals(0L, s.getXp(Job.MINER));
+        assertNull(s.primaryActiveJobId());
+        assertEquals(0L, s.getXp(MINER));
     }
 }

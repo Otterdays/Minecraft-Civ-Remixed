@@ -1,23 +1,31 @@
 package com.fpsmod.client.guilds;
 
+import com.fpsmod.OogaMod;
 import com.fpsmod.guilds.ClaimedChunk;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.resources.Identifier;
 
-/**
- * Chunk claim overlay — renders a grid of claimed chunks around the player
- * with colour coding (own guild = green, other = red).
- */
 public final class GuildChunkOverlay {
     private static boolean visible = false;
     private static int viewRadius = 4;
+    private static long hideAt = 0L;
+    private static final Identifier OVERLAY_ID =
+        Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "guild_chunk_overlay");
 
     private GuildChunkOverlay() {}
 
-    public static void toggle() {
-        visible = !visible;
+    public static void show(int seconds) {
+        visible = true;
+        hideAt = System.currentTimeMillis() + seconds * 1000L;
+    }
+
+    public static void hide() {
+        visible = false;
+        hideAt = 0L;
     }
 
     public static boolean isVisible() {
@@ -25,11 +33,19 @@ public final class GuildChunkOverlay {
     }
 
     public static void register() {
-        HudRenderCallback.EVENT.register(GuildChunkOverlay::render);
+        HudElementRegistry.attachElementAfter(
+            VanillaHudElements.INFO_BAR,
+            OVERLAY_ID,
+            GuildChunkOverlay::render
+        );
     }
 
-    private static void render(GuiGraphicsExtractor g, float tickDelta) {
+    private static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
         if (!visible) return;
+        if (hideAt > 0L && System.currentTimeMillis() > hideAt) {
+            visible = false;
+            return;
+        }
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -37,22 +53,19 @@ public final class GuildChunkOverlay {
         int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();
 
-        ChunkPos center = mc.player.chunkPosition();
-        int cx = center.x;
-        int cz = center.z;
+        int cx = mc.player.blockPosition().getX() >> 4;
+        int cz = mc.player.blockPosition().getZ() >> 4;
 
-        // Map dimensions
         int chunkPx = 8;
         int mapW = (viewRadius * 2 + 1) * chunkPx;
         int mapH = mapW;
         int mapX = sw - mapW - 10;
         int mapY = (sh - mapH) / 2;
 
-        // Background
         g.fill(mapX - 2, mapY - 2, mapX + mapW + 2, mapY + mapH + 2, 0xAA111827);
         g.fill(mapX - 1, mapY - 1, mapX + mapW + 1, mapY + mapH + 1, 0xCC1F2937);
 
-        String dim = mc.level.dimension().location().toString();
+        String dim = mc.level.dimension().identifier().toString();
 
         for (int dz = -viewRadius; dz <= viewRadius; dz++) {
             for (int dx = -viewRadius; dx <= viewRadius; dx++) {
@@ -70,7 +83,6 @@ public final class GuildChunkOverlay {
                 }
 
                 if (dx == 0 && dz == 0) {
-                    // Player position — highlight
                     g.fill(px, py, px + chunkPx, py + chunkPx, 0xFF67E8F9);
                 } else if (claim != null) {
                     g.fill(px, py, px + chunkPx, py + chunkPx, 0xFF22C55E);
@@ -78,13 +90,11 @@ public final class GuildChunkOverlay {
                     g.fill(px, py, px + chunkPx, py + chunkPx, 0xFF374151);
                 }
 
-                // Grid lines
                 g.fill(px, py + chunkPx - 1, px + chunkPx, py + chunkPx, 0xFF111827);
                 g.fill(px + chunkPx - 1, py, px + chunkPx, py + chunkPx, 0xFF111827);
             }
         }
 
-        // Legend
         int legX = mapX;
         int legY = mapY + mapH + 4;
         g.fill(legX, legY, legX + 6, legY + 6, 0xFF374151);

@@ -1,18 +1,19 @@
 package com.fpsmod.guilds;
 
 import com.fpsmod.economy.WalletService;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -22,12 +23,6 @@ public class GuildService {
     private final GuildStore store;
     private final WalletService wallets;
     private volatile GuildConfig config;
-
-    private final Map<UUID, Guild> guilds = new ConcurrentHashMap<>();
-    private final Map<String, UUID> byName = new ConcurrentHashMap<>();
-    private final Map<String, ClaimedChunk> claimsByKey = new ConcurrentHashMap<>();
-    private final Set<ClaimedChunk> claims = ConcurrentHashMap.newKeySet();
-
     public GuildService(GuildStore store, WalletService wallets, GuildConfig config) {
         this.store = store;
         this.wallets = wallets;
@@ -45,6 +40,14 @@ public class GuildService {
 
     public void refresh() {
         this.config = GuildConfigLoader.loadOrCreate();
+    }
+
+    private static int chunkCoord(int blockCoord) {
+        return blockCoord >> 4;
+    }
+
+    private static String dimensionId(ServerPlayer player) {
+        return player.level().dimension().identifier().toString();
     }
 
     public Guild guildById(UUID id) {
@@ -83,7 +86,7 @@ public class GuildService {
             long balance = wallets.getBalance(owner.getUUID());
             if (balance < config.creationCost)
                 return "You need $" + config.creationCost + " to create a guild (you have $" + balance + ").";
-            wallets.subtractBalance(owner.getUUID(), config.creationCost);
+            wallets.addBalance(owner.getUUID(), -config.creationCost);
         }
         Guild g = new Guild(UUID.randomUUID(), name.trim(), owner.getUUID());
         guilds.put(g.id, g);
@@ -107,18 +110,13 @@ public class GuildService {
         return "Guild '" + g.name + "' disbanded.";
     }
 
-    public String invitePlayer(ServerPlayer sender, String targetName, GuildCommand.NameResolver resolver) {
+    public String invitePlayer(ServerPlayer sender, ServerPlayer target) {
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(sender.getUUID())) return "Only officers can invite.";
         if (g.memberCount() >= config.maxMembers) return "Guild is full (max " + config.maxMembers + ").";
-
-        ServerPlayer target = resolver.resolve(targetName);
-        if (target == null) return "Player not found.";
         if (g.isMember(target.getUUID())) return "They are already in your guild.";
         if (guildByPlayer(target.getUUID()) != null) return "They are already in another guild.";
-
-        // store pending invite
         pendingInvites.put(target.getUUID(), g.id);
         return "Invited " + target.getName().getString() + " to " + g.name + ".";
     }
@@ -127,7 +125,17 @@ public class GuildService {
 
     public String joinGuild(ServerPlayer player) {
         UUID guildId = pendingInvites.remove(player.getUUID());
-        if (guildId == null) return "You have no pending invite.";
+        if (guildId == null) {
+            // Check if guild is open
+            for (Guild g : guilds.values()) {
+                if (g.open && !g.isMember(player.getUUID()) && g.memberCount() < config.maxMembers) {
+                    g.members.add(player.getUUID());
+                    persist();
+                    return "You joined " + g.name + "!";
+                }
+            }
+            return "You have no pending invite.";
+        }
         Guild g = guilds.get(guildId);
         if (g == null) return "That guild no longer exists.";
         if (g.memberCount() >= config.maxMembers) return "Guild is full.";
@@ -202,7 +210,7 @@ public class GuildService {
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can set the guild home.";
         g.homePos = player.blockPosition();
-        g.homeDimension = player.serverLevel().dimension().location().toString();
+        g.homeDimension = dimensionId(player);
         persist();
         return "Guild home set at your location.";
     }
@@ -211,26 +219,18 @@ public class GuildService {
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (g.homePos == null) return "No guild home has been set.";
-        ServerLevel targetLevel = player.server.getLevel(ResourceKey.create(
-            net.minecraft.core.registries.Registries.DIMENSION,
-            net.minecraft.resources.Identifier.parse(g.homeDimension)));
-        if (targetLevel == null) return "Home dimension not found.";
-        player.teleportTo(targetLevel, g.homePos.getX() + 0.5, g.homePos.getY() + 0.5, g.homePos.getZ() + 0.5, player.getYRot(), player.getXRot());
-        return "Teleported to guild home.";
-    }
 
-    public String info(ServerPlayer player) {
-        Guild g = guildByPlayer(player.getUUID());
-        if (g == null) return "You are not in a guild.";
-        StringBuilder sb = new StringBuilder();
-        sb.append("§6=== ").append(g.name).append(" ===§r\n");
-        sb.append("Owner: ").append(g.owner).append("\n");
-        sb.append("Members: ").append(g.memberCount()).append("/").append(config.maxMembers).append("\n");
-        sb.append("Balance: $").append(g.balance).append("\n");
-        sb.append("Claims: ").append(claimsForGuild(g.id).size()).append("/").append(config.maxClaims).append("\n");
-        sb.append("Open: ").append(g.open ? "yes" : "invite-only").append("\n");
-        if (g.homePos != null) sb.append("Home: set\n");
-        return sb.toString();
+        String dimStr = g.homeDimension != null ? g.homeDimension : "minecraft:overworld";
+        Identifier dimId = Identifier.parse(dimStr);
+        ResourceKey<Level> dimKey = ResourceKey.create(
+            net.minecraft.core.registries.Registries.DIMENSION, dimId);
+        ServerLevel targetLevel = player.level().getServer().getLevel(dimKey);
+        if (targetLevel == null) return "Home dimension not found.";
+
+        BlockPos pos = g.homePos;
+        player.teleportTo(targetLevel, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+            Set.of(), player.getYRot(), player.getXRot(), false);
+        return "Teleported to guild home.";
     }
 
     // --- Chunk claims ---
@@ -239,7 +239,7 @@ public class GuildService {
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can claim land.";
-        String dim = player.serverLevel().dimension().location().toString();
+        String dim = dimensionId(player);
         String key = ClaimedChunk.keyOf(dim, chunkX, chunkZ);
 
         if (claimsByKey.containsKey(key)) {
@@ -253,7 +253,7 @@ public class GuildService {
             long balance = wallets.getBalance(player.getUUID());
             if (balance < config.claimCost)
                 return "You need $" + config.claimCost + " to claim (you have $" + balance + ").";
-            wallets.subtractBalance(player.getUUID(), config.claimCost);
+            wallets.addBalance(player.getUUID(), -config.claimCost);
         }
 
         ClaimedChunk claim = new ClaimedChunk(dim, chunkX, chunkZ, g.id, System.currentTimeMillis());
@@ -267,7 +267,7 @@ public class GuildService {
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can unclaim land.";
-        String dim = player.serverLevel().dimension().location().toString();
+        String dim = dimensionId(player);
         String key = ClaimedChunk.keyOf(dim, chunkX, chunkZ);
         ClaimedChunk claim = claimsByKey.get(key);
         if (claim == null) return "This chunk is not claimed.";
@@ -330,10 +330,5 @@ public class GuildService {
         byName.putAll(ledger.byName());
         claims.addAll(ledger.claims());
         rebuildClaimsIndex();
-    }
-
-    @FunctionalInterface
-    public interface NameResolver {
-        ServerPlayer resolve(String name);
     }
 }

@@ -12,10 +12,25 @@ public final class GuildNetworking {
 
     public static void registerServer(GuildService guilds) {
         PayloadTypeRegistry.clientboundPlay().register(ClaimsPayload.TYPE, ClaimsPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(MapTogglePayload.TYPE, MapTogglePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(GuildStatusPayload.TYPE, GuildStatusPayload.CODEC);
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             sendClaimsTo(guilds, handler.getPlayer());
+            sendGuildStatusTo(guilds, handler.getPlayer());
         });
+    }
+
+    public static void sendGuildStatusTo(GuildService guilds, ServerPlayer player) {
+        if (player == null) return;
+        ServerPlayNetworking.send(player, GuildStatusPayload.forPlayer(player, guilds));
+    }
+
+    public static void broadcastGuildStatuses(GuildService guilds, MinecraftServer server) {
+        if (server == null) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            sendGuildStatusTo(guilds, player);
+        }
     }
 
     public static void sendClaimsTo(GuildService guilds, ServerPlayer player) {

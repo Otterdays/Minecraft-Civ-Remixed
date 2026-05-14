@@ -286,11 +286,10 @@ public class JobsService {
             return "Job '" + job.id + "' is not joinable right now.";
         }
         JobState state = stateOf(playerId);
-        if (state.isActive(job.id) && ("single".equals(config.global.activationPolicy) || state.activeJobIds().size() == 1)) {
+        if (state.isActive(job.id)) {
             return "Already on " + job.id + ".";
         }
         if ("multi".equals(config.global.activationPolicy)
-            && !state.isActive(job.id)
             && state.activeJobIds().size() >= maxActiveJobs()) {
             return "Active job slots full (" + maxActiveJobs() + "). Leave one first.";
         }

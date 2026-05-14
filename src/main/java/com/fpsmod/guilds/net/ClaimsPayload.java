@@ -10,7 +10,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +31,7 @@ public record ClaimsPayload(String json) implements CustomPacketPayload {
     }
 
     public List<ClaimedChunk> claims() {
-        Type type = new TypeToken<List<ClaimedChunk>>() {}.getType();
+        java.lang.reflect.Type type = new TypeToken<List<ClaimedChunk>>() {}.getType();
         List<ClaimedChunk> parsed = GSON.fromJson(json, type);
         return parsed == null ? List.of() : parsed;
     }

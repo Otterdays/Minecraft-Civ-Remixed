@@ -4,7 +4,9 @@ import com.fpsmod.guilds.ClaimedChunk;
 import com.fpsmod.guilds.Guild;
 import com.fpsmod.guilds.GuildService;
 import com.fpsmod.guilds.net.GuildNetworking;
+import com.fpsmod.guilds.net.MapTogglePayload;
 import com.mojang.brigadier.CommandDispatcher;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
@@ -75,6 +77,7 @@ public final class GuildCommand {
         if (p == null) return 0;
         String msg = guilds.createGuild(p, name);
         send(source, msg);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return msg.contains("created") ? 1 : 0;
     }
 
@@ -82,14 +85,17 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.disbandGuild(p));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
     private static int runInvite(CommandSourceStack source, GuildService guilds, ServerPlayer target) {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
-        send(source, guilds.invitePlayer(p, target.getName().getString(), name -> target));
-        if (guilds.guildByPlayer(p.getUUID()) != null) {
+        String result = guilds.invitePlayer(p, target);
+        send(source, result);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        if (result.startsWith("Invited")) {
             target.sendSystemMessage(Component.literal(
                 "You have been invited to join " + guilds.guildByPlayer(p.getUUID()).name
                     + ". Use /guild join to accept."));
@@ -101,6 +107,7 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.joinGuild(p));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
@@ -108,6 +115,7 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.leaveGuild(p));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
@@ -115,6 +123,8 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.kickPlayer(p, target));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, target);
         return 1;
     }
 
@@ -122,6 +132,8 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.transferOwnership(p, target));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, target);
         return 1;
     }
 
@@ -129,6 +141,8 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.promote(p, target));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, target);
         return 1;
     }
 
@@ -136,6 +150,8 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.demote(p, target));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, target);
         return 1;
     }
 
@@ -143,6 +159,7 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         send(source, guilds.setHome(p));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
@@ -180,20 +197,22 @@ public final class GuildCommand {
     private static int runClaim(CommandSourceStack source, GuildService guilds) {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
-        int cx = p.chunkPosition().x;
-        int cz = p.chunkPosition().z;
+        int cx = p.blockPosition().getX() >> 4;
+        int cz = p.blockPosition().getZ() >> 4;
         send(source, guilds.claimChunk(p, cx, cz));
         GuildNetworking.sendClaimsTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
     private static int runUnclaim(CommandSourceStack source, GuildService guilds) {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
-        int cx = p.chunkPosition().x;
-        int cz = p.chunkPosition().z;
+        int cx = p.blockPosition().getX() >> 4;
+        int cz = p.blockPosition().getZ() >> 4;
         send(source, guilds.unclaimChunk(p, cx, cz));
         GuildNetworking.sendClaimsTo(guilds, p);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
@@ -202,6 +221,7 @@ public final class GuildCommand {
         if (p == null) return 0;
         send(source, guilds.unclaimAll(p));
         GuildNetworking.broadcastClaims(guilds, source.getServer());
+        GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
 
@@ -209,8 +229,8 @@ public final class GuildCommand {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
         int radius = 4;
-        int cx = p.chunkPosition().x;
-        int cz = p.chunkPosition().z;
+        int cx = p.blockPosition().getX() >> 4;
+        int cz = p.blockPosition().getZ() >> 4;
         Guild playerGuild = guilds.guildByPlayer(p.getUUID());
 
         send(source, "§6Chunk Map (radius " + radius + "):§r");
@@ -219,7 +239,7 @@ public final class GuildCommand {
             for (int dx = -radius; dx <= radius; dx++) {
                 int rx = cx + dx;
                 int rz = cz + dz;
-                String dim = p.serverLevel().dimension().location().toString();
+                String dim = p.level().dimension().identifier().toString();
                 ClaimedChunk claim = guilds.claimAt(rx, rz, dim);
                 if (claim == null) {
                     row.append("§7▢ ");
@@ -232,6 +252,9 @@ public final class GuildCommand {
             p.sendSystemMessage(Component.literal(row.toString()));
         }
         send(source, "§7▢ §runclaimed  §a■ §ryour guild  §c■ §rother guild");
+        send(source, "§7Overlay toggled. (GUI overlay drawn in top-right)");
+
+        ServerPlayNetworking.send(p, new MapTogglePayload(true));
         return 1;
     }
 

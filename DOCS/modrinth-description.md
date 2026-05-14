@@ -14,11 +14,8 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - Welcome-back message for returning players
 - Configurable mining rewards
 - Configurable combat rewards
-- Four starter jobs:
-  - `miner`
-  - `lumberjack`
-  - `farmer`
-  - `fighter`
+- Fully configurable server-authoritative jobs from `jobs.json`
+- Dynamic `/job` catalog (`list`, `info`, `join`, `leave`, `stats`, `reload`, `validate`)
 - Jobs HUD overlay with in-game controls
 
 ---
@@ -40,8 +37,12 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - `/money set <player> <amount>`
 - `/job`
 - `/job list`
-- `/job join <job>`
-- `/job leave`
+- `/job info <id>`
+- `/job join <id>`
+- `/job leave [id]`
+- `/job stats`
+- `/job reload`
+- `/job validate`
 
 ---
 
@@ -69,10 +70,10 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 
 ### Jobs
 
-- One active job at a time
-- Earn job XP from matching actions
-- Level up over time
-- Jobs HUD shows job, level, and progress
+- Server owners can add arbitrary jobs without Java edits
+- Jobs can define their own triggers, progression, boosts, and display data
+- Activation policy supports single-slot or multi-slot setups
+- Jobs HUD shows synced server job labels, icons, level, and progress
 
 ### Player UX
 
@@ -84,6 +85,8 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 
 ## Config files
 
+- `config/otters_civ_revived/jobs.json`
+- `config/otters_civ_revived/jobs_state.json`
 - `config/otters_civ_revived/rewards.json`
 - `config/otters_civ_revived/block_values.json`
 - `config/otters_civ_revived/entity_values.json`

@@ -1,6 +1,8 @@
 package com.fpsmod;
 
 import com.fpsmod.client.OtterClientCommand;
+import com.fpsmod.client.guilds.GuildChunkOverlay;
+import com.fpsmod.client.guilds.GuildClientNetworking;
 import com.fpsmod.client.jobs.JobsClientNetworking;
 import com.fpsmod.client.jobs.JobsHudOverlay;
 import net.fabricmc.api.ClientModInitializer;
@@ -24,5 +26,7 @@ public class ProjectOogaClient implements ClientModInitializer {
         OtterClientCommand.register();
         JobsClientNetworking.register();
         JobsHudOverlay.register();
+        GuildClientNetworking.register();
+        GuildChunkOverlay.register();
     }
 }

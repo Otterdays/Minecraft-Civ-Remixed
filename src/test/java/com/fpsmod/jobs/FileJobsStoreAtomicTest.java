@@ -25,30 +25,31 @@ class FileJobsStoreAtomicTest {
 
     @Test
     void saveAndLoadRoundTrip() {
-        Path file = tempDir.resolve("jobs.properties");
+        Path file = tempDir.resolve("jobs_state.json");
         FileJobsStore store = new FileJobsStore(file);
 
         JobState state = new JobState();
-        state.setActive(Job.MINER);
-        state.addXp(Job.MINER, 100L);
-        state.addXp(Job.FIGHTER, 50L);
+        state.activate("miner", 1);
+        state.addXp("miner", 100L);
+        state.addXp("fighter", 50L);
 
         store.save(Map.of(ID, state), Map.of(ID, "PlayerOne"));
         JobsLedger loaded = store.load();
 
         JobState loadedState = loaded.states().get(ID);
         assertNotNull(loadedState);
-        assertEquals(Job.MINER, loadedState.active());
-        assertEquals(100L, loadedState.getXp(Job.MINER));
-        assertEquals(50L, loadedState.getXp(Job.FIGHTER));
+        assertEquals("miner", loadedState.primaryActiveJobId());
+        assertEquals(100L, loadedState.getXp("miner"));
+        assertEquals(50L, loadedState.getXp("fighter"));
         assertEquals("PlayerOne", loaded.displayHints().get(ID));
         assertFalse(Files.exists(file.resolveSibling(file.getFileName() + ".tmp")));
     }
 
     @Test
-    void loadFromExistingFile() throws Exception {
-        Path file = tempDir.resolve("jobs.properties");
-        AtomicFileWriter.writeAtomically(file, w -> {
+    void loadMigratesLegacyPropertiesFile() throws Exception {
+        Path file = tempDir.resolve("jobs_state.json");
+        Path legacy = tempDir.resolve("jobs.properties");
+        AtomicFileWriter.writeAtomically(legacy, w -> {
             w.write("# Name: PlayerOne");
             w.newLine();
             w.write(ID + ".active=miner");
@@ -64,18 +65,19 @@ class FileJobsStoreAtomicTest {
 
         JobState s = loaded.states().get(ID);
         assertNotNull(s);
-        assertEquals(Job.MINER, s.active());
-        assertEquals(100L, s.getXp(Job.MINER));
-        assertEquals(50L, s.getXp(Job.FIGHTER));
+        assertEquals("miner", s.primaryActiveJobId());
+        assertEquals(100L, s.getXp("miner"));
+        assertEquals(50L, s.getXp("fighter"));
         assertEquals("PlayerOne", loaded.displayHints().get(ID));
+        assertFalse(Files.exists(legacy));
+        assertTrue(Files.exists(file));
     }
 
     @Test
     void loadCleansUpStaleTempFile() throws Exception {
-        Path file = tempDir.resolve("jobs.properties");
+        Path file = tempDir.resolve("jobs_state.json");
         AtomicFileWriter.writeAtomically(file, w -> {
-            w.write(ID + ".active=fighter");
-            w.newLine();
+            w.write("{\"players\":{\"" + ID + "\":{\"activeJobs\":[\"fighter\"],\"xpByJobId\":{}}}}");
         });
 
         Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
@@ -84,13 +86,13 @@ class FileJobsStoreAtomicTest {
 
         FileJobsStore store = new FileJobsStore(file);
         JobsLedger loaded = store.load();
-        assertEquals(Job.FIGHTER, loaded.states().get(ID).active());
+        assertEquals("fighter", loaded.states().get(ID).primaryActiveJobId());
         assertFalse(Files.exists(tmp), "stale .tmp should be cleaned");
     }
 
     @Test
     void loadReturnsEmptyWhenNoFile() {
-        Path file = tempDir.resolve("nonexistent.properties");
+        Path file = tempDir.resolve("nonexistent.json");
         FileJobsStore store = new FileJobsStore(file);
         JobsLedger loaded = store.load();
         assertTrue(loaded.states().isEmpty());
@@ -98,26 +100,26 @@ class FileJobsStoreAtomicTest {
 
     @Test
     void overwritePreservesNewData() {
-        Path file = tempDir.resolve("jobs.properties");
+        Path file = tempDir.resolve("jobs_state.json");
         FileJobsStore store = new FileJobsStore(file);
 
         JobState first = new JobState();
-        first.setActive(Job.MINER);
+        first.activate("miner", 1);
         store.save(Map.of(ID, first), Map.of());
 
         JobState second = new JobState();
-        second.setActive(Job.FIGHTER);
-        second.addXp(Job.FIGHTER, 200L);
+        second.activate("fighter", 1);
+        second.addXp("fighter", 200L);
         store.save(Map.of(ID, second), Map.of());
 
         JobsLedger loaded = store.load();
-        assertEquals(Job.FIGHTER, loaded.states().get(ID).active());
-        assertEquals(200L, loaded.states().get(ID).getXp(Job.FIGHTER));
+        assertEquals("fighter", loaded.states().get(ID).primaryActiveJobId());
+        assertEquals(200L, loaded.states().get(ID).getXp("fighter"));
     }
 
     @Test
     void loadFromEmptyFileReturnsEmpty() throws Exception {
-        Path file = tempDir.resolve("jobs.properties");
+        Path file = tempDir.resolve("jobs_state.json");
         AtomicFileWriter.writeAtomically(file, w -> {});
         FileJobsStore store = new FileJobsStore(file);
         JobsLedger loaded = store.load();

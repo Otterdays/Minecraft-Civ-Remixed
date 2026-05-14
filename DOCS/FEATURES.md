@@ -1,5 +1,8 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-14]:
+- **Jobs are now fully configurable and server-authoritative.** The current Otters Civ. release no longer stops at a fixed starter set for runtime behavior. `config/otters_civ_revived/jobs.json` now defines the live jobs catalog itself: arbitrary job ids, display metadata, triggers, progression, boosts, and activation policy (`single` or `multi` active slots). Client HUD/UI surfaces render the server-synced catalog; player state persists in `config/otters_civ_revived/jobs_state.json` with one-time migration from legacy `jobs.properties`.
+
 [AMENDED 2026-05-13]:
 - **FPS HUD is fully deprecated and disabled.** Mod ID changed from `fpsmod` to `project_ooga`. Entrypoint classes renamed from `FpsMod`/`FpsModClient` to `OogaMod`/`ProjectOogaClient` (class name collision with standalone FPS overlay mod). The section below is kept for historical reference only — the standalone FPS overlay mod handles FPS display. See `DOCS/CHANGELOG.md` and `DOCS/ARCHITECTURE.md` for full details.
 

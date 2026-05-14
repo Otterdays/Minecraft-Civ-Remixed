@@ -7,7 +7,7 @@
 - Repository: `https://github.com/Otterdays/Minecraft-Civ-Remixed`
 - Mod ID: `project_ooga` (changed from `fpsmod` to avoid conflict with standalone FPS overlay mod)
 - Entrypoint classes: `OogaMod` / `ProjectOogaClient` (renamed to avoid class name collision)
-- Shipping: economy wallet, mining/combat rewards, 4 jobs, join welcome, crash-safe persistence, in-game `/otter` hub, jobs HUD overlay
+- Shipping: economy wallet, mining/combat rewards, fully configurable jobs, join welcome, crash-safe persistence, in-game `/otter` hub, jobs HUD overlay
 - Legacy FPS HUD: **deprecated & disabled** (standalone FPS overlay mod handles display)
 - Docs parity: `index.html` (repo root) is the canonical offline reference
 
@@ -44,6 +44,11 @@
 
 [AMENDED 2026-05-14 — jobs config surface]:
 - **Jobs progression is now operator-tunable via `config/otters_civ_revived/jobs.json`.** The four shipped job slugs stay fixed for UI/save compatibility, but operators can now change the shared progression math (`maxLevel`, `xpBase`, `xpExponent`, `multiplierTopBonus`, default `xpPerEvent`) and override each job's `tagId` plus optional per-job `xpPerEvent`. `jobs.properties` remains the player-state ledger; `jobs.json` is the tuning file. Reload path matches rewards hydration: `SERVER_STARTED` + `END_DATA_PACK_RELOAD`.
+
+[AMENDED 2026-05-14 — fully configurable jobs]:
+- **Jobs are now fully data-driven and server-authoritative.** `jobs.json` no longer just tunes four shipped roles; it defines the live job catalog itself: arbitrary job ids, display metadata, triggers, per-job progression, boosts, and global activation policy (`single` / `multi`, max active slots). The old enum-backed roster is gone from the runtime source of truth.
+- **Player state moved to `config/otters_civ_revived/jobs_state.json`.** The new JSON store keeps active job ids plus per-job XP totals and migrates legacy `jobs.properties` once on load.
+- **Client correctness now comes from server sync, not local config.** `JobsNetworking` sends a catalog payload plus player-status payload so remote clients render the right labels/icons/max levels in the HUD and `/otter` jobs tab without needing a matching local `jobs.json`.
 
 [AMENDED 2026-05-13 — reward chat semantics]:
 - **Reward chat is now split cleanly by system.** Economy payouts announce as **`+N coins`** (instead of the older hardcoded `(mining)` / `(combat)` labels). Jobs progression is a separate line and only fires when the action matches the player's active job, e.g. **`[lumberjack] +5 xp · Lvl 0 · 30/100`**. Level-up remains its own follow-up line on threshold crossings. This avoids falsely implying that a global block reward also counted as miner XP.
