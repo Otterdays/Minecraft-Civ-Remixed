@@ -1,9 +1,7 @@
 package com.fpsmod.jobs;
 
-import com.fpsmod.OogaMod;
-import com.fpsmod.ottersciv.config.RewardRules;
-import com.fpsmod.ottersciv.config.RewardRulesLoader;
-import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Dynamic jobs runtime: arbitrary config-defined jobs, string-keyed player state, and independent
  * gameplay-event XP tracking.
  */
-public class JobsService {
+public class JobsService implements IJobsService {
+    private static final Logger LOGGER = LoggerFactory.getLogger("project_ooga/jobs");
     private final JobsStore store;
     private final Map<UUID, JobState> states;
     private final Map<UUID, String> displayHints;
@@ -65,15 +64,7 @@ public class JobsService {
     }
 
     public List<String> validationMessages() {
-        return catalog.diagnostics();
-    }
-
-    public List<String> validationMessages(@Nullable MinecraftServer server) {
-        List<String> messages = new ArrayList<>(catalog.diagnostics());
-        if (server != null) {
-            messages.addAll(rewardSurfaceDiagnostics(server));
-        }
-        return messages;
+        return new ArrayList<>(catalog.diagnostics());
     }
 
     public JobsConfig config() {
@@ -110,12 +101,12 @@ public class JobsService {
         return states.computeIfAbsent(id, k -> new JobState());
     }
 
-    public void refresh(MinecraftServer server) {
+    public void refresh() {
         this.config = JobsConfigLoader.loadOrCreate();
         this.catalog = CompiledJobCatalog.compile(this.config);
         pruneStatesToCatalog();
-        for (String line : validationMessages(server)) {
-            OogaMod.LOGGER.warn("[otters_civ_revived/jobs] {}", line);
+        for (String line : validationMessages()) {
+            LOGGER.warn("[otters_civ_revived/jobs] {}", line);
         }
     }
 
@@ -370,133 +361,6 @@ public class JobsService {
         }
         lastTriggerEventMs.put(key, now);
         return true;
-    }
-
-    private List<String> rewardSurfaceDiagnostics(MinecraftServer server) {
-        RewardRules rewards = RewardRulesLoader.inspectEffectiveRewardsForRunningServer(server);
-        Set<String> rewardableBlocks = rewardableIds(rewards.blockRewards);
-        Set<String> rewardableEntities = rewardableIds(rewards.entityRewards);
-        List<ResolvedJobTargets> jobsByEvent = resolvedJobTargets();
-        List<String> diagnostics = new ArrayList<>();
-
-        for (ResolvedJobTargets resolved : jobsByEvent) {
-            if (resolved.targetIds().isEmpty()) {
-                continue;
-            }
-            Set<String> rewardable = resolved.eventType() == JobEventType.BLOCK_BREAK
-                ? rewardableBlocks
-                : rewardableEntities;
-            int covered = intersectionCount(resolved.targetIds(), rewardable);
-            if (covered == resolved.targetIds().size()) {
-                continue;
-            }
-            String eventLabel = resolved.eventType() == JobEventType.BLOCK_BREAK ? "block" : "mob";
-            Set<String> uncovered = new LinkedHashSet<>(resolved.targetIds());
-            uncovered.removeAll(rewardable);
-            if (covered == 0) {
-                diagnostics.add(
-                    "Job '" + resolved.jobId() + "' has 0/" + resolved.targetIds().size() + " rewardable "
-                        + eventLabel + " targets with the current rewards surface."
-                        + " It can still award XP, but money boosts never apply there."
-                );
-                continue;
-            }
-            diagnostics.add(
-                "Job '" + resolved.jobId() + "' has " + uncovered.size() + "/" + resolved.targetIds().size()
-                    + " " + eventLabel + " targets outside the current rewards surface"
-                    + " (e.g. " + summarizeIds(uncovered) + ")."
-            );
-        }
-
-        for (int i = 0; i < jobsByEvent.size(); i++) {
-            ResolvedJobTargets left = jobsByEvent.get(i);
-            for (int j = i + 1; j < jobsByEvent.size(); j++) {
-                ResolvedJobTargets right = jobsByEvent.get(j);
-                if (left.eventType() != right.eventType()) {
-                    continue;
-                }
-                Set<String> overlap = new LinkedHashSet<>(left.targetIds());
-                overlap.retainAll(right.targetIds());
-                if (overlap.isEmpty()) {
-                    continue;
-                }
-                diagnostics.add(
-                    "Jobs '" + left.jobId() + "' and '" + right.jobId() + "' overlap on "
-                        + left.eventType().id() + " for " + overlap.size() + " resolved targets"
-                        + " (e.g. " + summarizeIds(overlap) + ")."
-                        + " Multi-slot servers will stack boosts on those actions."
-                );
-            }
-        }
-        return diagnostics;
-    }
-
-    private List<ResolvedJobTargets> resolvedJobTargets() {
-        Map<String, Set<String>> grouped = new LinkedHashMap<>();
-        for (CompiledJobCatalog.CompiledJob compiledJob : catalog.compiledJobs()) {
-            Job job = compiledJob.job();
-            if (job == null || !job.enabled || !job.joinable) {
-                continue;
-            }
-            for (CompiledJobCatalog.CompiledTrigger trigger : compiledJob.triggers()) {
-                if (trigger == null || trigger.targetIds().isEmpty()) {
-                    continue;
-                }
-                String key = job.id + "|" + trigger.eventType().id();
-                grouped.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).addAll(trigger.targetIds());
-            }
-        }
-        List<ResolvedJobTargets> resolved = new ArrayList<>();
-        for (Map.Entry<String, Set<String>> entry : grouped.entrySet()) {
-            String[] parts = entry.getKey().split("\\|", 2);
-            if (parts.length != 2) {
-                continue;
-            }
-            resolved.add(new ResolvedJobTargets(
-                parts[0],
-                JobEventType.byId(parts[1]).orElse(JobEventType.BLOCK_BREAK),
-                Set.copyOf(entry.getValue())
-            ));
-        }
-        resolved.sort(Comparator.comparing(ResolvedJobTargets::jobId).thenComparing(value -> value.eventType().id()));
-        return resolved;
-    }
-
-    private static Set<String> rewardableIds(Map<String, Long> rewardsById) {
-        Set<String> rewardable = new LinkedHashSet<>();
-        if (rewardsById == null) {
-            return rewardable;
-        }
-        for (Map.Entry<String, Long> entry : rewardsById.entrySet()) {
-            if (entry.getValue() != null && entry.getValue() > 0L) {
-                rewardable.add(entry.getKey());
-            }
-        }
-        return rewardable;
-    }
-
-    private static int intersectionCount(Set<String> left, Set<String> right) {
-        int count = 0;
-        for (String id : left) {
-            if (right.contains(id)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private static String summarizeIds(Set<String> ids) {
-        List<String> sample = new ArrayList<>();
-        for (String id : ids) {
-            sample.add(id);
-            if (sample.size() >= 3) {
-                break;
-            }
-        }
-        return String.join(", ", sample);
-    }
-
-    private record ResolvedJobTargets(String jobId, JobEventType eventType, Set<String> targetIds) {
     }
 
 }

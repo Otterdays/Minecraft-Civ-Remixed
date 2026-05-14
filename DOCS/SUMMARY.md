@@ -50,6 +50,11 @@
 - **Player state moved to `config/otters_civ_revived/jobs_state.json`.** The new JSON store keeps active job ids plus per-job XP totals and migrates legacy `jobs.properties` once on load.
 - **Client correctness now comes from server sync, not local config.** `JobsNetworking` sends a catalog payload plus player-status payload so remote clients render the right labels/icons/max levels in the HUD and `/otter` jobs tab without needing a matching local `jobs.json`.
 
+[AMENDED 2026-05-14 — five-job starter pack]:
+- **The shipped jobs recommendation is now a 5-role starter pack.** Coded defaults now ship `miner`, `lumberjack`, `farmer`, `excavator`, and `fighter` in `single` mode with one active slot by default.
+- **Starter progression is faster early and deeper late.** The default ladder now uses explicit thresholds (level 1 at `20` XP, 40 levels total) and modest by-level boost tables instead of the older generic 50-level power curve.
+- **Starter jobs are cleaner against the reward surface.** `farmer` now targets rewarded farm outputs instead of mostly dead crop blocks, `lumberjack` drops unrewarded saplings in favor of bamboo-block family coverage, and `/job validate` now warns on overlap and reward-surface dead zones.
+
 [AMENDED 2026-05-13 — reward chat semantics]:
 - **Reward chat is now split cleanly by system.** Economy payouts announce as **`+N coins`** (instead of the older hardcoded `(mining)` / `(combat)` labels). Jobs progression is a separate line and only fires when the action matches the player's active job, e.g. **`[lumberjack] +5 xp · Lvl 0 · 30/100`**. Level-up remains its own follow-up line on threshold crossings. This avoids falsely implying that a global block reward also counted as miner XP.
 

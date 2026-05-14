@@ -212,15 +212,15 @@ public final class JobCommand {
     }
 
     private static int runReload(CommandSourceStack source, JobsService jobs) {
-        jobs.refresh(source.getServer());
+        jobs.refresh();
         JobsNetworking.broadcastCatalogAndStatuses(jobs, source.getServer());
         send(source, "Reloaded jobs.json and rebuilt catalog.");
         return 1;
     }
 
     private static int runValidate(CommandSourceStack source, JobsService jobs) {
-        jobs.refresh(source.getServer());
-        List<String> diagnostics = jobs.validationMessages(source.getServer());
+        jobs.refresh();
+        List<String> diagnostics = jobs.validationMessages();
         if (diagnostics.isEmpty()) {
             send(source, "Jobs validation OK. No diagnostics.");
             return 1;

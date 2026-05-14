@@ -6,25 +6,17 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraft.world.level.block.entity.HopperBlockEntity;
-import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class GuildProtection {
     private static final String MSG = "§cThis chunk is claimed by another guild.";
@@ -51,14 +43,14 @@ public final class GuildProtection {
 
         // Block breaking
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> {
-            if (level.isClientSide) return true;
+            if (!(level instanceof ServerLevel)) return true;
             if (!(player instanceof ServerPlayer sp)) return true;
             return canModifyBlock(sp, level, pos, guildService);
         });
 
         // Block placement via item use on block
         BlockEvents.USE_ITEM_ON.register((itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult) -> {
-            if (level.isClientSide) return null;
+            if (!(level instanceof ServerLevel)) return null;
             if (!(player instanceof ServerPlayer sp)) return null;
             if (!canModifyBlock(sp, level, blockPos, guildService)) {
                 return InteractionResult.FAIL;
@@ -68,14 +60,14 @@ public final class GuildProtection {
 
         // Container / interactive block use
         UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
-            if (level.isClientSide) return InteractionResult.PASS;
+            if (!(level instanceof ServerLevel)) return InteractionResult.PASS;
             if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = level.getBlockState(pos);
-            Identifier id = state.getBlock().builtInRegistryHolder().getKey().identifier();
+            Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             GuildConfig cfg = guildService.config();
 
-            if (cfg.protectContainers && CONTAINER_BLOCKS.contains(id.toString())) {
+            if (id != null && cfg.protectContainers && CONTAINER_BLOCKS.contains(id.toString())) {
                 if (!canAccess(sp, level, pos, guildService)) {
                     return InteractionResult.FAIL;
                 }
@@ -92,7 +84,7 @@ public final class GuildProtection {
 
         // Block attack (left-click on block)
         AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) -> {
-            if (level.isClientSide) return InteractionResult.PASS;
+            if (!(level instanceof ServerLevel)) return InteractionResult.PASS;
             if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
             if (!canModifyBlock(sp, level, pos, guildService)) {
                 return InteractionResult.FAIL;
@@ -127,8 +119,7 @@ public final class GuildProtection {
     }
 
     public static void showChunkBorders(ServerPlayer player, int chunkX, int chunkZ, int radius, String dimension, GuildService guilds) {
-        if (!(player.level() instanceof ServerLevel level)) return;
-        ServerLevel sLevel = level;
+        if (!(player.level() instanceof ServerLevel sLevel)) return;
         int px = player.blockPosition().getX();
         int pz = player.blockPosition().getZ();
 
@@ -141,9 +132,8 @@ public final class GuildProtection {
 
                 int worldX = cx << 4;
                 int worldZ = cz << 4;
-                int y = sLevel.getMinBuildHeight() + 1;
+                int y = sLevel.getMinY() + 1;
 
-                // Only show borders for chunks near the player
                 double dist = Math.abs(cx * 16 + 8 - px) + Math.abs(cz * 16 + 8 - pz);
                 if (dist > (radius + 1) * 20) continue;
 
@@ -153,7 +143,6 @@ public final class GuildProtection {
 
                 var particle = isOwn ? ParticleTypes.END_ROD : ParticleTypes.FLAME;
 
-                // 4 corner pillars of particles
                 for (int cornerX = 0; cornerX <= 16; cornerX += 16) {
                     for (int cornerZ = 0; cornerZ <= 16; cornerZ += 16) {
                         for (int h = 0; h < 4; h++) {

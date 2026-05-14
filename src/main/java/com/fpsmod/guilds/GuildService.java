@@ -1,6 +1,6 @@
 package com.fpsmod.guilds;
 
-import com.fpsmod.economy.WalletService;
+import com.fpsmod.economy.IEconomyService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
@@ -19,23 +19,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GuildService {
+public class GuildService implements IGuildService {
     private final GuildStore store;
-    private final WalletService wallets;
+    private final IEconomyService wallets;
     private volatile GuildConfig config;
     private final Map<UUID, Guild> guilds = new ConcurrentHashMap<>();
     private final Map<String, UUID> byName = new ConcurrentHashMap<>();
     private final Map<String, ClaimedChunk> claimsByKey = new ConcurrentHashMap<>();
     private final Set<ClaimedChunk> claims = ConcurrentHashMap.newKeySet();
 
-    public GuildService(GuildStore store, WalletService wallets, GuildConfig config) {
+    public GuildService(GuildStore store, IEconomyService wallets, GuildConfig config) {
         this.store = store;
         this.wallets = wallets;
         this.config = config;
         load();
     }
 
-    public static GuildService createDefault(WalletService wallets) {
+    public static GuildService createDefault(IEconomyService wallets) {
         return new GuildService(new FileGuildStore(), wallets, GuildConfigLoader.loadOrCreate());
     }
 

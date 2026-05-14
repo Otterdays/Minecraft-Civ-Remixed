@@ -108,6 +108,12 @@ Use this as the first stop for quick discovery.
 - **Networking:** `src/main/java/com/fpsmod/jobs/net/` now includes `JobCatalogPayload`, `JobStatusPayload`, and `JobsNetworking`; the server sends both catalog metadata and local-player status snapshots.
 - **Client mirrors:** `src/client/java/com/fpsmod/client/jobs/` now includes `JobsClientCatalog` alongside `JobsClientState`, `JobsClientNetworking`, `JobsHudConfig`, and `JobsHudOverlay`. `/otter` Jobs UI in `src/client/java/com/fpsmod/client/ui/OttersCivScreen.java` renders from those synced snapshots.
 
+[AMENDED 2026-05-14 — five-job starter pack]:
+- **Shipped default jobs are now the 5-role starter pack:** `miner`, `lumberjack`, `farmer`, `excavator`, `fighter`. Default catalog lives in `src/main/java/com/fpsmod/jobs/JobsConfig.java`.
+- **Bundled starter tags:** `src/main/resources/data/otters_civ_revived/tags/block/job/miner_blocks.json`, `lumberjack_blocks.json`, `farmer_blocks.json`, new `excavator_blocks.json`, plus `src/main/resources/data/otters_civ_revived/tags/entity_type/job/fighter_mobs.json`.
+- **Starter balance defaults:** `src/main/java/com/fpsmod/jobs/JobProgression.java` now ships an explicit 40-level threshold ladder (fast early levels, long tail), and `src/main/java/com/fpsmod/jobs/JobBoosts.java` / `JobsConfig.java` carry the modest by-level boost tables used by the coded starter pack.
+- **Operator visibility:** `src/main/java/com/fpsmod/command/JobCommand.java` now exposes richer `/job info` output and pack-aware `/job validate` diagnostics for overlap and reward-surface dead zones.
+
 [AMENDED 2026-05-13 — reward chat flow]:
 - **Economy message source:** `src/main/java/com/fpsmod/ottersciv/reward/RewardOrchestrator.java` now owns only the money line and formats it as **`+N coins`** via `coinMessageText(...)`, sent immediately after `wallets.addBalance(...)`.
 - **Jobs progress message source:** `src/main/java/com/fpsmod/jobs/JobsService.java` now owns the job-side line via `progressMessageText(...)`, emitting **`[job] +5 xp · Lvl X · inLevel/range`** only when the reward event matches the player's active job. Level-up remains a separate follow-up line.

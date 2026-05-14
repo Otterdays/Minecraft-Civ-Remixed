@@ -28,6 +28,7 @@ public final class JobsHudOverlay {
         "miner",      "⛏",  // ⛏
         "lumberjack", "▲",  // ▲ (tree silhouette)
         "farmer",     "✿",  // ✿
+        "excavator",  "▤",  // ▤
         "fighter",    "⚔"   // ⚔
     );
 

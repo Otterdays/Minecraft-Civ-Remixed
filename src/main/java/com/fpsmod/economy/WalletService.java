@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class WalletService {
+public class WalletService implements IEconomyService {
 
     public enum TransferResult { OK, INSUFFICIENT_FUNDS, SAME_PLAYER }
 
@@ -60,6 +60,11 @@ public class WalletService {
 
     public long getBalance(UUID playerId) {
         return balances.getOrDefault(playerId, 0L);
+    }
+
+    /** Read-only access to the audit log for moderator views and reporting. */
+    public TransactionLog transactionLog() {
+        return transactionLog;
     }
 
     /** Admin: replace balance entirely. Logs {@link TransactionReason#ADMIN_SET}. */

@@ -1,148 +1,168 @@
 ## Otters Civ. Revived
 
-A lightweight Fabric civ and economy mod for Minecraft that gives your world a stronger multiplayer backbone without burying you in setup.
+A lightweight Fabric civ and economy mod for Minecraft. Adds persistent money, configurable rewards, server-authoritative jobs, and guilds with chunk claims — without burying you in setup.
 
 ---
 
-## What you get
+## What it does
 
-- Persistent money per world
-- `/otter` in-game hub with dedicated guilds panel
-- `/money` balance command
-- Admin `/money set <player> <amount>`
-- Join onboarding for first-time players
-- Welcome-back message for returning players
-- Configurable mining rewards
-- Configurable combat rewards
-- Fully configurable server-authoritative jobs from `jobs.json`
-- Dynamic `/job` catalog (`list`, `info`, `join`, `leave`, `stats`, `reload`, `validate`)
-- Jobs HUD overlay with in-game controls
-- Guilds with `/guild create <name>` ($250)
-- Officer ranks (`/guild promote|demote`)
-- Chunk claims (`/guild claim`, $100 ea, max 16)
-- Guild home teleport (`/guild sethome` / `/guild home`)
-- ASCII + GUI chunk claim map (`/guild map`)
-
----
-
-## Why it is useful
-
-- Fast setup
-- Easy to understand
-- Easy to tune
-- Good foundation for a civ-style server
-- Works for singleplayer-hosted worlds and multiplayer servers
+- Persistent per-world economy with player-to-player transfers and admin tools
+- Configurable mining + combat coin rewards (tag-driven, every vanilla block/mob covered)
+- Server-authoritative jobs catalog defined in JSON — add your own without touching code
+- Guilds with chunk claims, officer ranks, home teleport, and a chunk-claim map
+- Immutable transaction log so every coin movement is auditable
+- Stylized in-game hub (`/otter`) with live wallet, jobs, rewards, and guild panels
 
 ---
 
 ## Commands
 
-- `/otter`
-- `/money`
-- `/money set <player> <amount>`
-- `/job`
-- `/job list`
-- `/job info <id>`
-- `/job join <id>`
-- `/job leave [id]`
-- `/job stats`
-- `/job reload`
-- `/job validate`
-- `/guild create <name>`
-- `/guild invite <player>`
-- `/guild join`
-- `/guild leave`
-- `/guild kick <player>`
-- `/guild promote|demote <player>`
-- `/guild claim`
-- `/guild unclaim`
-- `/guild map`
-- `/guild sethome`
-- `/guild home`
-- `/guild info`
-- `/guild list`
-- `/guild disband`
-- `/guild reload`
-
----
-
-## Current features
-
 ### Economy
 
-- Money is saved server-side per world
-- Wallets persist across restarts
-- Rewards can be tuned with config files
-
-### Rewards
-
-- Breaking configured blocks can pay coins
-- Killing configured mobs can pay coins
-- Per-block and per-entity payouts are supported
-- Reward behavior is configurable with JSON files
-
-### Coverage
-
-- Every current vanilla block is covered by the editable reward surface
-- Every current vanilla living entity is covered by the editable reward surface
-- Future blocks and mobs are covered by the same tag + value-file system
-- The reward setup is built to stay expandable instead of hardcoded
+- `/money` — show your wallet balance
+- `/pay <player> <amount>` — send coins to another player (atomic; server-enforced per-command cap, per-sender cooldown, optional flat fee — all tunable in `economy.json`)
+- `/money set <player> <amount>` — replace a player's balance (gamemaster / OP only)
+- `/money add <player> <amount>` — credit a player's balance (gamemaster / OP only)
+- `/money take <player> <amount>` — deduct from a player's balance, clamped to 0 (gamemaster / OP only)
+- `/economy reload` — re-read `economy.json` without restart (gamemaster / OP only)
+- `/economy log [count]` — show the most recent ledger entries server-wide, newest first (gamemaster / OP only)
+- `/economy log player <player> [count]` — filter the ledger to a single player (gamemaster / OP only)
 
 ### Jobs
 
-- Server owners can add arbitrary jobs without Java edits
-- Jobs can define their own triggers, progression, boosts, and display data
-- Activation policy supports single-slot or multi-slot setups
-- Jobs HUD shows synced server job labels, icons, level, and progress
+- `/job` — show your current job(s) and progression
+- `/job list` — list all jobs the server has configured
+- `/job info <id>` — details on a specific job (tags, XP/event, boosts)
+- `/job join <id>` — join a job
+- `/job leave [id]` — leave a job (or all jobs if omitted)
+- `/job stats` — your level/XP across all active jobs
+- `/job reload` — reload `jobs.json` (gamemaster / OP only)
+- `/job validate` — sanity-check the loaded jobs config (gamemaster / OP only)
+
+### Guilds
+
+- `/guild create <name>` — create a guild ($250 default, tunable)
+- `/guild disband` — owner-only; refunds claim costs
+- `/guild invite <player>` — invite a player (officer+)
+- `/guild join` — accept a pending invite
+- `/guild leave` — leave your guild
+- `/guild kick <player>` — kick a member (officer+)
+- `/guild transfer <player>` — transfer ownership to another member
+- `/guild promote <player>` / `/guild demote <player>` — owner-only officer management
+- `/guild claim` — claim the chunk you stand in ($100 each, max 16 per guild)
+- `/guild unclaim` — release the current chunk
+- `/guild unclaimall` — release every chunk your guild owns
+- `/guild map` — ASCII chunk map in chat plus a 30-second GUI overlay (top-right corner)
+- `/guild sethome` — set guild teleport point (officer+)
+- `/guild home` — teleport to guild home (any member)
+- `/guild info` — your guild's details
+- `/guild list` — every guild on the server
+- `/guild reload` — reload `guilds.json` (gamemaster / OP only)
+
+### Help
+
+- `/otter` — opens the in-game hub (HOME · WALLET · JOBS · REWARDS · CIV · HELP) on clients with the mod; falls back to a chat command list on vanilla clients
+
+---
+
+## Features
+
+### Economy
+
+- Money is persisted server-side per world
+- Player-to-player transfers are atomic — both balances update or neither does
+- `/pay` policy is operator-tunable: per-command cap, per-sender cooldown, optional flat fee (see `economy.json`)
+- Admin set/add/take for fast moderator action
+- Every mutation (admin op, pay, reward) is written to an append-only `transactions.log` (CSV: `timestamp,playerId,delta,balanceAfter,reason,note`)
+- Moderators can audit any player's history live in chat with `/economy log player <player>` — no need to open the file
+- Wallet file is human-readable: optional `# Name: PlayerName` hint above each `uuid=balance` line
+
+### Rewards
+
+- Breaking configured blocks pays coins
+- Killing configured mobs pays coins
+- Per-block and per-entity payouts override tag-wide defaults
+- Reward behavior is fully editable from JSON files — no Java required
+- Three-tier customization: edit sibling value files, inline in `rewards.json`, or extend bundled tags via server datapack
+- Reward chat splits cleanly: `+N coins` for money, separate `[job] +N xp · Lvl X · in/range` for matching active jobs
+
+### Coverage
+
+- Every current vanilla block has a slot in the editable reward surface
+- Every current vanilla living entity has a slot in the editable reward surface
+- Future blocks and mobs flow through the same tag + value-file system without code changes
+
+### Jobs
+
+- Operators add arbitrary jobs without Java edits — just edit `jobs.json`
+- Each job defines its own triggers, XP curve, payout multiplier, boosts, and display data
+- Activation policy supports single-active-job or multi-active-job setups
+- Starter pack ships miner / lumberjack / farmer / excavator / fighter in single-slot mode
+- Jobs HUD shows the server-synced primary job's label, icon, level, and progress bar
+- Level-up announcements fire only on threshold crossings
 
 ### Guilds
 
 - Create named guilds with a one-time fee ($250 default, tunable)
-- Officer rank system: promote/demote members; officers can invite and claim
-- Chunk claims: claim the chunk you stand in ($100 each, max 16 per guild)
-- Guild home: set a teleport point (officer+) and teleport to it (any member)
-- `/guild map` shows an ASCII grid in chat + a 30-second GUI overlay in top-right corner (green = claimed, aqua = you)
-- Guild data persists in `config/otters_civ_revived/guilds_data.json`
-- Operator tuning via `config/otters_civ_revived/guilds.json`
+- Officer rank system: promote/demote members; officers can invite and claim land
+- Owner can transfer guild ownership to another member
+- Chunk claims with configurable cost and per-guild cap ($100 each, max 16 default)
+- Guild home: set a teleport point (officer+) and use it (any member)
+- `/guild map` paints a 9×9 chunk grid in chat plus a temporary GUI overlay
+- Block-break, place, and container-access protection inside claimed chunks
+- Guild data lives in `config/otters_civ_revived/guilds_data.json`; operator tuning in `config/otters_civ_revived/guilds.json`
 
 ### Player UX
 
-- New players get quick onboarding chat messages
-- Returning players get a shorter reminder
-- `/otter` gives players a cleaner in-game reference point with live guild info panel
+- First-join welcome: three onboarding chat lines pointing to `/otter`, `/money`, and rewards
+- Returning players see a shorter welcome-back line
+- `/otter` opens a stylized in-game menu on modded clients with live wallet, job, rewards, and guild panels
+- Vanilla clients still get a full chat command help list from `/otter`
 
 ---
 
 ## Config files
 
-- `config/otters_civ_revived/jobs.json`
-- `config/otters_civ_revived/jobs_state.json`
-- `config/otters_civ_revived/rewards.json`
-- `config/otters_civ_revived/block_values.json`
-- `config/otters_civ_revived/entity_values.json`
-- `config/otters_civ_revived/wallet.properties`
-- `config/otters_civ_revived/guilds.json`
-- `config/otters_civ_revived/guilds_data.json`
-- `config/project_ooga/jobs_hud.properties`
+All under `config/otters_civ_revived/` unless noted:
+
+- `economy.json` — `/pay` policy: max transfer per command, per-sender cooldown, optional flat fee
+- `rewards.json` — mining/combat reward rules (tags + per-id overrides)
+- `block_values.json` — per-block coin payouts (auto-prefilled from tags)
+- `entity_values.json` — per-entity coin payouts (auto-prefilled from tags)
+- `jobs.json` — server jobs catalog (triggers, progression, boosts, activation policy)
+- `jobs_state.json` — per-player job state (active jobs, XP)
+- `wallet.properties` — per-UUID balances (with operator-friendly name hints)
+- `transactions.log` — append-only CSV audit of every balance change
+- `guilds.json` — guild costs, claim cap, member cap, protection toggles
+- `guilds_data.json` — live guild + claim data
+- `config/project_ooga/jobs_hud.properties` — client-side HUD position/scale (only on clients with the mod)
+
+---
+
+## Permissions
+
+- **Open to all players:** `/otter`, `/money`, `/pay`, the self-service `/job` set, and most `/guild` commands (create, invite, join, leave, claim, unclaim, map, sethome, home, info, list)
+- **Gamemaster / OP only** (same band as vanilla cheat commands): `/money set|add|take`, `/economy reload`, `/economy log`, `/job reload`, `/job validate`, `/guild reload`
+- A dedicated permission apparatus (string-id permission nodes, Fabric Permissions API / LuckPerms compatibility) is planned
 
 ---
 
 ## Good to know
 
-- Fabric API is required
-- Economy, rewards, and persistence run on the host/server side
-- Installing the mod on the client adds the jobs HUD, guild chunk map overlay, and richer `/otter` UI with live guild panel
-- The mod ID is `project_ooga`
-- Reward coverage is broad now and future-proof by design
+- Requires Fabric API
+- Economy, rewards, jobs, and guild logic all run on the host/server side
+- Client install is optional but unlocks the jobs HUD, guild chunk overlay, and the stylized `/otter` menu
+- The technical mod ID is `project_ooga`
+- Reward coverage is broad today and future-proof — new vanilla blocks and mobs flow through the same tag system
 
 ---
 
 ## Planned next
 
-- Player shops
-- Better admin economy controls
-- Deeper civ systems
-- More progression and server tooling
+- Player shops (M4) — listings, escrow, market UI
+- Friends list and private messaging (M4.5)
+- Civ governance: diplomacy, treaties, faction projects (M5)
+- Deeper jobs/profession trees and richer admin tooling
 
 ---
 
@@ -170,5 +190,4 @@ If you want to do something outside those boundaries, ask first.
 
 ## Short version
 
-Otters Civ. Revived turns a Fabric world into the start of a real civ server with money, jobs, configurable rewards, and simple in-game tools players can use immediately, with reward coverage for every current vanilla block and living entity and a setup that is ready for future additions too.
-
+Otters Civ. Revived turns a Fabric world into the start of a real civ server: persistent money, atomic player transfers, an immutable transaction log, configurable mining/combat rewards covering every vanilla block and mob, fully server-authoritative jobs from JSON, and guilds with chunk claims — usable from day one in singleplayer or multiplayer.

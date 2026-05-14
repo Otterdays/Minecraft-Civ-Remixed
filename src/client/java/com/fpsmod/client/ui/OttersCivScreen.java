@@ -76,9 +76,9 @@ public final class OttersCivScreen extends Screen {
     private static final int BTN_BG         = 0xFF1F2937;
     private static final int BTN_BG_HOVER   = 0xFF334155;
 
-    private static final int PANEL_W = 480;
-    private static final int PANEL_H = 268;
-    private static final int SIDEBAR_W = 132;
+    private static final int PANEL_W = 520;
+    private static final int PANEL_H = 300;
+    private static final int SIDEBAR_W = 128;
     private static final int TAB_H = 28;
     private static final int COMFORT_MIN_W = PANEL_W + 120;
     private static final int COMFORT_MIN_H = PANEL_H + 80;
@@ -189,22 +189,21 @@ public final class OttersCivScreen extends Screen {
         body(g, px + 12, py + 42, "Current GUI: " + this.width + " x " + this.height, TEXT_MUTED);
         body(g, px + 12, py + 56, "Recommended: at least " + COMFORT_MIN_W + " x " + COMFORT_MIN_H, TEXT_MUTED);
         body(g, px + 12, py + 76, "Try one of these:", TEXT_PRIMARY);
-        body(g, px + 20, py + 90, "1. Enlarge the game window.", TEXT_MUTED);
-        body(g, px + 20, py + 102, "2. Lower Minecraft GUI Scale.", TEXT_MUTED);
-        body(g, px + 12, py + 122, "Quick commands still work:", TEXT_PRIMARY);
 
-        int btnY = py + 142;
-        int gap = 8;
+        int btnY = py + 90;
+        int gap = 6;
         if (cardW >= 320) {
-            int btnW = (cardW - 24 - gap * 2) / 3;
-            renderButton(g, px + 12, btnY, btnW, 22, "/money", "action:money", mouseX, mouseY);
-            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 22, "/job", "jobs:cmd_stats", mouseX, mouseY);
-            renderButton(g, px + 12 + (btnW + gap) * 2, btnY, btnW, 22, "/job list", "jobs:cmd_list", mouseX, mouseY);
+            int btnW = (cardW - 24 - gap * 3) / 4;
+            renderButton(g, px + 12, btnY, btnW, 20, "/money",     "action:money",     mouseX, mouseY);
+            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 20, "/job",       "jobs:cmd_stats",  mouseX, mouseY);
+            renderButton(g, px + 12 + (btnW + gap) * 2, btnY, btnW, 20, "/guild info", "guild:info", mouseX, mouseY);
+            renderButton(g, px + 12 + (btnW + gap) * 3, btnY, btnW, 20, "/guild map", "guild:map", mouseX, mouseY);
         } else {
             int btnW = (cardW - 24 - gap) / 2;
-            renderButton(g, px + 12, btnY, btnW, 22, "/money", "action:money", mouseX, mouseY);
-            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 22, "/job", "jobs:cmd_stats", mouseX, mouseY);
-            renderButton(g, px + 12, btnY + 28, cardW - 24, 22, "/job list", "jobs:cmd_list", mouseX, mouseY);
+            renderButton(g, px + 12, btnY, btnW, 20, "/money",     "action:money",   mouseX, mouseY);
+            renderButton(g, px + 12 + btnW + gap, btnY, btnW, 20, "/job",       "jobs:cmd_stats", mouseX, mouseY);
+            renderButton(g, px + 12, btnY + 24, cardW - 24, 20, "/guild info", "guild:info",     mouseX, mouseY);
+            renderButton(g, px + 12, btnY + 48, cardW - 24, 20, "/guild map", "guild:map",       mouseX, mouseY);
         }
 
         String hint = "ESC to close";
@@ -254,21 +253,63 @@ public final class OttersCivScreen extends Screen {
     }
 
     private void renderHome(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
-        sectionHeading(g, x, y, "Welcome back");
-        body(g, x, y + 14, "Project OOGA — all-in-one civ suite for Fabric.", TEXT_PRIMARY);
-        body(g, x, y + 26, "Economy & jobs live. Factions, shops, governance incoming.", TEXT_MUTED);
+        // Live status cards row
+        var guildInfo = com.fpsmod.client.guilds.GuildClientState.guildInfo();
+        var jobStatus = JobsClientState.primaryActiveJob();
 
-        // Milestone progress strip — 7 segments M0–M6.
-        int stripY = y + 44;
+        int cardW = (w - 6) / 3;
+        int cardH = 36;
+
+        // Wallet card
+        g.fill(x, y, x + cardW, y + cardH, PANEL_BG_ALT);
+        outlineRect(g, x, y, x + cardW, y + cardH, PANEL_BORDER);
+        g.fill(x, y, x + 2, y + cardH, ACCENT_GOLD);
+        g.text(this.font, "WALLET", x + 6, y + 4, ACCENT_GOLD, false);
+        g.text(this.font, "/money to check balance", x + 6, y + 16, TEXT_MUTED, false);
+        hotspots.add(new Rect(x, y, x + cardW, y + cardH, "action:wallet"));
+
+        // Jobs card
+        int cx2 = x + cardW + 3;
+        g.fill(cx2, y, cx2 + cardW, y + cardH, PANEL_BG_ALT);
+        outlineRect(g, cx2, y, cx2 + cardW, y + cardH, PANEL_BORDER);
+        g.fill(cx2, y, cx2 + 2, y + cardH, 0xFF22C55E);
+        g.text(this.font, "JOBS", cx2 + 6, y + 4, 0xFF22C55E, false);
+        if (jobStatus != null) {
+            g.text(this.font, jobStatus.shortLabel + " Lv" + jobStatus.level, cx2 + 6, y + 16, TEXT_PRIMARY, false);
+        } else {
+            g.text(this.font, "No active job", cx2 + 6, y + 16, TEXT_MUTED, false);
+        }
+        hotspots.add(new Rect(cx2, y, cx2 + cardW, y + cardH, "tab:JOBS"));
+
+        // Guild card
+        int cx3 = cx2 + cardW + 3;
+        g.fill(cx3, y, cx3 + cardW, y + cardH, PANEL_BG_ALT);
+        outlineRect(g, cx3, y, cx3 + cardW, y + cardH, PANEL_BORDER);
+        g.fill(cx3, y, cx3 + 2, y + cardH, 0xFF67E8F9);
+        g.text(this.font, "GUILD", cx3 + 6, y + 4, 0xFF67E8F9, false);
+        if (guildInfo != null) {
+            g.text(this.font, guildInfo.name + " · " + guildInfo.memberCount + " members", cx3 + 6, y + 16, TEXT_PRIMARY, false);
+        } else {
+            g.text(this.font, "Not in a guild", cx3 + 6, y + 16, TEXT_MUTED, false);
+        }
+        hotspots.add(new Rect(cx3, y, cx3 + cardW, y + cardH, "tab:GUILDS"));
+
+        // Quick action bar
+        int btnY = y + cardH + 8;
+        int bw = (w - 12) / 3;
+        int bh = 20;
+        int gap = 6;
+        renderButton(g, x,           btnY, bw, bh, "/money",           "action:money",       mouseX, mouseY);
+        renderButton(g, x + bw + gap, btnY, bw, bh, "/job list",       "jobs:cmd_list",      mouseX, mouseY);
+        renderButton(g, x + (bw + gap)*2, btnY, bw, bh, "/guild info", "guild:info",         mouseX, mouseY);
+
+        // Milestone strip
+        int stripY = btnY + 28;
         int segW = (w - 6) / 7;
         Status[] miles = {
-            Status.PARTIAL, // M0 Foundation — partial (wallet/rewards persist; no audit log/migrations yet)
-            Status.PARTIAL, // M1 Economy MVP — /money + /money set live; /pay, /ooga still planned
-            Status.SHIPPED, // M2 Jobs starter pack — 5 jobs, XP, HUD bar shipped
-            Status.SHIPPED, // M3 Factions & Claims
-            Status.PLANNED, // M4 Player Shops
-            Status.FUTURE,  // M5 Governance
-            Status.FUTURE   // M6 Scale & PostgreSQL
+            Status.PARTIAL, Status.PARTIAL,
+            Status.SHIPPED, Status.SHIPPED,
+            Status.PLANNED, Status.FUTURE, Status.FUTURE
         };
         String[] labels = {"M0","M1","M2","M3","M4","M5","M6"};
         for (int i = 0; i < 7; i++) {
@@ -280,21 +321,15 @@ public final class OttersCivScreen extends Screen {
             int tw = this.font.width(labels[i]);
             g.text(this.font, labels[i], sx0 + (segW - 2 - tw) / 2, sy1 + 2, TEXT_MUTED, false);
         }
-        // Legend.
-        int legY = stripY + 22;
+
+        // Badge legend
+        int legY = stripY + 14;
         drawBadge(g, x,      legY, "LIVE",    Status.SHIPPED.color);
         drawBadge(g, x + 36, legY, "PARTIAL", Status.PARTIAL.color);
         drawBadge(g, x + 84, legY, "SOON",    Status.PLANNED.color);
         drawBadge(g, x +124, legY, "FUTURE",  Status.FUTURE.color);
 
-        // Quick actions.
-        int qaY = y + 86;
-        int bw = (w - 8) / 2;
-        renderButton(g, x,           qaY,      bw, 22, "Open Wallet",     "action:wallet",      mouseX, mouseY);
-        renderButton(g, x + bw + 8,  qaY,      bw, 22, "Jobs & HUD",      "action:jobs",        mouseX, mouseY);
-        renderButton(g, x,           qaY + 28, bw, 22, "Reward Configs",  "action:rewards",     mouseX, mouseY);
-        renderButton(g, x + bw + 8,  qaY + 28, bw, 22, "Guild & Claims",  "tab:GUILDS",        mouseX, mouseY);
-        renderButton(g, x,           qaY + 56, bw, 22, "Run /money",      "action:money",       mouseX, mouseY);
+        body(g, x, legY + 16, "Click any card above to jump to its panel. Full roadmap in CIV tab.", TEXT_DIM);
     }
 
     /** Small colored chip with label — used for milestone badges. */
@@ -492,87 +527,87 @@ public final class OttersCivScreen extends Screen {
             return;
         }
 
-        int cardY = y;
-        sectionHeading(g, x, cardY, info.name);
-        cardY += 14;
+        int yy = y;
+        sectionHeading(g, x, yy, info.name);
+        yy += 14;
 
-        // Status row
-        int rowY = cardY;
-        drawBadge(g, x, rowY, info.open ? "OPEN" : "INVITE", info.open ? 0xFF22C55E : 0xFFE9B949);
-        drawBadge(g, x + 56, rowY, info.role.toUpperCase(), 0xFF67E8F9);
-        cardY += 14;
+        // Status chips
+        drawBadge(g, x, yy, info.open ? "OPEN" : "INVITE", info.open ? 0xFF22C55E : 0xFFE9B949);
+        drawBadge(g, x + 56, yy, info.role.toUpperCase(), 0xFF67E8F9);
+        yy += 12;
 
-        // Stats
-        body(g, x, cardY, "Owner: " + info.owner.substring(0, Math.min(8, info.owner.length())) + "…", TEXT_MUTED);
-        cardY += 10;
-        body(g, x, cardY, "Members: " + info.memberCount + "/" + info.maxMembers + "  ·  Claims: " + info.claimCount + "/" + info.maxClaims + "  ·  Balance: $" + info.balance, TEXT_PRIMARY);
-        cardY += 10;
-        body(g, x, cardY, "Home: " + (info.hasHome ? "set" : "not set") + "  ·  Description: " + (info.description.isEmpty() ? "(none)" : info.description), TEXT_MUTED);
-        cardY += 16;
+        // Stat line
+        body(g, x, yy, info.memberCount + "/" + info.maxMembers + " members  ·  "
+            + info.claimCount + "/" + info.maxClaims + " claims  ·  $" + info.balance
+            + "  ·  Home " + (info.hasHome ? "set" : "not set"), TEXT_PRIMARY);
+        yy += 14;
 
-        // Quick action buttons
-        int bw = (w - 8) / 3;
-        int bh = 20;
-        int gap = 4;
-        renderButton(g, x,              cardY, bw, bh, "Invite",       "guild:invite",      mouseX, mouseY);
-        renderButton(g, x + bw + gap,    cardY, bw, bh, "Claim chunk",  "guild:claim",       mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Chunk map", "guild:map",         mouseX, mouseY);
-        cardY += bh + gap;
+        // Action buttons — 2-column grouped layout
+        int colW = (w - 4) / 2;
+        int bh = 18;
+        int gap = 3;
 
-        renderButton(g, x,              cardY, bw, bh, "Set home",     "guild:sethome",     mouseX, mouseY);
-        renderButton(g, x + bw + gap,    cardY, bw, bh, "Go home",      "guild:home",        mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Guild info", "guild:info",       mouseX, mouseY);
-        cardY += bh + gap;
+        // Membership column
+        sectionHeading(g, x, yy, "Membership");
+        yy += 14;
+        renderButton(g, x,      yy, colW, bh, "Invite player",       "guild:invite",    mouseX, mouseY);
+        yy += bh + gap;
+        renderButton(g, x,      yy, colW, bh, "Kick player",         "guild:kick",      mouseX, mouseY);
+        yy += bh + gap;
+        renderButton(g, x,      yy, colW, bh, "Promote",             "guild:promote",   mouseX, mouseY);
+        yy += bh + gap;
+        renderButton(g, x,      yy, colW, bh, "Demote",              "guild:demote",    mouseX, mouseY);
+        yy += bh + gap;
+        renderButton(g, x,      yy, colW, bh, "Leave guild",         "guild:leave",     mouseX, mouseY);
 
-        renderButton(g, x,              cardY, bw, bh, "Promote",      "guild:promote",     mouseX, mouseY);
-        renderButton(g, x + bw + gap,    cardY, bw, bh, "Demote",       "guild:demote",      mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Kick",     "guild:kick",        mouseX, mouseY);
-        cardY += bh + gap;
+        // Territory column
+        int ty = y + 14 + 14; // align with first col
+        sectionHeading(g, x + colW + 4, ty, "Territory");
+        ty += 14;
+        renderButton(g, x + colW + 4, ty, colW, bh, "Claim chunk",     "guild:claim",     mouseX, mouseY);
+        ty += bh + gap;
+        renderButton(g, x + colW + 4, ty, colW, bh, "Unclaim chunk",   "guild:unclaim",   mouseX, mouseY);
+        ty += bh + gap;
+        renderButton(g, x + colW + 4, ty, colW, bh, "Chunk map",       "guild:map",       mouseX, mouseY);
+        ty += bh + gap;
+        renderButton(g, x + colW + 4, ty, colW, bh, "Set home",        "guild:sethome",   mouseX, mouseY);
+        ty += bh + gap;
+        renderButton(g, x + colW + 4, ty, colW, bh, "Go home",         "guild:home",      mouseX, mouseY);
 
-        renderButton(g, x,              cardY, bw, bh, "Leave guild",  "guild:leave",       mouseX, mouseY);
-        renderButton(g, x + bw + gap,    cardY, bw, bh, "Unclaim",     "guild:unclaim",     mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 2, cardY, bw, bh, "Open config", "guild:config",   mouseX, mouseY);
-
-        // Legend
-        body(g, x, cardY + 26, "Claimed chunks near you are shown in green on the GUI overlay.", TEXT_DIM);
+        // Bottom bar — info + config
+        int bottomY = y + h - 14;
+        g.fill(x, bottomY, x + w, bottomY + 1, PANEL_BORDER);
+        body(g, x, bottomY + 4, "Chunks: green on overlay. Rep: /guild map.", TEXT_DIM);
+        renderButton(g, x + w - 76, bottomY + 2, 76, 12, "Open config", "guild:config", mouseX, mouseY);
     }
 
     private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
-        sectionHeading(g, x, y, "Civilization Roadmap");
-        body(g, x, y + 14, "M3 → M6 — full execution order in DOCS/ROADMAP.md.", TEXT_MUTED);
+        sectionHeading(g, x, y, "Roadmap");
+        int yy = y + 14;
 
-        int cardY = y + 28;
-        int cardH = 38;
-        int cardGap = 4;
+        String[][] milestones = {
+            {"M3  Guilds & Claims", "SHIPPED", "Create, invite, claim chunks, home TP, protections, map"},
+            {"M4  Player Shops",    "PLANNED", "Market UI, escrow, listing caps, tax"},
+            {"M5  Governance",      "FUTURE",  "Diplomacy, territory projects, regional bonuses"},
+            {"M6  Scale",           "FUTURE",  "SQLite → PostgreSQL, soak testing, RC hardening"}
+        };
+        for (String[] m : milestones) {
+            Status s = switch (m[1]) {
+                case "SHIPPED" -> Status.SHIPPED;
+                case "PLANNED" -> Status.PLANNED;
+                default -> Status.FUTURE;
+            };
+            g.fill(x, yy, x + w, yy + 24, PANEL_BG_ALT);
+            outlineRect(g, x, yy, x + w, yy + 24, PANEL_BORDER);
+            g.fill(x, yy, x + 2, yy + 24, s.color);
+            g.text(this.font, m[0], x + 6, yy + 3, TEXT_PRIMARY, false);
+            drawBadge(g, x + 6 + this.font.width(m[0]) + 4, yy + 3, s.label, s.color);
+            g.text(this.font, fit(m[2], w - 16), x + 6, yy + 14, TEXT_MUTED, false);
+            yy += 27;
+        }
 
-        drawMilestone(g, x, cardY, w, cardH,
-            "M3  Guilds & Claims",
-            "/guild create|invite|join|leave|kick|promote|demote · chunk claims · guild home",
-            Status.SHIPPED);
-        cardY += cardH + cardGap;
-
-        drawMilestone(g, x, cardY, w, cardH,
-            "M4  Player Shops",
-            "Screen Handler market UI · escrow purchase · listing caps · tax sinks",
-            Status.PLANNED);
-        cardY += cardH + cardGap;
-
-        drawMilestone(g, x, cardY, w, cardH,
-            "M5  Governance",
-            "Diplomacy (ally/neutral/rival/war) · territory projects · regional bonuses",
-            Status.FUTURE);
-        cardY += cardH + cardGap;
-
-        drawMilestone(g, x, cardY, w, cardH,
-            "M6  Stabilization & Scale",
-            "Telemetry · adversarial soak · SQLite → PostgreSQL migration · RC",
-            Status.FUTURE);
-
-        // Quick actions for M3
-        int btnY = cardY + cardH + 8;
-        int bw = (w - 6) / 2;
-        renderButton(g, x, btnY, bw, 20, "Guilds panel", "tab:GUILDS", mouseX, mouseY);
-        renderButton(g, x + bw + 6, btnY, bw, 20, "Open guilds config", "guild:config", mouseX, mouseY);
+        renderButton(g, x, yy + 4, (w - 3) / 2, 18, "Guilds panel", "tab:GUILDS", mouseX, mouseY);
+        renderButton(g, x + (w + 3) / 2, yy + 4, (w - 3) / 2, 18, "Open guilds.json", "guild:config", mouseX, mouseY);
     }
 
     private void drawMilestone(GuiGraphicsExtractor g, int x, int y, int w, int h, String title, String detail, Status status) {
@@ -751,6 +786,14 @@ public final class OttersCivScreen extends Screen {
     }
 
     private void runCommand(String cmd) {
+        Minecraft mc = Minecraft.getInstance();
+        var player = mc.player;
+        if (player != null && player.connection != null) {
+            player.connection.sendCommand(cmd);
+        }
+    }
+
+    private void runCommandAndClose(String cmd) {
         Minecraft mc = Minecraft.getInstance();
         var player = mc.player;
         if (player != null && player.connection != null) {

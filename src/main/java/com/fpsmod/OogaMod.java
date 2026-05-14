@@ -9,6 +9,7 @@ import com.fpsmod.guilds.GuildProtection;
 import com.fpsmod.guilds.GuildService;
 import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.jobs.JobsService;
+import com.fpsmod.ottersciv.config.JobRewardDiagnostics;
 import com.fpsmod.jobs.net.JobsNetworking;
 import com.fpsmod.ottersciv.OttersCivGameplay;
 import com.fpsmod.ottersciv.config.RewardRules;
@@ -111,7 +112,11 @@ public class OogaMod implements ModInitializer {
         }
         try {
             if (jobsService != null) {
-                jobsService.refresh(server);
+                jobsService.refresh();
+                // Surface diagnostics formerly inside JobsService — now cross-module utility
+                for (String line : JobRewardDiagnostics.diagnostics(jobsService, server)) {
+                    LOGGER.warn("[otters_civ_revived/jobs/surface] {}", line);
+                }
                 JobsNetworking.broadcastCatalogAndStatuses(jobsService, server);
             }
         } catch (RuntimeException e) {
