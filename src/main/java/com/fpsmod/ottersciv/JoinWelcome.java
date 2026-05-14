@@ -1,5 +1,7 @@
 package com.fpsmod.ottersciv;
 
+import com.fpsmod.economy.EconomyConfig;
+import com.fpsmod.economy.TransactionReason;
 import com.fpsmod.economy.WalletService;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -20,17 +22,36 @@ public final class JoinWelcome {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayer player = handler.player;
             wallets.touchPlayerLabelForOps(player.getUUID(), player.getName().getString());
+            EconomyConfig economyConfig = wallets.economyConfig();
 
             SavedDataStorage storage = server.overworld().getDataStorage();
             JoinAttendanceSavedData attendance =
                 storage.computeIfAbsent(JoinAttendanceSavedData.TYPE);
 
             boolean returning = attendance.hasSeenBefore(player.getUUID());
+            long startingBalanceGranted = 0L;
+            if (!returning) {
+                long configuredStart = Math.max(0L, economyConfig.newPlayerStartingBalance);
+                if (configuredStart > 0L && wallets.getBalance(player.getUUID()) <= 0L) {
+                    long previousBalance = wallets.getBalance(player.getUUID());
+                    long nextBalance = wallets.addBalance(
+                        player.getUUID(),
+                        configuredStart,
+                        player.getName().getString(),
+                        TransactionReason.JOIN_STARTING_BALANCE
+                    );
+                    startingBalanceGranted = Math.max(0L, nextBalance - previousBalance);
+                }
+                attendance.markSeen(player.getUUID());
+            }
+
+            if (!economyConfig.showJoinWelcome) {
+                return;
+            }
             if (returning) {
                 sendReturningWelcome(player);
             } else {
-                sendFirstTimeWelcome(player);
-                attendance.markSeen(player.getUUID());
+                sendFirstTimeWelcome(player, economyConfig, startingBalanceGranted);
             }
         });
     }
@@ -44,17 +65,23 @@ public final class JoinWelcome {
                 .append(Component.literal(".").withStyle(ChatFormatting.GOLD))
         );
         player.sendSystemMessage(
-            Component.literal("Otters Civ. Revived — /otter for help, /money for your purse.")
+            Component.literal("Otters Civ. Revived — /guide for the handbook, /otter for help, /money for your purse.")
                 .withStyle(ChatFormatting.GRAY)
         );
     }
 
-    private static void sendFirstTimeWelcome(ServerPlayer player) {
+    private static void sendFirstTimeWelcome(
+        ServerPlayer player,
+        EconomyConfig economyConfig,
+        long startingBalanceGranted
+    ) {
+        String firstLine = "Welcome — Otters Civ. Revived is active on this server.";
+        if (startingBalanceGranted > 0L) {
+            firstLine += " You received " + economyConfig.format(startingBalanceGranted) + " to get started.";
+        }
+        player.sendSystemMessage(Component.literal(firstLine));
         player.sendSystemMessage(
-            Component.literal("Welcome — Otters Civ. Revived is active on this server.")
-        );
-        player.sendSystemMessage(
-            Component.literal("Try /otter for commands, /money for your balance.")
+            Component.literal("Try /guide for the handbook, /otter for commands, /money for your balance.")
         );
         player.sendSystemMessage(
             Component.literal(

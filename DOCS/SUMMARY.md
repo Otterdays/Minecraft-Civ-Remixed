@@ -7,7 +7,7 @@
 - Repository: `https://github.com/Otterdays/Minecraft-Civ-Remixed`
 - Mod ID: `project_ooga` (changed from `fpsmod` to avoid conflict with standalone FPS overlay mod)
 - Entrypoint classes: `OogaMod` / `ProjectOogaClient` (renamed to avoid class name collision)
-- Shipping: economy wallet, mining/combat rewards, fully configurable jobs, join welcome, crash-safe persistence, in-game `/otter` hub, jobs HUD overlay
+- Shipping: economy wallet, mining/combat rewards, fully configurable jobs, join welcome, crash-safe persistence, in-game `/otter` hub, `/guide` handbook command, jobs HUD overlay
 - Legacy FPS HUD: **deprecated & disabled** (standalone FPS overlay mod handles display)
 - Docs parity: `index.html` (repo root) is the canonical offline reference
 
@@ -32,6 +32,12 @@
 
 [AMENDED 2026-05-12 — `/otter` covers full roadmap]:
 - **In-game hub surfaces every milestone.** HOME paints the M0–M6 progress strip (PARTIAL/PARTIAL/SHIPPED/PLANNED/PLANNED/FUTURE/FUTURE). Tabs: HOME · WALLET · JOBS · REWARDS · CIV · HELP. WALLET/REWARDS/HELP enumerate shipped + planned commands as `[chip] /cmd · note` rows (chips: LIVE/PARTIAL/SOON/FUTURE). CIV stacks 4 milestone cards (M3 Factions & Claims, M4 Player Shops, M5 Governance, M6 Stabilization & Scale). Panel 480×268.
+
+[AMENDED 2026-05-14 — handbook command]:
+- **Players can now spawn a written Otters Civ. handbook in-game with `/guide`.** The book is a glinting custom written book filled with live mod basics (economy, jobs, guilds, config paths, admin give path). Ops can place it directly on someone else with **`/guide give <player>`**. Join copy, `/otter` help/UI, README, Modrinth copy, and `index.html` were synced so the command is discoverable.
+
+[AMENDED 2026-05-14 — runtime jobs storage clarification]:
+- **Public docs should treat live jobs state as part of SQLite runtime persistence.** The shipped runtime path is `PersistenceService -> SqliteJobsStore`, so player job state in normal play lives in `config/otters_civ_revived/project_ooga.db` alongside wallets/guilds/claims. The older `jobs_state.json` notes describe the prior JSON store and should not be repeated on player-facing surfaces unless explicitly called out as legacy/history.
 
 [AMENDED 2026-05-12 — jobs HUD]:
 - **In-game job bar.** Compact bar above vanilla XP showing icon + slug + level + XP fill (gold gradient). Server pushes `JobStatusPayload` on join/job-change/reward. Client mirror + HUD overlay. Operator-tunable via `/otter` → Jobs tab (visible toggle, X/Y nudge, scale ±, reset, `/job` shortcuts). Persistence `config/fpsmod/jobs_hud.properties`. BMP-only icons (⛏▲✿⚔) for unifont compatibility.
@@ -78,6 +84,10 @@
 - **Commands:** **`/money`** for all chat users; **`/money set`** requires vanilla **gamemaster** (`PermissionLevel.GAMEMASTERS`). Roadmap **`Permissions apparatus (planned)`** describes future plugin-style nodes.
 - **Wallet path:** **`config/otters_civ_revived/wallet.properties`** (economy grouped with **`rewards.json`**). **`config/fpsmod/hud.properties`** stays FPS-overlay-only; legacy **`config/fpsmod/wallet.properties`** auto-migrates on first wallet read. Optional **`# Name:`** plaintext above each **`uuid=balance`** for operators; refreshed on join, **`/money`**, **`/money set`**, and reward events.
 - **Join UX:** first join per **world save** still gets three onboarding lines; **`JoinAttendanceSavedData`** (**`fpsmod:join_attendance`**, overworld **`SavedDataStorage`**) remembers returning UUIDs **for that save** so later joins get a concise **welcome back ~** _(display name)_ line (gold/aqua formatting) plus a shortened `/otter` / `/money` tip—not tied to wiping global **`config/`**.
+
+[AMENDED 2026-05-14 — economy/guild completion]:
+- **Economy runtime now centers on SQLite + live admin tools.** Runtime state persists in **`config/otters_civ_revived/project_ooga.db`** (not the older flat wallet file path). `/pay` now honors the full `economy.json` surface (`minTransferAmount`, `allowSelfPay`, `maxTransferPerCommand`, `transferCooldownSeconds`, `transferFlatFee`, `maxBalance`) and moderators can inspect the immutable `wallet_ledger` table in-game via **`/economy log [count]`** and **`/economy log player <player> [count]`**. First-join stipends now honor `newPlayerStartingBalance`; join chat respects `showJoinWelcome`.
+- **Guilds gained the missing operator knobs and public-join controls.** `guilds.json` now includes **`maxOfficers`**, **`allowOpenGuilds`**, and **`homeTeleportCooldownSeconds`**. Players can join a named public guild with **`/guild join <name>`**, owners can toggle **`/guild open`** / **`/guild close`**, officer promotion respects the configured cap, and `/guild reload` now closes lingering public guilds when public joining is disabled.
 
 [AMENDED 2026-05-10]:
 - **Passive rewards tuning:** same `config/otters_civ_revived/rewards.json` supports optional **`blockRewards`** and **`entityRewards`** maps (validated block/entity ids → payouts; precedence over tag-wide `blockReward`/`entityReward` when an id is listed), plus sibling **`block_values.json`** / **`entity_values.json`** (whole-file per-id maps merged after startup parse; overlapping keys prefer the sibling files). Join UX: **`JoinWelcome`** broadcasts a few system-chat lines on player connect (`/otter`, `/money`, rewards pointer). Offline **reference site:** repo root **`index.html`** (sidebar TOC, configs, roadmap links—including **`#config-block-values`**, **`#config-entity-values`**).

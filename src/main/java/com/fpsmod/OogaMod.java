@@ -1,10 +1,15 @@
 package com.fpsmod;
 
+import com.fpsmod.command.EconomyCommand;
+import com.fpsmod.command.GuideCommand;
 import com.fpsmod.command.GuildCommand;
 import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OogaCommand;
 import com.fpsmod.command.OtterCommand;
+import com.fpsmod.command.PayCommand;
+import com.fpsmod.economy.EconomyConfig;
+import com.fpsmod.economy.EconomyConfigLoader;
 import com.fpsmod.economy.WalletService;
 import com.fpsmod.guilds.GuildConfigLoader;
 import com.fpsmod.jobs.JobsConfigLoader;
@@ -40,6 +45,7 @@ public class OogaMod implements ModInitializer {
     private static JobsService jobsService;
     private static GuildService guildService;
     private static RewardOrchestrator ottersRewardGameplay;
+    private static EconomyConfig economyConfig;
     private static final String EMOJI_DEBUG = "🔍";
     private static final String EMOJI_OK = "✅";
     private static final String EMOJI_WARN = "⚠️";
@@ -63,7 +69,8 @@ public class OogaMod implements ModInitializer {
 
         persistence = new PersistenceService();
         persistence.initialize();
-        walletService = new WalletService(persistence.walletStore(), persistence.transactionLog());
+        economyConfig = EconomyConfigLoader.loadOrCreate();
+        walletService = new WalletService(persistence.walletStore(), persistence.transactionLog(), economyConfig);
         jobsService = new JobsService(persistence.jobsStore(), JobsConfigLoader.loadOrCreate());
         guildService = new GuildService(persistence.guildStore(), walletService, GuildConfigLoader.loadOrCreate());
         GuildProtection.register(guildService);
@@ -89,7 +96,10 @@ public class OogaMod implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             OtterCommand.register(dispatcher);
-            MoneyCommand.register(dispatcher, walletService);
+            GuideCommand.register(dispatcher, economyConfig, jobsService, guildService);
+            MoneyCommand.register(dispatcher, walletService, economyConfig);
+            PayCommand.register(dispatcher, walletService, economyConfig);
+            EconomyCommand.register(dispatcher, walletService, economyConfig);
             JobCommand.register(dispatcher, jobsService);
             GuildCommand.register(dispatcher, guildService);
             OogaCommand.register(dispatcher, persistence.database(), persistence.migrator());
@@ -110,6 +120,14 @@ public class OogaMod implements ModInitializer {
     }
 
     private static void onLogicalServerFullyStarted(MinecraftServer server) {
+        try {
+            if (economyConfig != null && walletService != null) {
+                economyConfig.copyFrom(EconomyConfigLoader.loadOrCreate());
+                walletService.setEconomyConfig(economyConfig);
+            }
+        } catch (RuntimeException e) {
+            LOGGER.error("[otters_civ_revived/economy] Economy config hydrate failed — pay rules may be stale.", e);
+        }
         try {
             RewardRules finalized = RewardRulesLoader.finalizeRewardsForRunningServer(server);
             if (ottersRewardGameplay != null) {

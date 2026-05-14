@@ -8,7 +8,6 @@ import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.guilds.net.MapTogglePayload;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -17,8 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
-
-import java.util.Set;
 
 public final class GuildCommand {
     private static final Permission ADMIN = new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);
@@ -36,7 +33,13 @@ public final class GuildCommand {
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> runInvite(ctx.getSource(), guilds, EntityArgument.getPlayer(ctx, "player")))))
             .then(Commands.literal("join")
-                .executes(ctx -> runJoin(ctx.getSource(), guilds)))
+                .executes(ctx -> runJoin(ctx.getSource(), guilds, null))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(ctx -> runJoin(
+                        ctx.getSource(),
+                        guilds,
+                        StringArgumentType.getString(ctx, "name")
+                    ))))
             .then(Commands.literal("leave")
                 .executes(ctx -> runLeave(ctx.getSource(), guilds)))
             .then(Commands.literal("kick")
@@ -55,6 +58,10 @@ public final class GuildCommand {
                 .executes(ctx -> runSetHome(ctx.getSource(), guilds)))
             .then(Commands.literal("home")
                 .executes(ctx -> runHome(ctx.getSource(), guilds)))
+            .then(Commands.literal("open")
+                .executes(ctx -> runOpenMode(ctx.getSource(), guilds, true)))
+            .then(Commands.literal("close")
+                .executes(ctx -> runOpenMode(ctx.getSource(), guilds, false)))
             .then(Commands.literal("info")
                 .executes(ctx -> runInfo(ctx.getSource(), guilds, ctx.getSource().getPlayer())))
             .then(Commands.literal("list")
@@ -104,10 +111,11 @@ public final class GuildCommand {
         return 1;
     }
 
-    private static int runJoin(CommandSourceStack source, GuildService guilds) {
+    private static int runJoin(CommandSourceStack source, GuildService guilds, String guildName) {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
-        send(source, guilds.joinGuild(p));
+        String result = guildName == null ? guilds.joinGuild(p) : guilds.joinGuild(p, guildName);
+        send(source, result);
         GuildNetworking.sendGuildStatusTo(guilds, p);
         return 1;
     }
@@ -171,6 +179,14 @@ public final class GuildCommand {
         return 1;
     }
 
+    private static int runOpenMode(CommandSourceStack source, GuildService guilds, boolean open) {
+        ServerPlayer p = source.getPlayer();
+        if (p == null) return 0;
+        send(source, guilds.setOpen(p, open));
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        return 1;
+    }
+
     private static int runInfo(CommandSourceStack source, GuildService guilds, ServerPlayer target) {
         if (target == null) return 0;
         Guild g = guilds.guildByPlayer(target.getUUID());
@@ -178,10 +194,14 @@ public final class GuildCommand {
         send(source, "§6=== " + g.name + " ===§r");
         send(source, "Owner: UUID " + g.owner);
         send(source, "Members: " + g.memberCount() + "/" + guilds.config().maxMembers);
+        send(source, "Officers: " + g.officers.size() + "/" + guilds.config().maxOfficers);
         send(source, "Balance: $" + g.balance);
         send(source, "Claims: " + guilds.claimsForGuild(g.id).size() + "/" + guilds.config().maxClaims);
         send(source, "Open: " + (g.open ? "yes" : "invite-only"));
-        if (g.homePos != null) send(source, "Home: " + g.homePos.getX() + ", " + g.homePos.getY() + ", " + g.homePos.getZ());
+        if (g.homePos != null) {
+            send(source, "Home: " + g.homePos.getX() + ", " + g.homePos.getY() + ", " + g.homePos.getZ());
+            send(source, "Home cooldown: " + guilds.config().homeTeleportCooldownSeconds + "s");
+        }
         return 1;
     }
 
@@ -190,7 +210,10 @@ public final class GuildCommand {
         if (all.isEmpty()) { send(source, "No guilds yet."); return 0; }
         send(source, "§6Guilds (" + all.size() + "):§r");
         for (Guild g : all) {
-            send(source, "  " + g.name + " — " + g.memberCount() + " members, " + guilds.claimsForGuild(g.id).size() + " claims");
+            send(source,
+                "  " + g.name + " — " + g.memberCount() + " members, "
+                    + guilds.claimsForGuild(g.id).size() + " claims, "
+                    + (g.open ? "open" : "invite-only"));
         }
         return 1;
     }
@@ -229,7 +252,7 @@ public final class GuildCommand {
     private static int runMap(CommandSourceStack source, GuildService guilds) {
         ServerPlayer p = source.getPlayer();
         if (p == null) return 0;
-        int radius = 4;
+        int radius = guilds.config().mapRadius;
         int cx = p.blockPosition().getX() >> 4;
         int cz = p.blockPosition().getZ() >> 4;
         Guild playerGuild = guilds.guildByPlayer(p.getUUID());
@@ -257,13 +280,16 @@ public final class GuildCommand {
         send(source, "§7Chunk borders shown as particles (30s).");
 
         GuildProtection.showChunkBorders(p, cx, cz, radius, p.level().dimension().identifier().toString(), guilds);
-        ServerPlayNetworking.send(p, new MapTogglePayload(true));
+        ServerPlayNetworking.send(p, new MapTogglePayload(guilds.config().overlayDurationSeconds));
         return 1;
     }
 
     private static int runReload(CommandSourceStack source, GuildService guilds) {
         guilds.refresh();
-        send(source, "Reloaded guilds.json config.");
+        send(source,
+            "Reloaded guilds.json config. maxOfficers=" + guilds.config().maxOfficers
+                + ", homeTeleportCooldownSeconds=" + guilds.config().homeTeleportCooldownSeconds
+                + ", allowOpenGuilds=" + guilds.config().allowOpenGuilds + ".");
         return 1;
     }
 

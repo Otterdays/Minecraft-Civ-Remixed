@@ -6,28 +6,42 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WalletService implements IEconomyService {
 
-    public enum TransferResult { OK, INSUFFICIENT_FUNDS, SAME_PLAYER }
+    public enum TransferResult { OK, INSUFFICIENT_FUNDS, SAME_PLAYER, RECEIVER_MAX_BALANCE }
 
     private final WalletStore walletStore;
     private final TransactionLog transactionLog;
     private final Map<UUID, Long> balances;
     /** Plain-text hints for operators; persisted as {@code # Name:} lines; UUID=balance stays authoritative. */
     private final Map<UUID, String> displayHints;
+    private volatile EconomyConfig economyConfig;
 
     public WalletService(WalletStore walletStore) {
-        this(walletStore, TransactionLog.NO_OP);
+        this(walletStore, TransactionLog.NO_OP, EconomyConfig.defaults());
     }
 
     public WalletService(WalletStore walletStore, TransactionLog transactionLog) {
+        this(walletStore, transactionLog, EconomyConfig.defaults());
+    }
+
+    public WalletService(WalletStore walletStore, TransactionLog transactionLog, EconomyConfig economyConfig) {
         this.walletStore = walletStore;
         this.transactionLog = transactionLog;
+        this.economyConfig = economyConfig;
         WalletLedger loaded = walletStore.load();
         this.balances = new ConcurrentHashMap<>(loaded.balances());
         this.displayHints = new ConcurrentHashMap<>(loaded.displayHints());
     }
 
     public static WalletService createDefault() {
-        return new WalletService(new FileWalletStore(), new FileTransactionLog());
+        return new WalletService(new FileWalletStore(), new FileTransactionLog(), EconomyConfig.defaults());
+    }
+
+    public EconomyConfig economyConfig() {
+        return economyConfig;
+    }
+
+    public void setEconomyConfig(EconomyConfig config) {
+        this.economyConfig = config;
     }
 
     /**
@@ -69,18 +83,19 @@ public class WalletService implements IEconomyService {
 
     /** Admin: replace balance entirely. Logs {@link TransactionReason#ADMIN_SET}. */
     public long setBalance(UUID playerId, long amount) {
-        long sanitized = Math.max(0L, amount);
+        long current = balances.getOrDefault(playerId, 0L);
+        long sanitized = clampToBalanceCap(Math.max(0L, amount));
         balances.put(playerId, sanitized);
         persist();
-        transactionLog.record(new LedgerEntry(playerId, sanitized, sanitized, TransactionReason.ADMIN_SET, null));
+        transactionLog.record(new LedgerEntry(playerId, sanitized - current, sanitized, TransactionReason.ADMIN_SET, null));
         return sanitized;
     }
 
     /** Admin: add coins to a player's balance. Logs {@link TransactionReason#ADMIN_ADD}. */
     public long adminAdd(UUID playerId, long amount) {
-        long next = applyDelta(playerId, Math.max(0L, amount));
-        transactionLog.record(new LedgerEntry(playerId, amount, next, TransactionReason.ADMIN_ADD, null));
-        return next;
+        BalanceChange change = applyDelta(playerId, Math.max(0L, amount));
+        transactionLog.record(new LedgerEntry(playerId, change.delta(), change.next(), TransactionReason.ADMIN_ADD, null));
+        return change.next();
     }
 
     /** Admin: deduct coins from a player's balance (clamped to 0). Logs {@link TransactionReason#ADMIN_TAKE}. */
@@ -99,26 +114,51 @@ public class WalletService implements IEconomyService {
      * Logs {@link TransactionReason#PLAYER_PAY_SENT} and {@link TransactionReason#PLAYER_PAY_RECEIVED}.
      */
     public synchronized TransferResult transfer(UUID fromId, String fromName, UUID toId, String toName, long amount) {
-        if (fromId.equals(toId)) return TransferResult.SAME_PLAYER;
-        long fromBalance = balances.getOrDefault(fromId, 0L);
-        if (fromBalance < amount) return TransferResult.INSUFFICIENT_FUNDS;
+        return transfer(fromId, fromName, toId, toName, amount, 0L);
+    }
 
-        long newFrom = fromBalance - amount;
-        long currentTo = balances.getOrDefault(toId, 0L);
-        long newTo;
+    /**
+     * Player-to-player transfer with an optional sink fee.
+     * The recipient always receives {@code amount}; the sender pays {@code amount + fee}.
+     */
+    public synchronized TransferResult transfer(
+        UUID fromId,
+        String fromName,
+        UUID toId,
+        String toName,
+        long amount,
+        long fee
+    ) {
+        if (fromId.equals(toId)) return TransferResult.SAME_PLAYER;
+        long safeAmount = Math.max(0L, amount);
+        long safeFee = Math.max(0L, fee);
+        long totalCost;
         try {
-            newTo = Math.addExact(currentTo, amount);
+            totalCost = Math.addExact(safeAmount, safeFee);
         } catch (ArithmeticException e) {
-            newTo = Long.MAX_VALUE;
+            return TransferResult.INSUFFICIENT_FUNDS;
         }
+        long fromBalance = balances.getOrDefault(fromId, 0L);
+        if (fromBalance < totalCost) return TransferResult.INSUFFICIENT_FUNDS;
+
+        long currentTo = balances.getOrDefault(toId, 0L);
+        if (wouldExceedBalanceCap(currentTo, safeAmount)) {
+            return TransferResult.RECEIVER_MAX_BALANCE;
+        }
+        long balanceAfterAmount = fromBalance - safeAmount;
+        long newFrom = balanceAfterAmount - safeFee;
+        long newTo = saturatingAdd(currentTo, safeAmount);
 
         balances.put(fromId, newFrom);
         balances.put(toId, newTo);
         if (fromName != null) rememberPlayerName(fromId, fromName);
         if (toName != null) rememberPlayerName(toId, toName);
         persist();
-        transactionLog.record(new LedgerEntry(fromId, -amount, newFrom, TransactionReason.PLAYER_PAY_SENT, "to:" + toId));
-        transactionLog.record(new LedgerEntry(toId, amount, newTo, TransactionReason.PLAYER_PAY_RECEIVED, "from:" + fromId));
+        transactionLog.record(new LedgerEntry(fromId, -safeAmount, balanceAfterAmount, TransactionReason.PLAYER_PAY_SENT, "to:" + toId));
+        transactionLog.record(new LedgerEntry(toId, safeAmount, newTo, TransactionReason.PLAYER_PAY_RECEIVED, "from:" + fromId));
+        if (safeFee > 0L) {
+            transactionLog.record(new LedgerEntry(fromId, -safeFee, newFrom, TransactionReason.PLAYER_PAY_FEE, "to:" + toId));
+        }
         return TransferResult.OK;
     }
 
@@ -134,9 +174,9 @@ public class WalletService implements IEconomyService {
                 displayHints.put(playerId, s);
             }
         }
-        long next = applyDelta(playerId, delta);
-        transactionLog.record(new LedgerEntry(playerId, delta, next, reason, null));
-        return next;
+        BalanceChange change = applyDelta(playerId, delta);
+        transactionLog.record(new LedgerEntry(playerId, change.delta(), change.next(), reason, null));
+        return change.next();
     }
 
     /**
@@ -154,17 +194,44 @@ public class WalletService implements IEconomyService {
         return addBalance(playerId, delta, displayHintOrNull, TransactionReason.REWARD_BLOCK);
     }
 
-    private long applyDelta(UUID playerId, long delta) {
+    private BalanceChange applyDelta(UUID playerId, long delta) {
         long current = balances.getOrDefault(playerId, 0L);
-        long next;
-        try {
-            next = Math.addExact(current, delta);
-        } catch (ArithmeticException e) {
-            next = delta > 0L ? Long.MAX_VALUE : Long.MIN_VALUE;
-        }
-        next = Math.max(0L, next);
+        long next = clampToBalanceCap(Math.max(0L, saturatingAdd(current, delta)));
         balances.put(playerId, next);
         persist();
-        return next;
+        return new BalanceChange(current, next);
+    }
+
+    private long clampToBalanceCap(long amount) {
+        long cap = economyConfig.maxBalance;
+        if (cap > 0L && amount > cap) {
+            return cap;
+        }
+        return amount;
+    }
+
+    private boolean wouldExceedBalanceCap(long currentBalance, long delta) {
+        long cap = economyConfig.maxBalance;
+        if (cap <= 0L) {
+            return false;
+        }
+        if (currentBalance >= cap) {
+            return delta > 0L;
+        }
+        return delta > cap - currentBalance;
+    }
+
+    private long saturatingAdd(long left, long right) {
+        try {
+            return Math.addExact(left, right);
+        } catch (ArithmeticException e) {
+            return right > 0L ? Long.MAX_VALUE : Long.MIN_VALUE;
+        }
+    }
+
+    private record BalanceChange(long previous, long next) {
+        private long delta() {
+            return next - previous;
+        }
     }
 }

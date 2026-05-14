@@ -156,7 +156,7 @@ public final class OttersCivScreen extends Screen {
         // Footer band — separates content from chrome and prevents overlap with tab content.
         int footerY = py + PANEL_H - 14;
         g.fill(px + SIDEBAR_W + 1, footerY, px + PANEL_W - 1, footerY + 1, PANEL_BORDER);
-        String left = "Mod id: project_ooga · /otter · /money";
+        String left = "Mod id: project_ooga · /otter · /guide";
         String hint = "ESC to close";
         g.text(this.font, left, px + SIDEBAR_W + 10, footerY + 4, TEXT_DIM, false);
         g.text(this.font, hint, px + PANEL_W - 6 - this.font.width(hint), footerY + 4, TEXT_DIM, false);
@@ -344,20 +344,25 @@ public final class OttersCivScreen extends Screen {
 
     private void renderWallet(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Wallet  ·  M1 Economy");
-        body(g, x, y + 14, "config/otters_civ_revived/wallet.properties (uuid=balance).", TEXT_MUTED);
+        body(g, x, y + 14, "Host data: config/otters_civ_revived/project_ooga.db (SQLite).", TEXT_MUTED);
 
         // Command catalog with badges.
         int row = y + 28;
         drawCommandRow(g, x, row,      "/money",                          "show your balance",            Status.SHIPPED);
         drawCommandRow(g, x, row + 12, "/money set <player> <amount>",    "op-only set (GAMEMASTER tier)", Status.SHIPPED);
-        drawCommandRow(g, x, row + 24, "/pay <player> <amount>",          "transfer between players",      Status.PLANNED);
-        drawCommandRow(g, x, row + 36, "/ooga money add|take <p> <amt>",  "admin grant/burn with reason",  Status.PLANNED);
-        drawCommandRow(g, x, row + 48, "Transaction log + audit views",   "immutable ledger, mod queries", Status.PLANNED);
-        drawCommandRow(g, x, row + 60, "Transfer caps · cooldowns · fees", "M1 anti-abuse policy",         Status.PLANNED);
+        drawCommandRow(g, x, row + 24, "/pay <player> <amount>",          "player transfer",               Status.SHIPPED);
+        drawCommandRow(g, x, row + 36, "/economy reload",                 "re-read economy.json",          Status.SHIPPED);
+        drawCommandRow(g, x, row + 48, "/economy log [count]",            "wallet audit view",             Status.SHIPPED);
+        drawCommandRow(g, x, row + 60, "Caps · cooldowns · fees",         "live from economy.json",        Status.SHIPPED);
 
         // Actions.
         renderButton(g, x,        y + 110, 130, 22, "Run /money",       "action:money",       mouseX, mouseY);
-        renderButton(g, x + 138,  y + 110, 130, 22, "Open Wallet File", "action:open_wallet", mouseX, mouseY);
+        renderButton(g, x + 138,  y + 110, 130, 22,
+            canOpenServerJobsConfig() ? "Open Host DB" : "Ask Host",
+            "action:open_database",
+            mouseX,
+            mouseY
+        );
     }
 
     private void drawCommandRow(GuiGraphicsExtractor g, int x, int y, String cmd, String note, Status status) {
@@ -627,22 +632,23 @@ public final class OttersCivScreen extends Screen {
         int row = y + 16;
         // Shipped commands.
         drawCommandRow(g, x, row,      "/otter",                          "opens this menu",                 Status.SHIPPED);
-        drawCommandRow(g, x, row + 12, "/money",                          "balance",                         Status.SHIPPED);
-        drawCommandRow(g, x, row + 24, "/money set <p> <amt>",            "op-tier set",                     Status.SHIPPED);
-        drawCommandRow(g, x, row + 36, "/job",                            "active job + progression",        Status.SHIPPED);
-        drawCommandRow(g, x, row + 48, "/job list",                       "jobs catalog",                    Status.SHIPPED);
-        drawCommandRow(g, x, row + 60, "/job join <slug> · /job leave",   "pick or clear a job",            Status.SHIPPED);
+        drawCommandRow(g, x, row + 12, "/guide",                          "spawn the handbook",              Status.SHIPPED);
+        drawCommandRow(g, x, row + 24, "/money",                          "balance",                         Status.SHIPPED);
+        drawCommandRow(g, x, row + 36, "/money set <p> <amt>",            "op-tier set",                     Status.SHIPPED);
+        drawCommandRow(g, x, row + 48, "/job",                            "active job + progression",        Status.SHIPPED);
+        drawCommandRow(g, x, row + 60, "/job list",                       "jobs catalog",                    Status.SHIPPED);
+        drawCommandRow(g, x, row + 72, "/job join <slug> · /job leave",   "pick or clear a job",            Status.SHIPPED);
 
         // Shipped M3 guilds.
-        drawCommandRow(g, x, row + 76, "/guild create <name>",            "M3 create ($250)",                Status.SHIPPED);
-        drawCommandRow(g, x, row + 88, "/guild invite|join|leave|kick",   "M3 membership",                   Status.SHIPPED);
-        drawCommandRow(g, x, row +100, "/guild claim|unclaim|map",        "M3 chunk claims ($100)",          Status.SHIPPED);
-        drawCommandRow(g, x, row +112, "/guild promote|demote",           "M3 officer ranks",                Status.SHIPPED);
-        drawCommandRow(g, x, row +124, "/guild sethome|home",             "M3 guild teleport",               Status.SHIPPED);
-        drawCommandRow(g, x, row +136, "/pay <player> <amount>",          "M1 transfer",                     Status.PLANNED);
-        drawCommandRow(g, x, row +148, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
+        drawCommandRow(g, x, row + 88, "/guild create <name>",            "M3 create ($250)",                Status.SHIPPED);
+        drawCommandRow(g, x, row +100, "/guild invite|join|leave|kick",   "M3 membership",                   Status.SHIPPED);
+        drawCommandRow(g, x, row +112, "/guild claim|unclaim|map",        "M3 chunk claims ($100)",          Status.SHIPPED);
+        drawCommandRow(g, x, row +124, "/guild promote|demote",           "M3 officer ranks",                Status.SHIPPED);
+        drawCommandRow(g, x, row +136, "/guild sethome|home",             "M3 guild teleport",               Status.SHIPPED);
+        drawCommandRow(g, x, row +148, "/pay <player> <amount>",          "M1 transfer",                     Status.SHIPPED);
+        drawCommandRow(g, x, row +160, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
 
-        body(g, x, row + 142, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
+        body(g, x, row + 174, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
     }
 
     private void renderButton(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, String actionKey, int mouseX, int mouseY) {
@@ -720,7 +726,13 @@ public final class OttersCivScreen extends Screen {
             case "action:rewards"            -> active = Tab.REWARDS;
             case "action:money"              -> runCommand("money");
             case "action:open_config"        -> openClientConfigDir("otters_civ_revived");
-            case "action:open_wallet"        -> openClientConfigFile("otters_civ_revived", "wallet.properties");
+            case "action:open_database"      -> {
+                if (canOpenServerJobsConfig()) {
+                    openClientConfigFile("otters_civ_revived", "project_ooga.db");
+                } else {
+                    showClientNotice("project_ooga.db lives on the server host. Ask the host if you need it.");
+                }
+            }
             case "action:open_rewards"       -> openClientConfigFile("otters_civ_revived", "rewards.json");
             case "action:open_block_values"  -> openClientConfigFile("otters_civ_revived", "block_values.json");
             case "action:open_entity_values" -> openClientConfigFile("otters_civ_revived", "entity_values.json");

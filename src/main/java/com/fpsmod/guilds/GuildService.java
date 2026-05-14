@@ -2,12 +2,10 @@ package com.fpsmod.guilds;
 
 import com.fpsmod.economy.IEconomyService;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.Level;
 
 import java.util.Collection;
@@ -27,6 +25,7 @@ public class GuildService implements IGuildService {
     private final Map<String, UUID> byName = new ConcurrentHashMap<>();
     private final Map<String, ClaimedChunk> claimsByKey = new ConcurrentHashMap<>();
     private final Set<ClaimedChunk> claims = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Long> lastHomeTeleports = new ConcurrentHashMap<>();
 
     public GuildService(GuildStore store, IEconomyService wallets, GuildConfig config) {
         this.store = store;
@@ -45,10 +44,18 @@ public class GuildService implements IGuildService {
 
     public void refresh() {
         this.config = GuildConfigLoader.loadOrCreate();
-    }
-
-    private static int chunkCoord(int blockCoord) {
-        return blockCoord >> 4;
+        boolean mutated = false;
+        if (!config.enabled || !config.allowOpenGuilds) {
+            for (Guild guild : guilds.values()) {
+                if (guild.open) {
+                    guild.open = false;
+                    mutated = true;
+                }
+            }
+        }
+        if (mutated) {
+            persist();
+        }
     }
 
     private static String dimensionId(ServerPlayer player) {
@@ -101,6 +108,7 @@ public class GuildService implements IGuildService {
     }
 
     public String disbandGuild(ServerPlayer player) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOwner(player.getUUID())) return "Only the owner can disband the guild.";
@@ -116,6 +124,7 @@ public class GuildService implements IGuildService {
     }
 
     public String invitePlayer(ServerPlayer sender, ServerPlayer target) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(sender.getUUID())) return "Only officers can invite.";
@@ -129,31 +138,81 @@ public class GuildService implements IGuildService {
     private final Map<UUID, UUID> pendingInvites = new ConcurrentHashMap<>();
 
     public String joinGuild(ServerPlayer player) {
-        UUID guildId = pendingInvites.remove(player.getUUID());
-        if (guildId == null) {
-            // Check if guild is open
-            for (Guild g : guilds.values()) {
-                if (g.open && !g.isMember(player.getUUID()) && g.memberCount() < config.maxMembers) {
-                    g.members.add(player.getUUID());
-                    persist();
-                    return "You joined " + g.name + "!";
-                }
-            }
-            return "You have no pending invite.";
-        }
-        Guild g = guilds.get(guildId);
-        if (g == null) return "That guild no longer exists.";
-        if (g.memberCount() >= config.maxMembers) return "Guild is full.";
+        if (!config.enabled) return "Guilds are disabled.";
         if (guildByPlayer(player.getUUID()) != null) {
             pendingInvites.remove(player.getUUID());
             return "You are already in a guild.";
         }
+        UUID guildId = pendingInvites.remove(player.getUUID());
+        if (guildId == null) {
+            if (!config.allowOpenGuilds) {
+                return "You have no pending invite.";
+            }
+            Guild openGuild = null;
+            for (Guild g : guilds.values()) {
+                if (!g.open || g.memberCount() >= config.maxMembers) {
+                    continue;
+                }
+                if (openGuild != null) {
+                    return "Multiple guilds are open. Use /guild join <name>.";
+                }
+                openGuild = g;
+            }
+            if (openGuild == null) {
+                return "You have no pending invite.";
+            }
+            openGuild.members.add(player.getUUID());
+            persist();
+            return "You joined " + openGuild.name + "!";
+        }
+        Guild g = guilds.get(guildId);
+        if (g == null) return "That guild no longer exists.";
+        if (g.memberCount() >= config.maxMembers) return "Guild is full.";
+        g.members.add(player.getUUID());
+        persist();
+        return "You joined " + g.name + "!";
+    }
+
+    public String joinGuild(ServerPlayer player, String name) {
+        if (!config.enabled) return "Guilds are disabled.";
+        if (guildByPlayer(player.getUUID()) != null) {
+            return "You are already in a guild.";
+        }
+        UUID invitedGuildId = pendingInvites.get(player.getUUID());
+        if (invitedGuildId != null) {
+            Guild invitedGuild = guilds.get(invitedGuildId);
+            if (invitedGuild != null
+                && FileGuildStore.normalizeName(invitedGuild.name).equals(FileGuildStore.normalizeName(name))) {
+                if (invitedGuild.memberCount() >= config.maxMembers) {
+                    return "Guild is full.";
+                }
+                pendingInvites.remove(player.getUUID());
+                invitedGuild.members.add(player.getUUID());
+                persist();
+                return "You joined " + invitedGuild.name + "!";
+            }
+        }
+        Guild g = guildByName(name);
+        if (g == null) {
+            return "No guild named '" + name + "' exists.";
+        }
+        if (!config.allowOpenGuilds) {
+            return "Open guild joining is disabled.";
+        }
+        if (!g.open) {
+            return "That guild is invite-only.";
+        }
+        if (g.memberCount() >= config.maxMembers) {
+            return "Guild is full.";
+        }
+        pendingInvites.remove(player.getUUID());
         g.members.add(player.getUUID());
         persist();
         return "You joined " + g.name + "!";
     }
 
     public String leaveGuild(ServerPlayer player) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (g.isOwner(player.getUUID())) return "Use /guild disband to dissolve the guild.";
@@ -168,6 +227,7 @@ public class GuildService implements IGuildService {
     }
 
     public String kickPlayer(ServerPlayer sender, ServerPlayer target) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(sender.getUUID())) return "Only officers can kick.";
@@ -180,6 +240,7 @@ public class GuildService implements IGuildService {
     }
 
     public String transferOwnership(ServerPlayer sender, ServerPlayer target) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOwner(sender.getUUID())) return "Only the owner can transfer.";
@@ -190,17 +251,23 @@ public class GuildService implements IGuildService {
     }
 
     public String promote(ServerPlayer sender, ServerPlayer target) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOwner(sender.getUUID())) return "Only the owner can promote.";
         if (!g.isMember(target.getUUID())) return "That player is not in your guild.";
+        if (g.isOwner(target.getUUID())) return "The owner is already the owner.";
         if (g.officers.contains(target.getUUID())) return "They are already an officer.";
+        if (config.maxOfficers > 0 && g.officers.size() >= config.maxOfficers) {
+            return "Officer cap reached (max " + config.maxOfficers + ").";
+        }
         g.officers.add(target.getUUID());
         persist();
         return "Promoted " + target.getName().getString() + " to officer.";
     }
 
     public String demote(ServerPlayer sender, ServerPlayer target) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(sender.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOwner(sender.getUUID())) return "Only the owner can demote.";
@@ -211,6 +278,7 @@ public class GuildService implements IGuildService {
     }
 
     public String setHome(ServerPlayer player) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can set the guild home.";
@@ -221,9 +289,23 @@ public class GuildService implements IGuildService {
     }
 
     public String teleportHome(ServerPlayer player) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (g.homePos == null) return "No guild home has been set.";
+        long cooldownSeconds = Math.max(0, config.homeTeleportCooldownSeconds);
+        long now = System.currentTimeMillis();
+        if (cooldownSeconds > 0L) {
+            Long lastTeleportAt = lastHomeTeleports.get(player.getUUID());
+            if (lastTeleportAt != null) {
+                long cooldownMs = cooldownSeconds * 1000L;
+                long elapsedMs = now - lastTeleportAt;
+                if (elapsedMs < cooldownMs) {
+                    long remainingSeconds = (cooldownMs - elapsedMs + 999L) / 1000L;
+                    return "Guild home is on cooldown for " + remainingSeconds + "s.";
+                }
+            }
+        }
 
         String dimStr = g.homeDimension != null ? g.homeDimension : "minecraft:overworld";
         Identifier dimId = Identifier.parse(dimStr);
@@ -235,12 +317,30 @@ public class GuildService implements IGuildService {
         BlockPos pos = g.homePos;
         player.teleportTo(targetLevel, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
             Set.of(), player.getYRot(), player.getXRot(), false);
+        if (cooldownSeconds > 0L) {
+            lastHomeTeleports.put(player.getUUID(), now);
+        }
         return "Teleported to guild home.";
+    }
+
+    public String setOpen(ServerPlayer player, boolean open) {
+        if (!config.enabled) return "Guilds are disabled.";
+        Guild g = guildByPlayer(player.getUUID());
+        if (g == null) return "You are not in a guild.";
+        if (!g.isOwner(player.getUUID())) return "Only the owner can change guild join mode.";
+        if (open && !config.allowOpenGuilds) return "Open guild joining is disabled in guilds.json.";
+        if (g.open == open) {
+            return open ? "Your guild is already open to the public." : "Your guild is already invite-only.";
+        }
+        g.open = open;
+        persist();
+        return open ? "Your guild is now open to the public." : "Your guild is now invite-only.";
     }
 
     // --- Chunk claims ---
 
     public String claimChunk(ServerPlayer player, int chunkX, int chunkZ) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can claim land.";
@@ -269,6 +369,7 @@ public class GuildService implements IGuildService {
     }
 
     public String unclaimChunk(ServerPlayer player, int chunkX, int chunkZ) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOfficer(player.getUUID())) return "Only officers can unclaim land.";
@@ -284,6 +385,7 @@ public class GuildService implements IGuildService {
     }
 
     public String unclaimAll(ServerPlayer player) {
+        if (!config.enabled) return "Guilds are disabled.";
         Guild g = guildByPlayer(player.getUUID());
         if (g == null) return "You are not in a guild.";
         if (!g.isOwner(player.getUUID())) return "Only the owner can unclaim all.";

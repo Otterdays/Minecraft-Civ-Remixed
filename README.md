@@ -49,10 +49,10 @@ One-line version: **wallet + transfers/admin econ + jobs + guilds + optional min
 
 | Area | What you get |
 |------|----------------|
-| **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/otters_civ_revived/wallet.properties` (legacy `config/fpsmod/wallet.properties` migrates once on load) |
+| **Wallet & commands** | `/guide`, `/money`, `/money set|add|take`, `/pay`, `/economy reload|log`, `/otter`; economy/guild/jobs state persists in `config/otters_civ_revived/project_ooga.db` |
 | **Payouts** | Tag-driven mining & combat rewards; **per-block** / **per-entity-type** amounts via inline `blockRewards` / `entityRewards` **or** dedicated **`block_values.json`** / **`entity_values.json`** next to **`rewards.json`** (merged; sibling files override same keys after load). Current vanilla block + living-entity coverage is broad out of the box, and the same tag/value-file system is designed to absorb future additions cleanly. |
-| **Jobs** | `/job`, `/job list`, `/job info <id>`, `/job join <id>`, `/job leave [id]`, `/job stats`; jobs are now server-authoritative and fully data-driven from `config/otters_civ_revived/jobs.json`, including arbitrary job count, triggers, progression, boosts, and single-vs-multi active-slot rules. The shipped starter pack now defaults to **5 low-overlap roles** (`miner`, `lumberjack`, `farmer`, `excavator`, `fighter`) with **single-slot** activation, fast early thresholds, and modest long-tail boosts. Player job progress persists in `config/otters_civ_revived/jobs_state.json` (legacy `jobs.properties` migrates once). |
-| **Onboarding** | System chat on join: **first visit per save** - three lines; **returning** - short **welcome back ~name** + `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
+| **Jobs** | `/job`, `/job list`, `/job info <id>`, `/job join <id>`, `/job leave [id]`, `/job stats`; jobs are now server-authoritative and fully data-driven from `config/otters_civ_revived/jobs.json`, including arbitrary job count, triggers, progression, boosts, and single-vs-multi active-slot rules. The shipped starter pack now defaults to **5 low-overlap roles** (`miner`, `lumberjack`, `farmer`, `excavator`, `fighter`) with **single-slot** activation, fast early thresholds, and modest long-tail boosts. Live player job progress persists in SQLite inside `config/otters_civ_revived/project_ooga.db`. |
+| **Onboarding** | System chat on join: **first visit per save** - three lines; **returning** - short **welcome back ~name** + `/guide` / `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
 | **Client extra** | Jobs HUD overlay (icon + level + XP bar); legacy FPS HUD is **deprecated & disabled** (standalone FPS overlay mod handles display) |
 
 For full mechanics, defaults, and operator notes, open **`index.html`** in the repo or see **`DOCS/`** below.
@@ -94,17 +94,23 @@ When docs say **"server,"** they mean **"the game side that stores your balance 
 | Command | What it does |
 |---------|----------------|
 | `/otter` | Shows a short help list and where reward settings live |
+| `/guide` | Gives you the in-game Otters Civ. handbook (requires an inventory slot) |
+| `/guide give <player>` | Gives the handbook to another player (**gamemaster / OP-equivalent** only) |
 | `/money` | Shows **your** money |
 | `/money set <player> <amount>` | Sets someone's balance (**gamemaster / OP-equivalent** only - same band as many vanilla cheat commands; see below) |
+| `/money add <player> <amount>`, `/money take <player> <amount>` | Admin credit / deduct tools (**gamemaster / OP-equivalent** only) |
+| `/pay <player> <amount>` | Player-to-player transfer with live cap/cooldown/fee rules from `economy.json` |
+| `/economy reload`, `/economy log [count]`, `/economy log player <player> [count]` | Reload economy policy and inspect the immutable ledger (**gamemaster / OP-equivalent** only) |
 | `/job`, `/job stats` | Shows your active jobs, levels, and XP progress |
 | `/job list` | Lists the live server job catalog |
 | `/job info <id>` | Shows one job's triggers, progression, and boosts |
 | `/job join <id>`, `/job leave [id]` | Activates or clears jobs using the live server catalog |
 | `/job reload`, `/job validate` | Reloads and validates jobs config (**gamemaster / OP-equivalent** only) |
+| `/guild join [name]`, `/guild open`, `/guild close` | Join the one open guild (or a named one) and toggle public guild joining (owner-only for open/close) |
 
 Money rules load from **`config/otters_civ_revived/rewards.json`**; **`block_values.json`** / **`entity_values.json`** list per-block / per-mob payouts. On logical server startup the mod expands your configured **`blockTag`**/**`entityTag`** into those maps when empty, merges inline overrides from **`rewards.json`**, persists sorted JSON, then applies it - restart after edits.
 
-Jobs rules load from **`config/otters_civ_revived/jobs.json`**. That file now owns the live server job catalog: global enable/activation rules, arbitrary job ids, display metadata, triggers, progression, and money / XP boosts. Player selections / XP totals live separately in **`config/otters_civ_revived/jobs_state.json`**; older **`jobs.properties`** data migrates once on load.
+Jobs rules load from **`config/otters_civ_revived/jobs.json`**. That file now owns the live server job catalog: global enable/activation rules, arbitrary job ids, display metadata, triggers, progression, and money / XP boosts. Runtime player selections / XP totals are persisted in SQLite inside **`config/otters_civ_revived/project_ooga.db`** alongside wallets, guilds, and claims.
 
 The coded starter recommendation is now a **5-job civ pack**: `miner`, `lumberjack`, `farmer`, `excavator`, and `fighter`. It ships in `single` mode with one active slot by default, uses explicit fast-early XP thresholds, and keeps money / XP boosts modest so long-term depth comes from specialization instead of runaway inflation.
 
@@ -118,11 +124,11 @@ Three layers, low -> high precedence. Combine freely.
 
 ### Command permissions (current)
 
-- **Everyone** who can open chat: **`/money`** (read-only balance).
-- **Gamemaster-tier** command sources (vanilla **operators** in the usual cheat band, console, etc.): **`/money set`**. Implemented with Minecraft 26.x `CommandSourceStack.permissions()` and `Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS)`.
+- **Everyone** who can open chat: **`/guide`**, **`/otter`**, **`/money`**, **`/pay`**, the self-service **`/job`** set, and most **`/guild`** commands.
+- **Gamemaster-tier** command sources (vanilla **operators** in the usual cheat band, console, etc.): **`/guide give <player>`**, **`/money set|add|take`**, **`/economy reload|log`**, **`/job reload|validate`**, and **`/guild reload`**. Implemented with Minecraft 26.x `CommandSourceStack.permissions()` and `Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS)`.
 - **Future:** dedicated mod permission strings / Fabric Permissions API compatibility so you can grant econ admin without full OP - see **`DOCS/ROADMAP.md`** -> **Permissions apparatus (planned)**.
 
-Balances on disk (**`config/otters_civ_revived/wallet.properties`**) use **`uuid=amount`** keys; when the server knows your name it also writes **`# Name: YourName`** on the line above as a readability hint (the UUID line stays the source of truth for money).
+Runtime state now persists in SQLite at **`config/otters_civ_revived/project_ooga.db`**. The economy audit trail lives in the **`wallet_ledger`** table, so moderators can inspect it in-game with **`/economy log`** instead of editing a flat wallet file.
 
 ---
 
@@ -146,7 +152,7 @@ Browser-friendly reference (**commands, configs, defaults**): [`index.html`](ind
 
 ## Roadmap & contributing
 
-**Next up (short list):** richer econ **permission nodes** / plugin integration (beyond vanilla gamemaster for **`/money set`**), **`/pay`**, an audit trail, sinks and caps. The full checklist lives in **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`**.
+**Next up (short list):** richer econ **permission nodes** / plugin integration (beyond vanilla gamemaster for **`/money set`**), more sinks/balance controls, shops, and the broader civ stack. The full checklist lives in **`[DOCS/ROADMAP.md](DOCS/ROADMAP.md)`**.
 
 For pull requests or automation-assisted work: read **`AGENTS.md`** first, then **`DOCS/STYLE_GUIDE.md`**.
 

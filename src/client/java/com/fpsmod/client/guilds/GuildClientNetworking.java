@@ -16,8 +16,8 @@ public final class GuildClientNetworking {
             GuildClientState.updateGuildInfo(payload.info());
         });
         ClientPlayNetworking.registerGlobalReceiver(MapTogglePayload.TYPE, (payload, context) -> {
-            if (payload.show()) {
-                GuildChunkOverlay.show(30);
+            if (payload.durationSeconds() > 0) {
+                GuildChunkOverlay.show(payload.durationSeconds());
             } else {
                 GuildChunkOverlay.hide();
             }
