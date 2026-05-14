@@ -23,6 +23,11 @@ public class GuildService {
     private final GuildStore store;
     private final WalletService wallets;
     private volatile GuildConfig config;
+    private final Map<UUID, Guild> guilds = new ConcurrentHashMap<>();
+    private final Map<String, UUID> byName = new ConcurrentHashMap<>();
+    private final Map<String, ClaimedChunk> claimsByKey = new ConcurrentHashMap<>();
+    private final Set<ClaimedChunk> claims = ConcurrentHashMap.newKeySet();
+
     public GuildService(GuildStore store, WalletService wallets, GuildConfig config) {
         this.store = store;
         this.wallets = wallets;

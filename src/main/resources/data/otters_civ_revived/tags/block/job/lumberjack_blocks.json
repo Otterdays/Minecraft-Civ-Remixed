@@ -4,6 +4,8 @@
     "#minecraft:logs",
     "#minecraft:leaves",
     "#minecraft:planks",
-    "#minecraft:saplings"
+    "minecraft:bamboo_block",
+    "minecraft:stripped_bamboo_block",
+    "minecraft:bamboo_mosaic"
   ]
 }

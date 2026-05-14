@@ -1,9 +1,15 @@
 package com.fpsmod.jobs;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class JobsConfigTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestBootstrap.ensureBootstrapped();
+    }
 
     @Test
     void xpForLevelMonotonicAndZeroAtZero() {
@@ -16,6 +22,8 @@ public class JobsConfigTest {
             Assertions.assertTrue(x > prev, "xpForLevel must increase, broke at level " + l);
             prev = x;
         }
+        Assertions.assertEquals(20L, progression.xpForLevel(1));
+        Assertions.assertEquals(40, progression.maxLevel);
     }
 
     @Test
@@ -37,6 +45,21 @@ public class JobsConfigTest {
         Assertions.assertEquals(1.0D, job.boosts.moneyMultiplierForLevel(0), 1e-9);
         Assertions.assertEquals(0L, job.boosts.moneyFlatBonusForLevel(0));
         Assertions.assertEquals(1.0D, job.boosts.xpMultiplierForLevel(0), 1e-9);
+        Assertions.assertTrue(job.boosts.moneyMultiplierForLevel(job.progression.maxLevel) <= 1.20D);
+        Assertions.assertTrue(job.boosts.xpMultiplierForLevel(job.progression.maxLevel) <= 1.20D);
+    }
+
+    @Test
+    void starterPackShipsFiveDistinctJobsWithAlignedDefaults() {
+        JobsConfig config = JobsConfig.defaults();
+        Assertions.assertEquals(5, config.jobs.size());
+        Assertions.assertEquals("single", config.global.activationPolicy);
+        Assertions.assertEquals(1, config.global.maxActiveJobs);
+        Assertions.assertNotNull(config.jobById("excavator"));
+        for (Job job : config.jobs) {
+            Assertions.assertFalse(job.triggers.isEmpty(), job.id + " should have a starter trigger");
+            Assertions.assertTrue(job.triggers.get(0).requireEconomyReward, job.id + " should align to rewardable events");
+        }
     }
 
     @Test
@@ -92,6 +115,6 @@ public class JobsConfigTest {
         Assertions.assertEquals("custom_miner", config.jobs.get(0).id);
         Assertions.assertEquals("Custom Miner", config.jobs.get(0).displayName);
         Assertions.assertEquals(5L, config.jobs.get(0).progression.xpPerEvent);
-        Assertions.assertEquals(50, config.jobs.get(0).progression.maxLevel);
+        Assertions.assertEquals(40, config.jobs.get(0).progression.maxLevel);
     }
 }

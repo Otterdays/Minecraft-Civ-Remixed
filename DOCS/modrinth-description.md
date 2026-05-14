@@ -7,7 +7,7 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 ## What you get
 
 - Persistent money per world
-- `/otter` in-game hub
+- `/otter` in-game hub with dedicated guilds panel
 - `/money` balance command
 - Admin `/money set <player> <amount>`
 - Join onboarding for first-time players
@@ -17,6 +17,11 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - Fully configurable server-authoritative jobs from `jobs.json`
 - Dynamic `/job` catalog (`list`, `info`, `join`, `leave`, `stats`, `reload`, `validate`)
 - Jobs HUD overlay with in-game controls
+- Guilds with `/guild create <name>` ($250)
+- Officer ranks (`/guild promote|demote`)
+- Chunk claims (`/guild claim`, $100 ea, max 16)
+- Guild home teleport (`/guild sethome` / `/guild home`)
+- ASCII + GUI chunk claim map (`/guild map`)
 
 ---
 
@@ -43,6 +48,21 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - `/job stats`
 - `/job reload`
 - `/job validate`
+- `/guild create <name>`
+- `/guild invite <player>`
+- `/guild join`
+- `/guild leave`
+- `/guild kick <player>`
+- `/guild promote|demote <player>`
+- `/guild claim`
+- `/guild unclaim`
+- `/guild map`
+- `/guild sethome`
+- `/guild home`
+- `/guild info`
+- `/guild list`
+- `/guild disband`
+- `/guild reload`
 
 ---
 
@@ -75,11 +95,21 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - Activation policy supports single-slot or multi-slot setups
 - Jobs HUD shows synced server job labels, icons, level, and progress
 
+### Guilds
+
+- Create named guilds with a one-time fee ($250 default, tunable)
+- Officer rank system: promote/demote members; officers can invite and claim
+- Chunk claims: claim the chunk you stand in ($100 each, max 16 per guild)
+- Guild home: set a teleport point (officer+) and teleport to it (any member)
+- `/guild map` shows an ASCII grid in chat + a 30-second GUI overlay in top-right corner (green = claimed, aqua = you)
+- Guild data persists in `config/otters_civ_revived/guilds_data.json`
+- Operator tuning via `config/otters_civ_revived/guilds.json`
+
 ### Player UX
 
 - New players get quick onboarding chat messages
 - Returning players get a shorter reminder
-- `/otter` gives players a cleaner in-game reference point
+- `/otter` gives players a cleaner in-game reference point with live guild info panel
 
 ---
 
@@ -91,6 +121,8 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 - `config/otters_civ_revived/block_values.json`
 - `config/otters_civ_revived/entity_values.json`
 - `config/otters_civ_revived/wallet.properties`
+- `config/otters_civ_revived/guilds.json`
+- `config/otters_civ_revived/guilds_data.json`
 - `config/project_ooga/jobs_hud.properties`
 
 ---
@@ -99,7 +131,7 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 
 - Fabric API is required
 - Economy, rewards, and persistence run on the host/server side
-- Installing the mod on the client adds the jobs HUD and richer `/otter` UI
+- Installing the mod on the client adds the jobs HUD, guild chunk map overlay, and richer `/otter` UI with live guild panel
 - The mod ID is `project_ooga`
 - Reward coverage is broad now and future-proof by design
 
@@ -107,7 +139,6 @@ A lightweight Fabric civ and economy mod for Minecraft that gives your world a s
 
 ## Planned next
 
-- Factions and land claims
 - Player shops
 - Better admin economy controls
 - Deeper civ systems

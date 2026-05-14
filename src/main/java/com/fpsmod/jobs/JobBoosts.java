@@ -9,18 +9,59 @@ import java.util.List;
  */
 public final class JobBoosts {
     public double moneyMultiplier = 1.0D;
-    public List<JobLevelDouble> moneyMultiplierByLevel = new ArrayList<>();
+    public List<JobLevelDouble> moneyMultiplierByLevel = defaultMoneyMultipliers();
     public long moneyFlatBonus = 0L;
-    public List<JobLevelLong> moneyFlatBonusByLevel = new ArrayList<>();
+    public List<JobLevelLong> moneyFlatBonusByLevel = defaultMoneyFlatBonuses();
     public double xpMultiplier = 1.0D;
-    public List<JobLevelDouble> xpMultiplierByLevel = new ArrayList<>();
+    public List<JobLevelDouble> xpMultiplierByLevel = defaultXpMultipliers();
     public long xpFlatBonus = 0L;
-    public List<JobLevelLong> xpFlatBonusByLevel = new ArrayList<>();
+    public List<JobLevelLong> xpFlatBonusByLevel = defaultXpFlatBonuses();
 
     public static JobBoosts defaults() {
         JobBoosts boosts = new JobBoosts();
         boosts.sanitize(null);
         return boosts;
+    }
+
+    private static List<JobLevelDouble> defaultMoneyMultipliers() {
+        return List.of(
+            doubleLevel(10, 1.02D),
+            doubleLevel(20, 1.04D),
+            doubleLevel(30, 1.06D),
+            doubleLevel(40, 1.08D)
+        );
+    }
+
+    private static List<JobLevelLong> defaultMoneyFlatBonuses() {
+        return List.of(longLevel(30, 1L));
+    }
+
+    private static List<JobLevelDouble> defaultXpMultipliers() {
+        return List.of(
+            doubleLevel(5, 1.03D),
+            doubleLevel(10, 1.06D),
+            doubleLevel(20, 1.09D),
+            doubleLevel(30, 1.12D),
+            doubleLevel(40, 1.15D)
+        );
+    }
+
+    private static List<JobLevelLong> defaultXpFlatBonuses() {
+        return List.of(longLevel(25, 1L));
+    }
+
+    private static JobLevelDouble doubleLevel(int level, double value) {
+        JobLevelDouble entry = new JobLevelDouble();
+        entry.level = level;
+        entry.value = value;
+        return entry;
+    }
+
+    private static JobLevelLong longLevel(int level, long value) {
+        JobLevelLong entry = new JobLevelLong();
+        entry.level = level;
+        entry.value = value;
+        return entry;
     }
 
     public void sanitize(JobBoosts defaults) {

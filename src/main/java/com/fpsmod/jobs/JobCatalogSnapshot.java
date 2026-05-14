@@ -21,6 +21,7 @@ public final class JobCatalogSnapshot {
         public boolean hidden = false;
         public int sortOrder = 0;
         public int maxLevel = 1;
+        public long firstLevelXp = 0L;
         public List<String> triggerEventTypes = new ArrayList<>();
     }
 }

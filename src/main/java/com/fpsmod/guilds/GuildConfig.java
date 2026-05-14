@@ -9,4 +9,13 @@ public final class GuildConfig {
     public int minNameLength = 3;
     public int maxNameLength = 24;
     public boolean disbandRefundClaims = true;
+
+    // Protection settings
+    public boolean protectBlocks = true;
+    public boolean protectContainers = true;
+    public boolean protectInteractables = false;
+    public boolean allowMemberBuild = true;
+    public boolean allowOfficerBuild = true;
+    public boolean pvpInClaims = true;
+    public boolean showChunkBorders = true;
 }

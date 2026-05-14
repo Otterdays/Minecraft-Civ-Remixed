@@ -87,6 +87,21 @@ public final class RewardRulesLoader {
      * those files were missing or contained no keys so operators always get editable per-id payouts.
      */
     public static RewardRules finalizeRewardsForRunningServer(MinecraftServer server) {
+        return loadEffectiveRewardsForRunningServer(server, true);
+    }
+
+    /**
+     * Read-only view of the live reward surface used for diagnostics and operator tooling.
+     * Unlike {@link #finalizeRewardsForRunningServer(MinecraftServer)}, this never writes sibling files.
+     */
+    public static RewardRules inspectEffectiveRewardsForRunningServer(MinecraftServer server) {
+        return loadEffectiveRewardsForRunningServer(server, false);
+    }
+
+    private static RewardRules loadEffectiveRewardsForRunningServer(
+        MinecraftServer server,
+        boolean persistMissingSiblingMaps
+    ) {
         Path dir = configDirectoryPath();
         Path path = dir.resolve(FILE_NAME);
         RewardRules defaults = RewardRules.defaults();
@@ -132,13 +147,15 @@ public final class RewardRulesLoader {
                 loaded.blockReward
             );
 
-        LinkedHashMap<String, Long> blockEff = composeEffectiveIdMap(
-            tier1Blocks,
-            loaded.blockRewards,
-            blkSibling,
-            blkPath,
-            level != null ? "[blocks]" : "[blocks-tags-skipped]"
-        );
+        LinkedHashMap<String, Long> blockEff = persistMissingSiblingMaps
+            ? composeEffectiveIdMap(
+                tier1Blocks,
+                loaded.blockRewards,
+                blkSibling,
+                blkPath,
+                level != null ? "[blocks]" : "[blocks-tags-skipped]"
+            )
+            : composeEffectiveIdMapNoPersist(tier1Blocks, loaded.blockRewards, blkSibling);
         loaded.blockRewards = blockEff;
 
         LinkedHashMap<String, Long> tier1Entities = level == null ? new LinkedHashMap<>()
@@ -148,13 +165,15 @@ public final class RewardRulesLoader {
                 loaded.entityReward
             );
 
-        LinkedHashMap<String, Long> entityEff = composeEffectiveIdMap(
-            tier1Entities,
-            loaded.entityRewards,
-            entSibling,
-            entPath,
-            level != null ? "[entities]" : "[entities-tags-skipped]"
-        );
+        LinkedHashMap<String, Long> entityEff = persistMissingSiblingMaps
+            ? composeEffectiveIdMap(
+                tier1Entities,
+                loaded.entityRewards,
+                entSibling,
+                entPath,
+                level != null ? "[entities]" : "[entities-tags-skipped]"
+            )
+            : composeEffectiveIdMapNoPersist(tier1Entities, loaded.entityRewards, entSibling);
         loaded.entityRewards = entityEff;
 
         clampNonNegative(loaded);
@@ -197,6 +216,20 @@ public final class RewardRulesLoader {
             }
         }
 
+        return merged;
+    }
+
+    private static LinkedHashMap<String, Long> composeEffectiveIdMapNoPersist(
+        LinkedHashMap<String, Long> tier1TagMembers,
+        Map<String, Long> rewardsJsonInlineObj,
+        Map<String, Long> siblingDisk
+    ) {
+        LinkedHashMap<String, Long> merged = new LinkedHashMap<>();
+        merged.putAll(tier1TagMembers);
+        if (rewardsJsonInlineObj != null) {
+            merged.putAll(rewardsJsonInlineObj);
+        }
+        merged.putAll(siblingDisk);
         return merged;
     }
 

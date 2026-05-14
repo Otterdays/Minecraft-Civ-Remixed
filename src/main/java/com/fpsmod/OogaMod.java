@@ -5,6 +5,7 @@ import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.guilds.GuildProtection;
 import com.fpsmod.guilds.GuildService;
 import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.jobs.JobsService;
@@ -57,6 +58,7 @@ public class OogaMod implements ModInitializer {
         walletService = WalletService.createDefault();
         jobsService = JobsService.createDefault();
         guildService = GuildService.createDefault(walletService);
+        GuildProtection.register(guildService);
         RewardRules bootstrapRules = RewardRulesLoader.loadBootstrapRewards();
         ottersRewardGameplay = OttersCivGameplay.register(walletService, bootstrapRules, jobsService);
 

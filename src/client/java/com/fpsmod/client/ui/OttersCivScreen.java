@@ -264,7 +264,7 @@ public final class OttersCivScreen extends Screen {
         Status[] miles = {
             Status.PARTIAL, // M0 Foundation — partial (wallet/rewards persist; no audit log/migrations yet)
             Status.PARTIAL, // M1 Economy MVP — /money + /money set live; /pay, /ooga still planned
-            Status.SHIPPED, // M2 Jobs MVP — 4 jobs, XP, HUD bar shipped
+            Status.SHIPPED, // M2 Jobs starter pack — 5 jobs, XP, HUD bar shipped
             Status.SHIPPED, // M3 Factions & Claims
             Status.PLANNED, // M4 Player Shops
             Status.FUTURE,  // M5 Governance
@@ -835,7 +835,7 @@ public final class OttersCivScreen extends Screen {
         entry.level = 0;
         entry.xp = 0L;
         entry.xpForLevel = 0L;
-        entry.xpForNextLevel = 100L;
+        entry.xpForNextLevel = Math.max(1L, first.firstLevelXp);
         entry.maxLevel = Math.max(1, first.maxLevel);
         return entry;
     }

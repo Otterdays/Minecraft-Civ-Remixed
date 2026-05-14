@@ -99,6 +99,10 @@ public final class CompiledJobCatalog {
         return trigger == null ? null : new Match(compiled.job(), trigger);
     }
 
+    List<CompiledJob> compiledJobs() {
+        return jobs;
+    }
+
     public record Match(Job job, CompiledTrigger trigger) {
     }
 
@@ -137,6 +141,10 @@ public final class CompiledJobCatalog {
                 }
             }
             return null;
+        }
+
+        List<CompiledTrigger> triggers() {
+            return triggers;
         }
     }
 
@@ -212,6 +220,14 @@ public final class CompiledJobCatalog {
 
         public boolean requireEconomyReward() {
             return source.requireEconomyReward;
+        }
+
+        public JobEventType eventType() {
+            return eventType;
+        }
+
+        public Set<String> targetIds() {
+            return targetIds;
         }
 
         public boolean matches(JobEventContext context) {

@@ -174,7 +174,13 @@ public final class JobCommand {
         send(source, "  icon=" + jobs.defaultIconGlyph(job) + " / " + jobs.defaultIconKey(job));
         send(source, "  progression: maxLevel=" + job.progression.maxLevel
             + " xpPerEvent=" + job.progression.xpPerEvent
-            + " thresholds=" + (job.progression.levelThresholds.isEmpty() ? "curve" : "table"));
+            + " thresholds=" + (job.progression.levelThresholds.isEmpty()
+            ? "curve"
+            : "table first=" + job.progression.xpForLevel(1)
+                + " last=" + job.progression.xpForLevel(job.progression.maxLevel)));
+        if (!job.progression.levelThresholds.isEmpty()) {
+            send(source, "  threshold sample: " + summarizeThresholds(job.progression.levelThresholds));
+        }
         send(source, String.format(Locale.ROOT,
             "  boosts: money ×%.2f +%d · xp ×%.2f +%d",
             job.boosts.moneyMultiplier,
@@ -182,6 +188,10 @@ public final class JobCommand {
             job.boosts.xpMultiplier,
             job.boosts.xpFlatBonus
         ));
+        send(source, "  money by level: ×" + summarizeDoubleLevels(job.boosts.moneyMultiplierByLevel)
+            + " · +" + summarizeLongLevels(job.boosts.moneyFlatBonusByLevel));
+        send(source, "  xp by level: ×" + summarizeDoubleLevels(job.boosts.xpMultiplierByLevel)
+            + " · +" + summarizeLongLevels(job.boosts.xpFlatBonusByLevel));
         for (int i = 0; i < job.triggers.size(); i++) {
             var trigger = job.triggers.get(i);
             send(source,
@@ -189,8 +199,13 @@ public final class JobCommand {
                     + ": " + trigger.parsedEventType().id()
                     + " tags=" + trigger.tagIds
                     + " ids=" + trigger.ids
+                    + " allowDims=" + trigger.dimensionAllowlist
+                    + " denyDims=" + trigger.dimensionBlacklist
+                    + " handIds=" + trigger.requiredMainHandItemIds
+                    + " handTags=" + trigger.requiredMainHandItemTags
                     + " cooldownMs=" + trigger.cooldownMs
                     + " requireEconomyReward=" + trigger.requireEconomyReward
+                    + " directPlayerKillOnly=" + trigger.directPlayerKillOnly
             );
         }
         return 1;
@@ -205,12 +220,13 @@ public final class JobCommand {
 
     private static int runValidate(CommandSourceStack source, JobsService jobs) {
         jobs.refresh(source.getServer());
-        if (jobs.validationMessages().isEmpty()) {
+        List<String> diagnostics = jobs.validationMessages(source.getServer());
+        if (diagnostics.isEmpty()) {
             send(source, "Jobs validation OK. No diagnostics.");
             return 1;
         }
         send(source, "Jobs validation diagnostics:");
-        for (String line : jobs.validationMessages()) {
+        for (String line : diagnostics) {
             send(source, "  - " + line);
         }
         return 1;
@@ -229,6 +245,56 @@ public final class JobCommand {
             return "(none)";
         }
         return String.join(", ", ids);
+    }
+
+    private static String summarizeThresholds(List<Long> thresholds) {
+        if (thresholds == null || thresholds.isEmpty()) {
+            return "(curve)";
+        }
+        List<String> sample = new java.util.ArrayList<>();
+        int limit = Math.min(5, thresholds.size());
+        for (int i = 0; i < limit; i++) {
+            sample.add(String.valueOf(thresholds.get(i)));
+        }
+        if (thresholds.size() > limit) {
+            sample.add("...");
+            sample.add(String.valueOf(thresholds.get(thresholds.size() - 1)));
+        }
+        return String.join(", ", sample);
+    }
+
+    private static String summarizeDoubleLevels(List<com.fpsmod.jobs.JobLevelDouble> levels) {
+        if (levels == null || levels.isEmpty()) {
+            return "(none)";
+        }
+        List<String> sample = new java.util.ArrayList<>();
+        for (var entry : levels) {
+            sample.add(entry.level + ":" + String.format(Locale.ROOT, "%.2f", entry.value));
+            if (sample.size() >= 5) {
+                break;
+            }
+        }
+        if (levels.size() > sample.size()) {
+            sample.add("...");
+        }
+        return String.join(", ", sample);
+    }
+
+    private static String summarizeLongLevels(List<com.fpsmod.jobs.JobLevelLong> levels) {
+        if (levels == null || levels.isEmpty()) {
+            return "(none)";
+        }
+        List<String> sample = new java.util.ArrayList<>();
+        for (var entry : levels) {
+            sample.add(entry.level + ":" + entry.value);
+            if (sample.size() >= 5) {
+                break;
+            }
+        }
+        if (levels.size() > sample.size()) {
+            sample.add("...");
+        }
+        return String.join(", ", sample);
     }
 
     private static void send(CommandSourceStack source, String text) {

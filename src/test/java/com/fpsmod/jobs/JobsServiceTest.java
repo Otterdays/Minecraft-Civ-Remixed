@@ -1,6 +1,7 @@
 package com.fpsmod.jobs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,15 +16,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class JobsServiceTest {
 
     private static final UUID ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final JobsConfig CONFIG = JobsConfig.defaults();
+    private static JobsConfig config;
     private static final String MINER = "miner";
     private static final String FIGHTER = "fighter";
     private static final String LUMBERJACK = "lumberjack";
 
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestBootstrap.ensureBootstrapped();
+        config = JobsConfig.defaults();
+    }
+
     @Test
     void joinJobSetsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
         svc.joinJob(ID, MINER, null);
         // null player is fine for these tests since we don't trigger status listener side-effects
 
@@ -37,7 +44,7 @@ class JobsServiceTest {
     @Test
     void joinJobIdempotentReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
         assertTrue(svc.joinJob(ID, FIGHTER, null));
         assertFalse(svc.joinJob(ID, FIGHTER, null));
         assertEquals(1, store.saveCount);  // second join didn't persist
@@ -46,7 +53,7 @@ class JobsServiceTest {
     @Test
     void leaveJobClearsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
         svc.joinJob(ID, LUMBERJACK, null);
         assertEquals(1, store.saveCount);
 
@@ -58,7 +65,7 @@ class JobsServiceTest {
     @Test
     void leaveJobWhenInactiveReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
         assertFalse(svc.leaveJob(ID, null, null));
         assertEquals(0, store.saveCount);
     }
@@ -66,7 +73,7 @@ class JobsServiceTest {
     @Test
     void statusSnapshotReflectsXp() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
         svc.joinJob(ID, MINER, null);
         assertEquals(0L, svc.stateOf(ID).getXp(MINER));
 
@@ -87,7 +94,7 @@ class JobsServiceTest {
     @Test
     void hintSurvivesPersistRoundTrip() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
 
         svc.rememberPlayerName(ID, "TestPlayer");
         svc.joinJob(ID, MINER, null);
@@ -99,7 +106,7 @@ class JobsServiceTest {
     @Test
     void stateOfReturnsNewStateForUnknownId() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store, CONFIG);
+        JobsService svc = new JobsService(store, config);
 
         JobState s = svc.stateOf(ID);
         assertNotNull(s);

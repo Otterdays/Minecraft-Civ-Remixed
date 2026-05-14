@@ -2,6 +2,7 @@ package com.fpsmod.command;
 
 import com.fpsmod.guilds.ClaimedChunk;
 import com.fpsmod.guilds.Guild;
+import com.fpsmod.guilds.GuildProtection;
 import com.fpsmod.guilds.GuildService;
 import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.guilds.net.MapTogglePayload;
@@ -253,7 +254,9 @@ public final class GuildCommand {
         }
         send(source, "§7▢ §runclaimed  §a■ §ryour guild  §c■ §rother guild");
         send(source, "§7Overlay toggled. (GUI overlay drawn in top-right)");
+        send(source, "§7Chunk borders shown as particles (30s).");
 
+        GuildProtection.showChunkBorders(p, cx, cz, radius, p.level().dimension().identifier().toString(), guilds);
         ServerPlayNetworking.send(p, new MapTogglePayload(true));
         return 1;
     }

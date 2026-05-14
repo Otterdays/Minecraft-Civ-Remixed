@@ -1,10 +1,16 @@
 package com.fpsmod.jobs;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JobsProgressMessageTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestBootstrap.ensureBootstrapped();
+    }
 
     @Test
     void progressMessageIncludesJobXpAndLevelProgress() {
@@ -14,7 +20,7 @@ class JobsProgressMessageTest {
         job.shortLabel = "miner";
         job.sanitize(JobsConfig.defaults().global);
         String text = JobsService.progressMessageText(job, 0, 5L, 5L);
-        assertEquals("[miner] +5 xp · Lvl 0 · 5/100", text);
+        assertEquals("[miner] +5 xp · Lvl 0 · 5/20", text);
     }
 
     @Test

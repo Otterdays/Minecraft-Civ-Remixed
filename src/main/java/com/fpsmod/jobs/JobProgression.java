@@ -7,16 +7,27 @@ import java.util.List;
  * Per-job progression model. Supports either explicit level thresholds or the legacy power curve.
  */
 public final class JobProgression {
-    public int maxLevel = 50;
+    private static final List<Long> STARTER_LEVEL_THRESHOLDS = List.of(
+        20L, 50L, 90L, 140L, 200L, 270L, 350L, 440L, 540L, 650L,
+        775L, 915L, 1070L, 1240L, 1430L, 1640L, 1870L, 2120L, 2395L, 2695L,
+        3020L, 3370L, 3745L, 4145L, 4575L, 5035L, 5525L, 6045L, 6595L, 7175L,
+        7785L, 8425L, 9095L, 9795L, 10525L, 11285L, 12075L, 12895L, 13745L, 14625L
+    );
+
+    public int maxLevel = 40;
     public long xpPerEvent = 5L;
-    public double xpBase = 100.0D;
-    public double xpExponent = 1.5D;
-    public List<Long> levelThresholds = new ArrayList<>();
+    public double xpBase = 80.0D;
+    public double xpExponent = 1.45D;
+    public List<Long> levelThresholds = defaultThresholds();
 
     public static JobProgression defaults() {
         JobProgression progression = new JobProgression();
         progression.sanitize(null);
         return progression;
+    }
+
+    public static List<Long> defaultThresholds() {
+        return new ArrayList<>(STARTER_LEVEL_THRESHOLDS);
     }
 
     public void sanitize(JobProgression defaults) {
