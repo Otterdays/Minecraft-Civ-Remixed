@@ -1,9 +1,8 @@
 package com.fpsmod.command;
 
 import com.fpsmod.jobs.Job;
-import com.fpsmod.jobs.JobState;
-import com.fpsmod.jobs.JobsConfig;
 import com.fpsmod.jobs.JobsService;
+import com.fpsmod.jobs.net.JobsNetworking;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -11,26 +10,42 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 
+import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
-/** /job · /job list · /job join <name> · /job leave · /job stats */
+/** `/job` surface for fully configurable jobs. */
 public final class JobCommand {
+    private static final Permission ADMIN = new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);
+
     private JobCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, JobsService jobs) {
         SuggestionProvider<CommandSourceStack> jobSlugs = (ctx, b) -> {
-            for (Job j : Job.values()) b.suggest(j.slug());
+            for (Job job : jobs.jobs()) {
+                b.suggest(job.id);
+            }
             return b.buildFuture();
         };
 
         dispatcher.register(
             Commands.literal("job")
                 .executes(ctx -> runStats(ctx.getSource(), jobs))
-                .then(Commands.literal("list").executes(ctx -> runList(ctx.getSource())))
+                .then(Commands.literal("list").executes(ctx -> runList(ctx.getSource(), jobs)))
                 .then(Commands.literal("stats").executes(ctx -> runStats(ctx.getSource(), jobs)))
-                .then(Commands.literal("leave").executes(ctx -> runLeave(ctx.getSource(), jobs)))
+                .then(
+                    Commands.literal("leave")
+                        .executes(ctx -> runLeave(ctx.getSource(), jobs, null))
+                        .then(
+                            Commands.argument("name", StringArgumentType.word())
+                                .suggests(jobSlugs)
+                                .executes(ctx ->
+                                    runLeave(ctx.getSource(), jobs, StringArgumentType.getString(ctx, "name"))
+                                )
+                        )
+                )
                 .then(
                     Commands.literal("join")
                         .then(
@@ -41,15 +56,47 @@ public final class JobCommand {
                                 )
                         )
                 )
+                .then(
+                    Commands.literal("info")
+                        .then(
+                            Commands.argument("name", StringArgumentType.word())
+                                .suggests(jobSlugs)
+                                .executes(ctx ->
+                                    runInfo(ctx.getSource(), jobs, StringArgumentType.getString(ctx, "name"))
+                                )
+                        )
+                )
+                .then(
+                    Commands.literal("reload")
+                        .requires(source -> source.permissions().hasPermission(ADMIN))
+                        .executes(ctx -> runReload(ctx.getSource(), jobs))
+                )
+                .then(
+                    Commands.literal("validate")
+                        .requires(source -> source.permissions().hasPermission(ADMIN))
+                        .executes(ctx -> runValidate(ctx.getSource(), jobs))
+                )
         );
     }
 
-    private static int runList(CommandSourceStack source) {
-        send(source, "Jobs:");
-        for (Job j : Job.values()) {
-            send(source, "  " + j.slug() + " — tag " + j.tagId() + " (" + j.kind().name().toLowerCase(Locale.ROOT) + ")");
+    private static int runList(CommandSourceStack source, JobsService jobs) {
+        if (!jobs.jobsEnabled()) {
+            send(source, "Jobs disabled in jobs.json.");
+            return 0;
         }
-        send(source, "Use /job join <name> to pick one. Only one active at a time.");
+        send(source, "Jobs (" + jobs.jobs().size() + " total, policy: "
+            + jobs.config().global.activationPolicy + ", active slots: " + jobs.maxActiveJobs() + "):");
+        for (Job job : jobs.jobs()) {
+            String triggerSummary = summarizeTriggers(job);
+            send(source,
+                "  " + job.id + " — " + job.displayName
+                    + " [" + (job.enabled ? (job.joinable ? "joinable" : "read-only") : "disabled") + "]"
+                    + " · " + triggerSummary
+                    + " · lvl cap " + job.progression.maxLevel
+                    + " · +" + job.progression.xpPerEvent + " xp/event"
+            );
+        }
+        send(source, "Use /job join <name> to activate. /job info <name> shows full detail.");
         return 1;
     }
 
@@ -59,28 +106,30 @@ public final class JobCommand {
             send(source, "/job join requires a player source.");
             return 0;
         }
-        Optional<Job> picked = Job.bySlug(rawName);
-        if (picked.isEmpty()) {
-            send(source, "Unknown job '" + rawName + "'. Try one of: miner, lumberjack, farmer, fighter.");
+        String failure = jobs.joinFailureReason(rawName, player.getUUID());
+        if (!failure.isEmpty()) {
+            send(source, failure);
             return 0;
         }
-        boolean changed = jobs.joinJob(player.getUUID(), picked.get(), player);
-        if (changed) {
-            send(source, "Active job: " + picked.get().slug() + ". XP retained per job across switches.");
-        } else {
-            send(source, "Already on " + picked.get().slug() + ".");
-        }
+        jobs.joinJob(player.getUUID(), rawName, player);
+        var status = jobs.statusSnapshot(player.getUUID());
+        send(source, "Active jobs: " + joinIds(status.activeJobIds) + ".");
         return 1;
     }
 
-    private static int runLeave(CommandSourceStack source, JobsService jobs) {
+    private static int runLeave(CommandSourceStack source, JobsService jobs, String rawName) {
         ServerPlayer player = source.getPlayer();
         if (player == null) {
             send(source, "/job leave requires a player source.");
             return 0;
         }
-        boolean changed = jobs.leaveJob(player.getUUID(), player);
-        send(source, changed ? "Job cleared. No multiplier on payouts." : "No active job.");
+        boolean changed = jobs.leaveJob(player.getUUID(), rawName, player);
+        if (!changed) {
+            send(source, rawName == null || rawName.isBlank() ? "No active jobs." : "Job '" + rawName + "' not active.");
+            return 0;
+        }
+        var status = jobs.statusSnapshot(player.getUUID());
+        send(source, status.activeJobIds.isEmpty() ? "All active jobs cleared." : "Active jobs: " + joinIds(status.activeJobIds) + ".");
         return 1;
     }
 
@@ -90,19 +139,96 @@ public final class JobCommand {
             send(source, "/job stats requires a player source.");
             return 0;
         }
-        JobState state = jobs.stateOf(player.getUUID());
-        Job active = state.active();
-        send(source, "Active: " + (active == null ? "(none)" : active.slug()));
-        for (Job j : Job.values()) {
-            long xp = state.getXp(j);
-            int lvl = state.levelOf(j);
-            long next = JobsConfig.xpForLevel(Math.min(JobsConfig.MAX_LEVEL, lvl + 1));
-            double mult = JobsConfig.multiplierForLevel(lvl);
+        var status = jobs.statusSnapshot(player.getUUID());
+        send(source, "Active jobs: " + joinIds(status.activeJobIds) + ".");
+        for (var entry : status.progress) {
+            Job job = jobs.jobById(entry.jobId);
+            double moneyMult = job == null ? 1.0D : job.boosts.moneyMultiplierForLevel(entry.level);
+            long moneyFlat = job == null ? 0L : job.boosts.moneyFlatBonusForLevel(entry.level);
+            double xpMult = job == null ? 1.0D : job.boosts.xpMultiplierForLevel(entry.level);
+            long xpFlat = job == null ? 0L : job.boosts.xpFlatBonusForLevel(entry.level);
             send(source, String.format(Locale.ROOT,
-                "  %s: lvl %d (%d / %d xp) — payout ×%.2f%s",
-                j.slug(), lvl, xp, next, mult, active == j ? "  [active]" : ""));
+                "  %s: lvl %d (%d / %d xp) — money ×%.2f +%d · xp ×%.2f +%d%s",
+                entry.jobId,
+                entry.level,
+                entry.xp,
+                entry.xpForNextLevel,
+                moneyMult,
+                moneyFlat,
+                xpMult,
+                xpFlat,
+                entry.active ? "  [active]" : ""
+            ));
         }
         return 1;
+    }
+
+    private static int runInfo(CommandSourceStack source, JobsService jobs, String rawName) {
+        Job job = jobs.jobById(rawName);
+        if (job == null) {
+            send(source, "Unknown job '" + rawName + "'.");
+            return 0;
+        }
+        send(source, job.displayName + " (" + job.id + ")");
+        send(source, "  enabled=" + job.enabled + " joinable=" + job.joinable + " hidden=" + job.hidden);
+        send(source, "  icon=" + jobs.defaultIconGlyph(job) + " / " + jobs.defaultIconKey(job));
+        send(source, "  progression: maxLevel=" + job.progression.maxLevel
+            + " xpPerEvent=" + job.progression.xpPerEvent
+            + " thresholds=" + (job.progression.levelThresholds.isEmpty() ? "curve" : "table"));
+        send(source, String.format(Locale.ROOT,
+            "  boosts: money ×%.2f +%d · xp ×%.2f +%d",
+            job.boosts.moneyMultiplier,
+            job.boosts.moneyFlatBonus,
+            job.boosts.xpMultiplier,
+            job.boosts.xpFlatBonus
+        ));
+        for (int i = 0; i < job.triggers.size(); i++) {
+            var trigger = job.triggers.get(i);
+            send(source,
+                "  trigger#" + i
+                    + ": " + trigger.parsedEventType().id()
+                    + " tags=" + trigger.tagIds
+                    + " ids=" + trigger.ids
+                    + " cooldownMs=" + trigger.cooldownMs
+                    + " requireEconomyReward=" + trigger.requireEconomyReward
+            );
+        }
+        return 1;
+    }
+
+    private static int runReload(CommandSourceStack source, JobsService jobs) {
+        jobs.refresh(source.getServer());
+        JobsNetworking.broadcastCatalogAndStatuses(jobs, source.getServer());
+        send(source, "Reloaded jobs.json and rebuilt catalog.");
+        return 1;
+    }
+
+    private static int runValidate(CommandSourceStack source, JobsService jobs) {
+        jobs.refresh(source.getServer());
+        if (jobs.validationMessages().isEmpty()) {
+            send(source, "Jobs validation OK. No diagnostics.");
+            return 1;
+        }
+        send(source, "Jobs validation diagnostics:");
+        for (String line : jobs.validationMessages()) {
+            send(source, "  - " + line);
+        }
+        return 1;
+    }
+
+    private static String summarizeTriggers(Job job) {
+        List<String> parts = new java.util.ArrayList<>();
+        for (var trigger : job.triggers) {
+            parts.add(trigger.parsedEventType().id());
+        }
+        return String.join(", ", parts);
+    }
+
+    private static String joinIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return "(none)";
+        }
+        return String.join(", ", ids);
     }
 
     private static void send(CommandSourceStack source, String text) {

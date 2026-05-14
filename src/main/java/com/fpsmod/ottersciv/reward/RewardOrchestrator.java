@@ -1,5 +1,7 @@
 package com.fpsmod.ottersciv.reward;
 
+import com.fpsmod.jobs.JobEventContext;
+import com.fpsmod.jobs.JobsService;
 import com.fpsmod.ottersciv.config.RewardRules;
 import com.fpsmod.economy.WalletService;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RewardOrchestrator {
     private final WalletService wallets;
     private volatile RewardRules rules;
-    private final JobsHooks jobsHooks;
+    private final JobsService jobsService;
     private final ConcurrentHashMap<UUID, Long> lastBlockRewardMs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> lastEntityRewardMs = new ConcurrentHashMap<>();
 
@@ -33,10 +35,10 @@ public final class RewardOrchestrator {
     private volatile boolean loggedInvalidBlockTag;
     private volatile boolean loggedInvalidEntityTag;
 
-    public RewardOrchestrator(WalletService wallets, RewardRules rules, JobsHooks jobsHooks) {
+    public RewardOrchestrator(WalletService wallets, RewardRules rules, JobsService jobsService) {
         this.wallets = wallets;
         this.rules = Objects.requireNonNull(rules, "reward rules");
-        this.jobsHooks = jobsHooks;
+        this.jobsService = jobsService;
         refreshTagKeys();
     }
 
@@ -65,33 +67,33 @@ public final class RewardOrchestrator {
         return TagKey.create(registryKey, parsed);
     }
 
-    public void onBlockBroken(ServerPlayer player, ServerLevel level, BlockPos pos, BlockState state) {
+    public long onBlockBroken(ServerPlayer player, ServerLevel level, BlockPos pos, BlockState state) {
         if (!rules.enabled) {
-            return;
+            return 0L;
         }
         if (!eligiblePlayer(player)) {
-            return;
+            return 0L;
         }
         if (dimensionBlocked(level)) {
-            return;
+            return 0L;
         }
 
         long basePayout = resolvedBlockReward(state);
         if (basePayout <= 0L) {
-            return;
+            return 0L;
         }
         if (!pastCooldown(lastBlockRewardMs, player.getUUID(), rules.blockCooldownMs)) {
-            return;
+            return 0L;
         }
 
-        RewardContext preCtx = new RewardContext(RewardReason.BLOCK_BREAK, basePayout, state, null);
-        long payout = Math.max(0L, jobsHooks.multiplyPayout(player, preCtx, basePayout));
+        JobEventContext eventContext = JobEventContext.forBlockBreak(player, level, state, true);
+        long payout = Math.max(0L, jobsService.modifyPayout(player, eventContext, basePayout));
 
         wallets.addBalance(player.getUUID(), payout, player.getName().getString());
         if (rules.announceRewards) {
             sendCoinMessage(player, payout);
         }
-        jobsHooks.onEconomyReward(player, new RewardContext(RewardReason.BLOCK_BREAK, payout, state, null));
+        return payout;
     }
 
     private long resolvedBlockReward(BlockState state) {
@@ -125,38 +127,35 @@ public final class RewardOrchestrator {
         }
     }
 
-    public void onMobKilled(ServerPlayer killer, LivingEntity victim, ServerLevel level) {
+    public long onMobKilled(ServerPlayer killer, LivingEntity victim, ServerLevel level) {
         if (!rules.enabled) {
-            return;
+            return 0L;
         }
         if (!eligiblePlayer(killer)) {
-            return;
+            return 0L;
         }
         if (dimensionBlocked(level)) {
-            return;
+            return 0L;
         }
 
         EntityType<?> type = victim.getType();
         long basePayout = resolvedEntityReward(level, type);
         if (basePayout <= 0L) {
-            return;
+            return 0L;
         }
 
         if (!pastCooldown(lastEntityRewardMs, killer.getUUID(), rules.entityCooldownMs)) {
-            return;
+            return 0L;
         }
 
-        RewardContext preCtx = new RewardContext(RewardReason.MOB_KILL, basePayout, null, type);
-        long payout = Math.max(0L, jobsHooks.multiplyPayout(killer, preCtx, basePayout));
+        JobEventContext eventContext = JobEventContext.forMobKill(killer, level, type, true, true);
+        long payout = Math.max(0L, jobsService.modifyPayout(killer, eventContext, basePayout));
 
         wallets.addBalance(killer.getUUID(), payout, killer.getName().getString());
         if (rules.announceRewards) {
             sendCoinMessage(killer, payout);
         }
-        jobsHooks.onEconomyReward(
-            killer,
-            new RewardContext(RewardReason.MOB_KILL, payout, null, type)
-        );
+        return payout;
     }
 
     static String coinMessageText(long payout) {

@@ -1,6 +1,8 @@
 package com.fpsmod.jobs.net;
 
 import com.fpsmod.OogaMod;
+import com.fpsmod.jobs.JobStatusSnapshotData;
+import com.google.gson.Gson;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -9,27 +11,28 @@ import net.minecraft.resources.Identifier;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Server → client: current active job + cumulative XP + cached level/next-level thresholds so the
- * client HUD doesn't need to know the XP curve. Sent on login, on /job join|leave, and after each
- * matching reward event (post-XP).
+ * Server → client local-player jobs status snapshot.
  */
-public record JobStatusPayload(String slug, int level, long xp, long xpForLevel, long xpForNextLevel)
+public record JobStatusPayload(String json)
     implements CustomPacketPayload {
+    private static final Gson GSON = new Gson();
 
     public static final CustomPacketPayload.Type<JobStatusPayload> TYPE =
         new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "job_status"));
 
     public static final StreamCodec<ByteBuf, JobStatusPayload> CODEC = StreamCodec.composite(
-        ByteBufCodecs.STRING_UTF8, JobStatusPayload::slug,
-        ByteBufCodecs.VAR_INT,     JobStatusPayload::level,
-        ByteBufCodecs.VAR_LONG,    JobStatusPayload::xp,
-        ByteBufCodecs.VAR_LONG,    JobStatusPayload::xpForLevel,
-        ByteBufCodecs.VAR_LONG,    JobStatusPayload::xpForNextLevel,
+        ByteBufCodecs.STRING_UTF8, JobStatusPayload::json,
         JobStatusPayload::new
     );
 
-    /** Slug used when the player has no active job. Client HUD hides itself on this value. */
-    public static final String NO_ACTIVE = "";
+    public static JobStatusPayload fromSnapshot(JobStatusSnapshotData snapshot) {
+        return new JobStatusPayload(GSON.toJson(snapshot));
+    }
+
+    public JobStatusSnapshotData snapshot() {
+        JobStatusSnapshotData parsed = GSON.fromJson(json, JobStatusSnapshotData.class);
+        return parsed == null ? new JobStatusSnapshotData() : parsed;
+    }
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {

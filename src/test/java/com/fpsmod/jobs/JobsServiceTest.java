@@ -3,7 +3,6 @@ package com.fpsmod.jobs;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,11 +14,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class JobsServiceTest {
 
     private static final UUID ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final JobsConfig CONFIG = JobsConfig.defaults();
 
     @Test
     void joinJobSetsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
         svc.joinJob(ID, Job.MINER, null);
         // null player is fine for these tests since we don't trigger status listener side-effects
 
@@ -33,7 +33,7 @@ class JobsServiceTest {
     @Test
     void joinJobIdempotentReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
         assertTrue(svc.joinJob(ID, Job.FIGHTER, null));
         assertFalse(svc.joinJob(ID, Job.FIGHTER, null));
         assertEquals(1, store.saveCount);  // second join didn't persist
@@ -42,7 +42,7 @@ class JobsServiceTest {
     @Test
     void leaveJobClearsActiveAndPersists() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
         svc.joinJob(ID, Job.LUMBERJACK, null);
         assertEquals(1, store.saveCount);
 
@@ -54,7 +54,7 @@ class JobsServiceTest {
     @Test
     void leaveJobWhenInactiveReturnsFalse() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
         assertFalse(svc.leaveJob(ID, null));
         assertEquals(0, store.saveCount);
     }
@@ -62,7 +62,7 @@ class JobsServiceTest {
     @Test
     void xpPersistedOnEconomyReward() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
         svc.joinJob(ID, Job.MINER, null);
         assertEquals(0L, svc.stateOf(ID).getXp(Job.MINER));
 
@@ -72,8 +72,8 @@ class JobsServiceTest {
 
         // We can't easily test the full RewardContext flow without Minecraft classes,
         // but we verify the XP-add path directly:
-        long xp = svc.stateOf(ID).addXp(Job.MINER, JobsConfig.XP_PER_EVENT);
-        assertEquals(JobsConfig.XP_PER_EVENT, xp);
+        long xp = svc.stateOf(ID).addXp(Job.MINER, CONFIG.xpPerEvent(Job.MINER));
+        assertEquals(CONFIG.xpPerEvent(Job.MINER), xp);
     }
 
     /**
@@ -83,7 +83,7 @@ class JobsServiceTest {
     @Test
     void hintSurvivesPersistRoundTrip() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
 
         svc.rememberPlayerName(ID, "TestPlayer");
         svc.joinJob(ID, Job.MINER, null);
@@ -95,7 +95,7 @@ class JobsServiceTest {
     @Test
     void stateOfReturnsNewStateForUnknownId() {
         FakeJobsStore store = new FakeJobsStore(new HashMap<>());
-        JobsService svc = new JobsService(store);
+        JobsService svc = new JobsService(store, CONFIG);
 
         JobState s = svc.stateOf(ID);
         assertNotNull(s);

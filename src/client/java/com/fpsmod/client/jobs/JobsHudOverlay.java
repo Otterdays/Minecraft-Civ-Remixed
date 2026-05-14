@@ -1,7 +1,7 @@
 package com.fpsmod.client.jobs;
 
 import com.fpsmod.OogaMod;
-import com.fpsmod.jobs.net.JobStatusPayload;
+import com.fpsmod.jobs.JobStatusSnapshotData;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.DeltaTracker;
@@ -24,7 +24,7 @@ public final class JobsHudOverlay {
     private static final Identifier OVERLAY_ID = Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "jobs_overlay");
 
     /** Plain BMP code points that Minecraft's unifont resolves reliably across resource packs. */
-    private static final Map<String, String> ICON_BY_SLUG = Map.of(
+    private static final Map<String, String> ICON_BY_KEY = Map.of(
         "miner",      "⛏",  // ⛏
         "lumberjack", "▲",  // ▲ (tree silhouette)
         "farmer",     "✿",  // ✿
@@ -70,9 +70,9 @@ public final class JobsHudOverlay {
         int y,
         int maxWidth,
         float scale,
-        JobStatusPayload payload
+        JobStatusSnapshotData.JobProgressEntry payload
     ) {
-        if (payload == null || payload.slug().isEmpty()) return;
+        if (payload == null || payload.jobId == null || payload.jobId.isEmpty()) return;
         int barW = resolveBarWidth(font, payload, scale, Math.max(80, maxWidth));
         int barH = Math.max(14, (int) (BAR_BASE_H * scale));
         drawBar(g, font, x, y, barW, barH, payload);
@@ -83,8 +83,8 @@ public final class JobsHudOverlay {
         if (mc.level == null || mc.player == null || mc.options.hideGui) return;
         if (!CONFIG.visible()) return;
 
-        JobStatusPayload p = JobsClientState.latest();
-        if (p == null || p.slug().isEmpty()) return;
+        JobStatusSnapshotData.JobProgressEntry p = JobsClientState.primaryActiveJob();
+        if (p == null || p.jobId == null || p.jobId.isEmpty()) return;
 
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
@@ -109,7 +109,7 @@ public final class JobsHudOverlay {
         int y0,
         int barW,
         int barH,
-        JobStatusPayload p
+        JobStatusSnapshotData.JobProgressEntry p
     ) {
         int x1 = x0 + barW;
         int y1 = y0 + barH;
@@ -118,8 +118,8 @@ public final class JobsHudOverlay {
         outline(g, x0, y0, x1, y1, BORDER);
 
         // XP fill (cap to current/next thresholds, guard div-by-zero at max level).
-        long range = Math.max(1L, p.xpForNextLevel() - p.xpForLevel());
-        long inLevel = Math.max(0L, p.xp() - p.xpForLevel());
+        long range = Math.max(1L, p.xpForNextLevel - p.xpForLevel);
+        long inLevel = Math.max(0L, p.xp - p.xpForLevel);
         float pct = Math.min(1f, Math.max(0f, (float) inLevel / (float) range));
 
         int innerPad = 3;
@@ -137,7 +137,7 @@ public final class JobsHudOverlay {
         }
 
         // Icon + label line.
-        String icon = ICON_BY_SLUG.getOrDefault(p.slug(), "*");
+        String icon = resolveIcon(p);
         String right = rightLabel(p, inLevel, range);
         int rightW = font.width(right);
         int leftX = x0 + H_PADDING;
@@ -152,31 +152,31 @@ public final class JobsHudOverlay {
         g.text(font, icon, leftX, textY, TEXT_GOLD, false);
     }
 
-    private static int resolveBarWidth(Font font, JobStatusPayload payload, float scale, int maxWidth) {
+    private static int resolveBarWidth(Font font, JobStatusSnapshotData.JobProgressEntry payload, float scale, int maxWidth) {
         int scaledBaseWidth = Math.max(80, (int) (BAR_BASE_W * scale));
-        long range = Math.max(1L, payload.xpForNextLevel() - payload.xpForLevel());
-        long inLevel = Math.max(0L, payload.xp() - payload.xpForLevel());
+        long range = Math.max(1L, payload.xpForNextLevel - payload.xpForLevel);
+        long inLevel = Math.max(0L, payload.xp - payload.xpForLevel);
         String left = fullLeftLabel(payload);
         String right = rightLabel(payload, inLevel, range);
         int desiredWidth = (H_PADDING * 2) + font.width(left) + TEXT_GAP + font.width(right);
         return Math.min(maxWidth, Math.max(scaledBaseWidth, desiredWidth));
     }
 
-    private static String fullLeftLabel(JobStatusPayload p) {
-        String icon = ICON_BY_SLUG.getOrDefault(p.slug(), "*");
-        String name = p.slug().toUpperCase(java.util.Locale.ROOT);
-        return icon + "  " + name + "  Lvl " + p.level();
+    private static String fullLeftLabel(JobStatusSnapshotData.JobProgressEntry p) {
+        String icon = resolveIcon(p);
+        String name = displayLabel(p).toUpperCase(java.util.Locale.ROOT);
+        return icon + "  " + name + "  Lvl " + p.level;
     }
 
-    private static String rightLabel(JobStatusPayload p, long inLevel, long range) {
-        if (p.level() >= 50) {
+    private static String rightLabel(JobStatusSnapshotData.JobProgressEntry p, long inLevel, long range) {
+        if (p.level >= p.maxLevel) {
             return "MAX";
         }
         return inLevel + " / " + range + " xp";
     }
 
-    private static String fitLeftLabel(Font font, JobStatusPayload p, String icon, int maxWidth) {
-        String suffix = "  Lvl " + p.level();
+    private static String fitLeftLabel(Font font, JobStatusSnapshotData.JobProgressEntry p, String icon, int maxWidth) {
+        String suffix = "  Lvl " + p.level;
         String prefix = icon + "  ";
         int suffixWidth = font.width(suffix);
         int prefixWidth = font.width(prefix);
@@ -187,9 +187,32 @@ public final class JobsHudOverlay {
             return trimToWidth(font, prefix + suffix, maxWidth);
         }
 
-        String name = p.slug().toUpperCase(java.util.Locale.ROOT);
+        String name = displayLabel(p).toUpperCase(java.util.Locale.ROOT);
         int nameWidth = Math.max(0, maxWidth - prefixWidth - suffixWidth);
         return prefix + trimToWidth(font, name, nameWidth) + suffix;
+    }
+
+    private static String resolveIcon(JobStatusSnapshotData.JobProgressEntry p) {
+        if (p.iconGlyph != null && !p.iconGlyph.isBlank()) {
+            return p.iconGlyph;
+        }
+        if (p.iconKey != null && ICON_BY_KEY.containsKey(p.iconKey)) {
+            return ICON_BY_KEY.get(p.iconKey);
+        }
+        if (p.jobId != null && ICON_BY_KEY.containsKey(p.jobId)) {
+            return ICON_BY_KEY.get(p.jobId);
+        }
+        return "*";
+    }
+
+    private static String displayLabel(JobStatusSnapshotData.JobProgressEntry p) {
+        if (p.shortLabel != null && !p.shortLabel.isBlank()) {
+            return p.shortLabel;
+        }
+        if (p.displayName != null && !p.displayName.isBlank()) {
+            return p.displayName;
+        }
+        return p.jobId == null ? "JOB" : p.jobId;
     }
 
     private static String trimToWidth(Font font, String text, int maxWidth) {

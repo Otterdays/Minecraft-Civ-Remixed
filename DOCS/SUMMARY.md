@@ -42,6 +42,9 @@
 [AMENDED 2026-05-12 — jobs MVP]:
 - **Jobs/professions M2 first slice shipped.** Fixed-set: miner / lumberjack / farmer / fighter. One active slot. XP only on matching block-break / mob-kill events; level curve `100 * L^1.5` cap 50; payout multiplier `1.0 + L/50`. Commands `/job`, `/job list|join|leave|stats`. Persistence `config/otters_civ_revived/jobs.properties` (UUID.active=<slug>, UUID.xp.<slug>=N). Bundled tags `otters_civ_revived:job/{miner,lumberjack,farmer}_blocks` + `fighter_mobs` (singular `tags/block/` · `tags/entity_type/` dirs). New package `com.fpsmod.jobs`; `JobsHooks` interface gained `multiplyPayout` stage; `RewardOrchestrator` calls it pre-`addBalance`. Lessons + paths in `DOCS/LOCATIONS.md` + `DOCS/ARCHITECTURE.md`.
 
+[AMENDED 2026-05-14 — jobs config surface]:
+- **Jobs progression is now operator-tunable via `config/otters_civ_revived/jobs.json`.** The four shipped job slugs stay fixed for UI/save compatibility, but operators can now change the shared progression math (`maxLevel`, `xpBase`, `xpExponent`, `multiplierTopBonus`, default `xpPerEvent`) and override each job's `tagId` plus optional per-job `xpPerEvent`. `jobs.properties` remains the player-state ledger; `jobs.json` is the tuning file. Reload path matches rewards hydration: `SERVER_STARTED` + `END_DATA_PACK_RELOAD`.
+
 [AMENDED 2026-05-13 — reward chat semantics]:
 - **Reward chat is now split cleanly by system.** Economy payouts announce as **`+N coins`** (instead of the older hardcoded `(mining)` / `(combat)` labels). Jobs progression is a separate line and only fires when the action matches the player's active job, e.g. **`[lumberjack] +5 xp · Lvl 0 · 30/100`**. Level-up remains its own follow-up line on threshold crossings. This avoids falsely implying that a global block reward also counted as miner XP.
 

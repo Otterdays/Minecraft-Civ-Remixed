@@ -1,8 +1,11 @@
 package com.fpsmod.client.ui;
 
 import com.fpsmod.OogaMod;
+import com.fpsmod.client.jobs.JobsClientCatalog;
 import com.fpsmod.client.jobs.JobsHudOverlay;
-import com.fpsmod.jobs.net.JobStatusPayload;
+import com.fpsmod.client.jobs.JobsClientState;
+import com.fpsmod.jobs.JobCatalogSnapshot;
+import com.fpsmod.jobs.JobStatusSnapshotData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -83,6 +86,7 @@ public final class OttersCivScreen extends Screen {
     private final long openedAt = System.currentTimeMillis();
     private Tab active = Tab.HOME;
     private final List<Rect> hotspots = new ArrayList<>();
+    private int jobsPage = 0;
 
     public OttersCivScreen() {
         super(Component.literal("Otters Civ. Revived"));
@@ -349,22 +353,31 @@ public final class OttersCivScreen extends Screen {
 
     private void renderJobs(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Jobs");
-        var p = com.fpsmod.client.jobs.JobsClientState.latest();
+        JobCatalogSnapshot catalog = JobsClientCatalog.latest();
+        JobStatusSnapshotData status = JobsClientState.latest();
+        JobStatusSnapshotData.JobProgressEntry primary = JobsClientState.primaryActiveJob();
         var hud = JobsHudOverlay.config();
-        JobStatusPayload preview = (p != null && !p.slug().isEmpty())
-            ? p
-            : new JobStatusPayload("lumberjack", 0, 0L, 0L, 100L);
+        List<JobCatalogSnapshot.JobDescriptor> visibleJobs = JobsClientCatalog.visibleJobs();
+        int pageSize = 3;
+        int maxPage = visibleJobs.isEmpty() ? 0 : Math.max(0, (visibleJobs.size() - 1) / pageSize);
+        jobsPage = Mth.clamp(jobsPage, 0, maxPage);
+        JobStatusSnapshotData.JobProgressEntry preview = primary != null ? primary : previewEntry(visibleJobs);
 
         String activeLine;
         String levelLine;
-        if (p == null || p.slug().isEmpty()) {
+        if (status == null || status.activeJobIds == null || status.activeJobIds.isEmpty()) {
             activeLine = "Active: (none)";
-            levelLine = "Pick one with /job join <miner|lumberjack|farmer|fighter>";
+            levelLine = "Use /job join <id>. Catalog sync comes from server.";
         } else {
-            activeLine = "Active: " + p.slug().toUpperCase(java.util.Locale.ROOT) + "  ·  Lvl " + p.level();
-            long inLevel = Math.max(0L, p.xp() - p.xpForLevel());
-            long range = Math.max(1L, p.xpForNextLevel() - p.xpForLevel());
-            levelLine = "XP: " + inLevel + " / " + range + (p.level() >= 50 ? "  (MAX)" : "");
+            activeLine = "Active: " + joinIds(status.activeJobIds);
+            if (primary != null) {
+                long inLevel = Math.max(0L, primary.xp - primary.xpForLevel);
+                long range = Math.max(1L, primary.xpForNextLevel - primary.xpForLevel);
+                levelLine = "HUD: " + primary.shortLabel + "  ·  Lvl " + primary.level
+                    + "  ·  " + inLevel + "/" + range + (primary.level >= primary.maxLevel ? "  (MAX)" : "");
+            } else {
+                levelLine = "Primary HUD job unavailable.";
+            }
         }
         body(g, x, y + 14, activeLine, TEXT_PRIMARY);
         body(g, x, y + 26, levelLine,  TEXT_MUTED);
@@ -372,11 +385,13 @@ public final class OttersCivScreen extends Screen {
         // HUD preview + config row.
         sectionHeading(g, x, y + 44, "HUD Bar");
         body(g, x, y + 58,
-            p == null || p.slug().isEmpty()
-                ? "Preview below. Live bar appears above vanilla XP after /job join <slug>."
+            primary == null
+                ? "Preview below. Live bar appears above vanilla XP after /job join <id>."
                 : "Preview mirrors the live bar drawn above vanilla XP when this menu is closed.",
             TEXT_MUTED);
-        JobsHudOverlay.renderPreview(g, this.font, x, y + 72, Math.min(250, w - 4), hud.scale(), preview);
+        if (preview != null) {
+            JobsHudOverlay.renderPreview(g, this.font, x, y + 72, Math.min(250, w - 4), hud.scale(), preview);
+        }
         body(g, x, y + 102,
             "Visible: " + (hud.visible() ? "ON" : "OFF")
                 + "   X: " + hud.offsetX()
@@ -387,15 +402,16 @@ public final class OttersCivScreen extends Screen {
         int row1Y = y + 118;
         int row2Y = y + 144;
         int row3Y = y + 170;
-        int bw = 60;
+        int bw = 54;
         int bh = 22;
         int gap = 6;
 
-        // Row 1: toggle + reset + slash command shortcuts.
+        // Row 1: toggle + reset + config opener + slash command shortcuts.
         renderButton(g, x,                        row1Y, bw, bh, hud.visible() ? "Hide" : "Show", "jobs:toggle", mouseX, mouseY);
         renderButton(g, x + (bw + gap),           row1Y, bw, bh, "Reset",                          "jobs:reset",  mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 2,       row1Y, bw, bh, "/job",                           "jobs:cmd_stats", mouseX, mouseY);
-        renderButton(g, x + (bw + gap) * 3,       row1Y, bw, bh, "/job list",                      "jobs:cmd_list",  mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2,       row1Y, bw, bh, "Jobs cfg",                       "jobs:open_cfg", mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 3,       row1Y, bw, bh, "/job",                           "jobs:cmd_stats", mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 4,       row1Y, bw, bh, "/job list",                      "jobs:cmd_list",  mouseX, mouseY);
 
         // Row 2: nudge X/Y/scale.
         int nb = 28;
@@ -415,13 +431,51 @@ public final class OttersCivScreen extends Screen {
         renderButton(g, rx + 32,                 row2Y, nb, bh, "−",  "jobs:s-", mouseX, mouseY);
         renderButton(g, rx + 32 + nb + nbgap,    row2Y, nb, bh, "+",  "jobs:s+", mouseX, mouseY);
 
-        // Direct join shortcuts reduce the "controls but no HUD" confusion for first-time users.
-        int joinW = 74;
-        int joinGap = 4;
-        renderButton(g, x,                         row3Y, joinW, bh, "Miner",      "jobs:join_miner",      mouseX, mouseY);
-        renderButton(g, x + (joinW + joinGap),    row3Y, joinW, bh, "Lumberjack", "jobs:join_lumberjack", mouseX, mouseY);
-        renderButton(g, x + (joinW + joinGap) * 2, row3Y, joinW, bh, "Farmer",     "jobs:join_farmer",     mouseX, mouseY);
-        renderButton(g, x + (joinW + joinGap) * 3, row3Y, joinW, bh, "Fighter",    "jobs:join_fighter",    mouseX, mouseY);
+        sectionHeading(g, x, row3Y, "Catalog");
+        body(g, x, row3Y + 14,
+            canOpenServerJobsConfig()
+                ? "Jobs cfg opens host-side jobs.json on this machine."
+                : "Remote server: jobs.json lives on server host. Local opener disabled.",
+            TEXT_MUTED);
+        int navY = row3Y + 28;
+        renderButton(g, x, navY, 46, 18, "< Prev", "jobs:page_prev", mouseX, mouseY);
+        renderButton(g, x + 52, navY, 46, 18, "Next >", "jobs:page_next", mouseX, mouseY);
+        body(g, x + 106, navY + 5, "Page " + (jobsPage + 1) + "/" + (maxPage + 1)
+            + "  ·  slots " + activeCount(status) + "/" + maxActiveSlots(catalog), TEXT_PRIMARY);
+
+        int listY = row3Y + 50;
+        if (visibleJobs.isEmpty()) {
+            body(g, x, listY, "No jobs synced yet. Try /job list after server join.", TEXT_MUTED);
+            return;
+        }
+        int start = jobsPage * pageSize;
+        int end = Math.min(visibleJobs.size(), start + pageSize);
+        for (int i = start; i < end; i++) {
+            JobCatalogSnapshot.JobDescriptor job = visibleJobs.get(i);
+            JobStatusSnapshotData.JobProgressEntry progress = findProgress(status, job.id);
+            boolean activeJob = isActive(status, job.id);
+            String title = (activeJob ? "[A] " : "") + job.shortLabel;
+            String note = progress == null
+                ? job.description
+                : "Lvl " + progress.level + "/" + progress.maxLevel + " · xp " + progress.xp;
+            int rowY = listY + (i - start) * 18;
+            g.text(this.font, fit(title, 170), x, rowY, activeJob ? ACCENT_GOLD : TEXT_PRIMARY, false);
+            g.text(this.font, fit(note, 170), x + 76, rowY, TEXT_MUTED, false);
+            if (job.joinable && job.enabled) {
+                renderButton(
+                    g,
+                    x + w - 94,
+                    rowY - 4,
+                    42,
+                    16,
+                    activeJob ? "Leave" : "Join",
+                    activeJob ? "jobs:leave:" + job.id : "jobs:join:" + job.id,
+                    mouseX,
+                    mouseY
+                );
+            }
+            renderButton(g, x + w - 46, rowY - 4, 42, 16, "Info", "jobs:info:" + job.id, mouseX, mouseY);
+        }
     }
 
     private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h) {
@@ -570,6 +624,18 @@ public final class OttersCivScreen extends Screen {
 
     private void handleJobsAction(String op) {
         var hud = JobsHudOverlay.config();
+        if (op.startsWith("join:")) {
+            runCommand("job join " + op.substring(5));
+            return;
+        }
+        if (op.startsWith("leave:")) {
+            runCommand("job leave " + op.substring(6));
+            return;
+        }
+        if (op.startsWith("info:")) {
+            runCommand("job info " + op.substring(5));
+            return;
+        }
         switch (op) {
             case "toggle" -> hud.setVisible(!hud.visible());
             case "reset"  -> hud.reset();
@@ -579,12 +645,17 @@ public final class OttersCivScreen extends Screen {
             case "y+" -> hud.nudgeOffsetY(4);
             case "s-" -> hud.nudgeScale(-0.1f);
             case "s+" -> hud.nudgeScale(0.1f);
+            case "open_cfg" -> {
+                if (canOpenServerJobsConfig()) {
+                    openClientConfigFile("otters_civ_revived", "jobs.json");
+                } else {
+                    showClientNotice("jobs.json lives on server host. Use /job list or ask server owner.");
+                }
+            }
             case "cmd_stats" -> runCommand("job");
             case "cmd_list"  -> runCommand("job list");
-            case "join_miner"      -> runCommand("job join miner");
-            case "join_lumberjack" -> runCommand("job join lumberjack");
-            case "join_farmer"     -> runCommand("job join farmer");
-            case "join_fighter"    -> runCommand("job join fighter");
+            case "page_prev" -> jobsPage = Math.max(0, jobsPage - 1);
+            case "page_next" -> jobsPage++;
             default -> { /* no-op */ }
         }
     }
@@ -617,6 +688,65 @@ public final class OttersCivScreen extends Screen {
         } catch (Exception e) {
             OogaMod.LOGGER.warn("[otters_civ_revived] open config file failed", e);
         }
+    }
+
+    private static boolean canOpenServerJobsConfig() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc != null && mc.hasSingleplayerServer();
+    }
+
+    private static void showClientNotice(String message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.player != null) {
+            mc.player.displayClientMessage(Component.literal(message), false);
+        }
+    }
+
+    private static String joinIds(List<String> ids) {
+        return ids == null || ids.isEmpty() ? "(none)" : String.join(", ", ids);
+    }
+
+    private static int activeCount(JobStatusSnapshotData status) {
+        return status == null || status.activeJobIds == null ? 0 : status.activeJobIds.size();
+    }
+
+    private static int maxActiveSlots(JobCatalogSnapshot catalog) {
+        return catalog == null ? 1 : Math.max(1, catalog.maxActiveJobs);
+    }
+
+    private static boolean isActive(JobStatusSnapshotData status, String jobId) {
+        return status != null && status.activeJobIds != null && status.activeJobIds.contains(jobId);
+    }
+
+    private static JobStatusSnapshotData.JobProgressEntry findProgress(JobStatusSnapshotData status, String jobId) {
+        if (status == null || status.progress == null) {
+            return null;
+        }
+        for (JobStatusSnapshotData.JobProgressEntry entry : status.progress) {
+            if (entry != null && jobId.equals(entry.jobId)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    private static JobStatusSnapshotData.JobProgressEntry previewEntry(List<JobCatalogSnapshot.JobDescriptor> jobs) {
+        if (jobs == null || jobs.isEmpty()) {
+            return null;
+        }
+        JobCatalogSnapshot.JobDescriptor first = jobs.get(0);
+        JobStatusSnapshotData.JobProgressEntry entry = new JobStatusSnapshotData.JobProgressEntry();
+        entry.jobId = first.id;
+        entry.displayName = first.displayName;
+        entry.shortLabel = first.shortLabel;
+        entry.iconGlyph = first.iconGlyph;
+        entry.iconKey = first.iconKey;
+        entry.level = 0;
+        entry.xp = 0L;
+        entry.xpForLevel = 0L;
+        entry.xpForNextLevel = 100L;
+        entry.maxLevel = Math.max(1, first.maxLevel);
+        return entry;
     }
 
     @Override

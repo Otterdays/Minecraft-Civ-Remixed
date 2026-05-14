@@ -1,43 +1,30 @@
 package com.fpsmod.jobs;
 
 import com.fpsmod.OogaMod;
-import com.fpsmod.ottersciv.reward.JobsHooks;
-import com.fpsmod.ottersciv.reward.RewardContext;
-import com.fpsmod.ottersciv.reward.RewardReason;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MVP jobs runtime: one active job slot per player, XP accrues on matching reward events,
- * payout multiplier applied to wallet credit.
- *
- * <p>Tag membership is resolved per-job via {@link BuiltInRegistries#getTagOrEmpty} at
- * {@link #refresh(MinecraftServer) refresh} time (server-started / data-pack reload). Per-event
- * lookups are O(1) set membership against the cached id set — same static-registry path that
- * works around the {@code level.registryAccess()} tag-empty quirk documented in
- * {@code DOCS/ARCHITECTURE.md}.</p>
+ * Dynamic jobs runtime: arbitrary config-defined jobs, string-keyed player state, and independent
+ * gameplay-event XP tracking.
  */
-public class JobsService implements JobsHooks {
+public class JobsService {
     private final JobsStore store;
     private final Map<UUID, JobState> states;
     private final Map<UUID, String> displayHints;
-    private final EnumMap<Job, Set<String>> blockIdsByJob = new EnumMap<>(Job.class);
-    private final EnumMap<Job, Set<String>> entityIdsByJob = new EnumMap<>(Job.class);
+    private final Map<String, Long> lastTriggerEventMs = new ConcurrentHashMap<>();
+    private volatile JobsConfig config;
+    private volatile CompiledJobCatalog catalog;
 
     /** Optional callback fired after any per-player state mutation so the HUD can sync. */
     private java.util.function.Consumer<ServerPlayer> statusListener = p -> {};
@@ -46,83 +33,117 @@ public class JobsService implements JobsHooks {
         this.statusListener = listener == null ? p -> {} : listener;
     }
 
-    public JobsService(JobsStore store) {
+    public JobsService(JobsStore store, JobsConfig config) {
         this.store = Objects.requireNonNull(store, "store");
+        this.config = Objects.requireNonNull(config, "config");
+        this.config.sanitize();
+        this.catalog = CompiledJobCatalog.compile(this.config);
         JobsLedger loaded = store.load();
         this.states = new ConcurrentHashMap<>(loaded.states());
         this.displayHints = new ConcurrentHashMap<>(loaded.displayHints());
-        for (Job j : Job.values()) {
-            blockIdsByJob.put(j, Set.of());
-            entityIdsByJob.put(j, Set.of());
+        pruneStatesToCatalog();
+    }
+
+    public CompiledJobCatalog catalog() {
+        return catalog;
+    }
+
+    public List<Job> jobs() {
+        return new ArrayList<>(catalog.jobs());
+    }
+
+    public List<Job> visibleJobs() {
+        return catalog.visibleJobs();
+    }
+
+    public Job jobById(String rawJobId) {
+        return catalog.jobById(rawJobId);
+    }
+
+    public List<String> validationMessages() {
+        return catalog.diagnostics();
+    }
+
+    public JobsConfig config() {
+        return config;
+    }
+
+    public boolean jobsEnabled() {
+        return catalog.enabled();
+    }
+
+    public int maxActiveJobs() {
+        return catalog.maxActiveJobs();
+    }
+
+    public String defaultIconGlyph(Job job) {
+        if (job != null && job.iconGlyph != null && !job.iconGlyph.isBlank()) {
+            return job.iconGlyph;
         }
+        return config.global.defaultIconGlyph;
+    }
+
+    public String defaultIconKey(Job job) {
+        if (job != null && job.iconKey != null && !job.iconKey.isBlank()) {
+            return job.iconKey;
+        }
+        return config.global.defaultIconKey;
     }
 
     public static JobsService createDefault() {
-        return new JobsService(new FileJobsStore());
-    }
-
-    /** Rebuild the per-job id sets from current registries. Call on SERVER_STARTED + END_DATA_PACK_RELOAD. */
-    public void refresh(MinecraftServer server) {
-        for (Job job : Job.values()) {
-            switch (job.kind()) {
-                case BLOCK -> blockIdsByJob.put(job, resolveBlockIds(job));
-                case ENTITY -> entityIdsByJob.put(job, resolveEntityIds(job));
-            }
-        }
-    }
-
-    private Set<String> resolveBlockIds(Job job) {
-        Set<String> out = new HashSet<>();
-        var tag = job.blockTagKey();
-        if (tag == null) return out;
-        for (Holder<Block> h : BuiltInRegistries.BLOCK.getTagOrEmpty(tag)) {
-            Block b = h.value();
-            Identifier id = BuiltInRegistries.BLOCK.getKey(b);
-            if (id != null) out.add(id.toString());
-        }
-        OogaMod.LOGGER.info("[otters_civ_revived/jobs] {} block tag resolved {} entries", job.slug(), out.size());
-        return out;
-    }
-
-    private Set<String> resolveEntityIds(Job job) {
-        Set<String> out = new HashSet<>();
-        var tag = job.entityTagKey();
-        if (tag == null) return out;
-        for (Holder<EntityType<?>> h : BuiltInRegistries.ENTITY_TYPE.getTagOrEmpty(tag)) {
-            EntityType<?> t = h.value();
-            Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(t);
-            if (id != null) out.add(id.toString());
-        }
-        OogaMod.LOGGER.info("[otters_civ_revived/jobs] {} entity tag resolved {} entries", job.slug(), out.size());
-        return out;
+        return new JobsService(new FileJobsStore(), JobsConfigLoader.loadOrCreate());
     }
 
     public JobState stateOf(UUID id) {
         return states.computeIfAbsent(id, k -> new JobState());
     }
 
-    public void rememberPlayerName(UUID id, @Nullable String name) {
-        String s = FileJobsStore.sanitizeHintForStorage(name);
-        if (!s.isEmpty()) {
-            displayHints.put(id, s);
+    public void refresh(MinecraftServer server) {
+        this.config = JobsConfigLoader.loadOrCreate();
+        this.catalog = CompiledJobCatalog.compile(this.config);
+        pruneStatesToCatalog();
+        for (String line : catalog.diagnostics()) {
+            OogaMod.LOGGER.warn("[otters_civ_revived/jobs] {}", line);
         }
     }
 
-    public synchronized boolean joinJob(UUID id, Job job, ServerPlayer player) {
-        JobState s = stateOf(id);
-        if (s.active() == job) return false;
-        s.setActive(job);
+    public void rememberPlayerName(UUID id, @Nullable String name) {
+        String hint = FileJobsStore.sanitizeHintForStorage(name);
+        if (!hint.isEmpty()) {
+            displayHints.put(id, hint);
+        }
+    }
+
+    public synchronized boolean joinJob(UUID id, String rawJobId, @Nullable ServerPlayer player) {
+        if (!jobsEnabled()) {
+            return false;
+        }
+        Job job = jobById(rawJobId);
+        if (job == null || !job.canJoin()) {
+            return false;
+        }
+        JobState state = stateOf(id);
+        boolean changed = state.activate(job.id, maxActiveJobs());
+        if (!changed) {
+            return false;
+        }
         persist();
-        statusListener.accept(player);
+        if (player != null) {
+            statusListener.accept(player);
+        }
         return true;
     }
 
-    public synchronized boolean leaveJob(UUID id, ServerPlayer player) {
-        JobState s = stateOf(id);
-        if (s.active() == null) return false;
-        s.setActive(null);
+    public synchronized boolean leaveJob(UUID id, @Nullable String rawJobId, @Nullable ServerPlayer player) {
+        JobState state = stateOf(id);
+        boolean changed = state.deactivate(rawJobId);
+        if (!changed) {
+            return false;
+        }
         persist();
-        statusListener.accept(player);
+        if (player != null) {
+            statusListener.accept(player);
+        }
         return true;
     }
 
@@ -130,94 +151,213 @@ public class JobsService implements JobsHooks {
         store.save(Map.copyOf(states), Map.copyOf(displayHints));
     }
 
-    @Nullable
-    private Job jobMatchingBlock(BlockState block) {
-        if (block == null) return null;
-        Identifier id = BuiltInRegistries.BLOCK.getKey(block.getBlock());
-        if (id == null) return null;
-        String s = id.toString();
-        for (Job j : Job.values()) {
-            if (j.kind() == Job.Kind.BLOCK && blockIdsByJob.get(j).contains(s)) {
-                return j;
-            }
+    public long modifyPayout(ServerPlayer player, JobEventContext context, long basePayout) {
+        if (player == null || context == null || basePayout <= 0L || !jobsEnabled()) {
+            return basePayout;
         }
-        return null;
-    }
-
-    @Nullable
-    private Job jobMatchingEntity(EntityType<?> type) {
-        if (type == null) return null;
-        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
-        if (id == null) return null;
-        String s = id.toString();
-        for (Job j : Job.values()) {
-            if (j.kind() == Job.Kind.ENTITY && entityIdsByJob.get(j).contains(s)) {
-                return j;
-            }
+        JobState state = states.get(player.getUUID());
+        if (state == null || state.activeJobIds().isEmpty()) {
+            return basePayout;
         }
-        return null;
+        double multiplier = 1.0D;
+        long flatBonus = 0L;
+        boolean matched = false;
+        for (CompiledJobCatalog.Match match : matchingActiveJobs(state, context)) {
+            Job job = match.job();
+            int level = state.levelOf(job.id, job.progression);
+            multiplier *= job.boosts.moneyMultiplierForLevel(level);
+            flatBonus += job.boosts.moneyFlatBonusForLevel(level);
+            matched = true;
+        }
+        if (!matched) {
+            return basePayout;
+        }
+        long scaled = (long) Math.floor(basePayout * multiplier) + flatBonus;
+        return Math.max(0L, scaled);
     }
 
-    @Override
-    public long multiplyPayout(ServerPlayer player, RewardContext ctx, long basePayout) {
-        if (player == null || ctx == null || basePayout <= 0L) return basePayout;
-        JobState s = states.get(player.getUUID());
-        if (s == null || s.active() == null) return basePayout;
-        Job active = s.active();
-        Job matched = matchedJob(ctx);
-        if (matched != active) return basePayout;
-        double mult = JobsConfig.multiplierForLevel(s.levelOf(active));
-        long scaled = (long) Math.floor(basePayout * mult);
-        return Math.max(basePayout, scaled);
-    }
-
-    @Override
-    public void onEconomyReward(ServerPlayer player, RewardContext ctx) {
-        if (player == null || ctx == null) return;
+    public void onGameplayEvent(ServerPlayer player, JobEventContext context) {
+        if (player == null || context == null || !jobsEnabled()) {
+            return;
+        }
         rememberPlayerName(player.getUUID(), player.getName().getString());
-        JobState s = stateOf(player.getUUID());
-        if (s.active() == null) return;
-        Job active = s.active();
-        Job matched = matchedJob(ctx);
-        if (matched != active) return;
-        int prevLevel = s.levelOf(active);
-        long newXp = s.addXp(active, JobsConfig.XP_PER_EVENT);
-        int newLevel = JobsConfig.levelForXp(newXp);
+        JobState state = stateOf(player.getUUID());
+        if (state.activeJobIds().isEmpty()) {
+            return;
+        }
+        List<String> lines = new ArrayList<>();
+        boolean changed = false;
+        for (CompiledJobCatalog.Match match : matchingActiveJobs(state, context)) {
+            if (!pastCooldown(player.getUUID(), match.trigger().key(), match.trigger().cooldownMs())) {
+                continue;
+            }
+            Job job = match.job();
+            int prevLevel = state.levelOf(job.id, job.progression);
+            long xpAward = resolvedXpAward(job, prevLevel);
+            if (xpAward <= 0L) {
+                continue;
+            }
+            long newXp = state.addXp(job.id, xpAward);
+            int newLevel = job.progression.levelForXp(newXp);
+            lines.add(progressMessageText(job, newLevel, newXp, xpAward));
+            if (newLevel > prevLevel) {
+                lines.add("[" + job.labelForUi() + "] level up → " + newLevel);
+            }
+            changed = true;
+        }
+        if (!changed) {
+            return;
+        }
         persist();
         statusListener.accept(player);
-        player.sendSystemMessage(
-            net.minecraft.network.chat.Component.literal(
-                progressMessageText(active, newLevel, newXp)
-            )
-        );
-        if (newLevel > prevLevel) {
-            player.sendSystemMessage(
-                net.minecraft.network.chat.Component.literal(
-                    "[" + active.slug() + "] level up → " + newLevel
-                )
-            );
+        for (String line : lines) {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(line));
         }
     }
 
-    static String progressMessageText(Job job, int level, long totalXp) {
+    public JobCatalogSnapshot catalogSnapshot() {
+        JobCatalogSnapshot snapshot = new JobCatalogSnapshot();
+        snapshot.enabled = jobsEnabled();
+        snapshot.activationPolicy = config.global.activationPolicy;
+        snapshot.maxActiveJobs = maxActiveJobs();
+        for (Job job : jobs()) {
+            JobCatalogSnapshot.JobDescriptor descriptor = new JobCatalogSnapshot.JobDescriptor();
+            descriptor.id = job.id;
+            descriptor.displayName = job.displayName;
+            descriptor.shortLabel = job.labelForUi();
+            descriptor.description = job.description;
+            descriptor.iconGlyph = defaultIconGlyph(job);
+            descriptor.iconKey = defaultIconKey(job);
+            descriptor.enabled = job.enabled;
+            descriptor.joinable = job.joinable;
+            descriptor.hidden = job.hidden;
+            descriptor.sortOrder = job.sortOrder;
+            descriptor.maxLevel = job.progression.maxLevel;
+            for (JobTrigger trigger : job.triggers) {
+                if (trigger != null) {
+                    descriptor.triggerEventTypes.add(trigger.parsedEventType().id());
+                }
+            }
+            snapshot.jobs.add(descriptor);
+        }
+        return snapshot;
+    }
+
+    public JobStatusSnapshotData statusSnapshot(UUID playerId) {
+        JobState state = stateOf(playerId);
+        JobStatusSnapshotData snapshot = new JobStatusSnapshotData();
+        snapshot.activeJobIds.addAll(state.activeJobIds());
+        for (Job job : jobs()) {
+            long xp = state.getXp(job.id);
+            int level = state.levelOf(job.id, job.progression);
+            long floor = job.progression.xpForLevel(level);
+            long ceil = job.progression.isMaxLevel(level)
+                ? job.progression.xpForLevel(job.progression.maxLevel)
+                : job.progression.xpForLevel(level + 1);
+            JobStatusSnapshotData.JobProgressEntry entry = new JobStatusSnapshotData.JobProgressEntry();
+            entry.jobId = job.id;
+            entry.displayName = job.displayName;
+            entry.shortLabel = job.labelForUi();
+            entry.iconGlyph = defaultIconGlyph(job);
+            entry.iconKey = defaultIconKey(job);
+            entry.level = level;
+            entry.xp = xp;
+            entry.xpForLevel = floor;
+            entry.xpForNextLevel = ceil;
+            entry.maxLevel = job.progression.maxLevel;
+            entry.active = state.isActive(job.id);
+            snapshot.progress.add(entry);
+        }
+        return snapshot;
+    }
+
+    public String joinFailureReason(String rawJobId, UUID playerId) {
+        if (!jobsEnabled()) {
+            return "Jobs are disabled in jobs.json.";
+        }
+        Job job = jobById(rawJobId);
+        if (job == null) {
+            return "Unknown job '" + rawJobId + "'.";
+        }
+        if (!job.enabled) {
+            return "Job '" + job.id + "' is disabled.";
+        }
+        if (!job.joinable) {
+            return "Job '" + job.id + "' is not joinable right now.";
+        }
+        JobState state = stateOf(playerId);
+        if (state.isActive(job.id) && ("single".equals(config.global.activationPolicy) || state.activeJobIds().size() == 1)) {
+            return "Already on " + job.id + ".";
+        }
+        if ("multi".equals(config.global.activationPolicy)
+            && !state.isActive(job.id)
+            && state.activeJobIds().size() >= maxActiveJobs()) {
+            return "Active job slots full (" + maxActiveJobs() + "). Leave one first.";
+        }
+        return "";
+    }
+
+    private void pruneStatesToCatalog() {
+        Map<String, Job> byId = new LinkedHashMap<>();
+        for (Job job : jobs()) {
+            byId.put(job.id, job);
+        }
+        for (JobState state : states.values()) {
+            List<String> validActive = new ArrayList<>();
+            for (String active : state.activeJobIds()) {
+                Job job = byId.get(active);
+                if (job != null && job.enabled) {
+                    validActive.add(active);
+                }
+            }
+            state.setActiveJobs(validActive, maxActiveJobs());
+        }
+    }
+
+    private long resolvedXpAward(Job job, int level) {
+        double multiplier = job.boosts.xpMultiplierForLevel(level);
+        long flatBonus = job.boosts.xpFlatBonusForLevel(level);
+        long scaled = (long) Math.floor(job.progression.xpPerEvent * multiplier) + flatBonus;
+        return Math.max(0L, scaled);
+    }
+
+    private List<CompiledJobCatalog.Match> matchingActiveJobs(JobState state, JobEventContext context) {
+        List<CompiledJobCatalog.Match> matches = new ArrayList<>();
+        for (String activeJobId : state.activeJobIds()) {
+            CompiledJobCatalog.Match match = catalog.matchedJob(activeJobId, context);
+            if (match != null && match.job().enabled) {
+                matches.add(match);
+            }
+        }
+        return matches;
+    }
+
+    static String progressMessageText(Job job, int level, long totalXp, long xpAward) {
         if (job == null) {
             return "";
         }
-        if (level >= JobsConfig.MAX_LEVEL) {
-            return "[" + job.slug() + "] +" + JobsConfig.XP_PER_EVENT + " xp · MAX";
+        if (job.progression.isMaxLevel(level)) {
+            return "[" + job.labelForUi() + "] +" + xpAward + " xp · MAX";
         }
-        long floor = JobsConfig.xpForLevel(level);
-        long ceil = JobsConfig.xpForLevel(level + 1);
+        long floor = job.progression.xpForLevel(level);
+        long ceil = job.progression.xpForLevel(level + 1);
         long inLevel = Math.max(0L, totalXp - floor);
         long range = Math.max(1L, ceil - floor);
-        return "[" + job.slug() + "] +" + JobsConfig.XP_PER_EVENT + " xp · Lvl "
-            + level + " · " + inLevel + "/" + range;
+        return "[" + job.labelForUi() + "] +" + xpAward + " xp · Lvl " + level + " · " + inLevel + "/" + range;
     }
 
-    @Nullable
-    private Job matchedJob(RewardContext ctx) {
-        if (ctx.reason() == RewardReason.BLOCK_BREAK) return jobMatchingBlock(ctx.blockState());
-        if (ctx.reason() == RewardReason.MOB_KILL) return jobMatchingEntity(ctx.entityType());
-        return null;
+    private boolean pastCooldown(UUID playerId, String triggerKey, long cooldownMs) {
+        if (cooldownMs <= 0L) {
+            return true;
+        }
+        String key = playerId + "|" + triggerKey;
+        long now = System.currentTimeMillis();
+        Long prev = lastTriggerEventMs.get(key);
+        if (prev != null && now - prev < cooldownMs) {
+            return false;
+        }
+        lastTriggerEventMs.put(key, now);
+        return true;
     }
+
 }

@@ -51,6 +51,7 @@ One-line version: **wallet + chat commands + jobs + optional mining/kill payouts
 |------|----------------|
 | **Wallet & commands** | `/money`, `/money set`, `/otter`; balances in `config/otters_civ_revived/wallet.properties` (legacy `config/fpsmod/wallet.properties` migrates once on load) |
 | **Payouts** | Tag-driven mining & combat rewards; **per-block** / **per-entity-type** amounts via inline `blockRewards` / `entityRewards` **or** dedicated **`block_values.json`** / **`entity_values.json`** next to **`rewards.json`** (merged; sibling files override same keys after load). Current vanilla block + living-entity coverage is broad out of the box, and the same tag/value-file system is designed to absorb future additions cleanly. |
+| **Jobs** | `/job`, `/job list`, `/job join <slug>`, `/job leave`, `/job stats`; the four shipped jobs stay fixed, but operators can now retarget their tags and tune leveling via `config/otters_civ_revived/jobs.json`. Player job progress persists in `config/otters_civ_revived/jobs.properties`. |
 | **Onboarding** | System chat on join: **first visit per save** - three lines; **returning** - short **welcome back ~name** + `/otter` / `/money` refresher (stored per world save, not only in `config/`) |
 | **Client extra** | Jobs HUD overlay (icon + level + XP bar); legacy FPS HUD is **deprecated & disabled** (standalone FPS overlay mod handles display) |
 
@@ -95,8 +96,13 @@ When docs say **"server,"** they mean **"the game side that stores your balance 
 | `/otter` | Shows a short help list and where reward settings live |
 | `/money` | Shows **your** money |
 | `/money set <player> <amount>` | Sets someone's balance (**gamemaster / OP-equivalent** only - same band as many vanilla cheat commands; see below) |
+| `/job`, `/job stats` | Shows your active job, levels, payout multiplier, and XP progress |
+| `/job list` | Lists the four shipped jobs plus their current configured tag ids |
+| `/job join <slug>`, `/job leave` | Picks one active job at a time (or clears it) |
 
 Money rules load from **`config/otters_civ_revived/rewards.json`**; **`block_values.json`** / **`entity_values.json`** list per-block / per-mob payouts. On logical server startup the mod expands your configured **`blockTag`**/**`entityTag`** into those maps when empty, merges inline overrides from **`rewards.json`**, persists sorted JSON, then applies it - restart after edits.
+
+Jobs rules load from **`config/otters_civ_revived/jobs.json`**. That file tunes the shared level curve (`maxLevel`, `xpBase`, `xpExponent`, `multiplierTopBonus`, default `xpPerEvent`) and lets you override each shipped job's tag id plus optional per-job XP gain. Player selections / XP totals live separately in **`config/otters_civ_revived/jobs.properties`**.
 
 #### Adding your own blocks or mobs
 

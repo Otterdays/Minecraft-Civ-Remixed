@@ -1,8 +1,9 @@
 package com.fpsmod.ottersciv;
 
 import com.fpsmod.economy.WalletService;
+import com.fpsmod.jobs.JobEventContext;
+import com.fpsmod.jobs.JobsService;
 import com.fpsmod.ottersciv.config.RewardRules;
-import com.fpsmod.ottersciv.reward.JobsHooks;
 import com.fpsmod.ottersciv.reward.RewardOrchestrator;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
@@ -17,18 +18,19 @@ public final class OttersCivGameplay {
     }
 
     /** Otters Civ. Revived gameplay rewards (wired from main mod initializer). */
-    public static RewardOrchestrator register(WalletService wallets, RewardRules rules, JobsHooks jobsHooks) {
-        RewardOrchestrator orchestrator = new RewardOrchestrator(wallets, rules, jobsHooks);
+    public static RewardOrchestrator register(WalletService wallets, RewardRules rules, JobsService jobsService) {
+        RewardOrchestrator orchestrator = new RewardOrchestrator(wallets, rules, jobsService);
 
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, entity) -> {
             if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) {
                 return;
             }
-            orchestrator.onBlockBroken(sp, level, pos, state);
+            long payout = orchestrator.onBlockBroken(sp, level, pos, state);
+            jobsService.onGameplayEvent(sp, JobEventContext.forBlockBreak(sp, level, state, payout > 0L));
         });
 
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) ->
-            rewardKill(orchestrator, entity, damageSource)
+            rewardKill(orchestrator, jobsService, entity, damageSource)
         );
 
         JoinWelcome.register(wallets);
@@ -36,7 +38,12 @@ public final class OttersCivGameplay {
         return orchestrator;
     }
 
-    private static void rewardKill(RewardOrchestrator orchestrator, LivingEntity entity, DamageSource damageSource) {
+    private static void rewardKill(
+        RewardOrchestrator orchestrator,
+        JobsService jobsService,
+        LivingEntity entity,
+        DamageSource damageSource
+    ) {
         if (!(entity.level() instanceof ServerLevel level)) {
             return;
         }
@@ -44,7 +51,11 @@ public final class OttersCivGameplay {
         if (!(killerPlayer instanceof ServerPlayer killer)) {
             return;
         }
-        orchestrator.onMobKilled(killer, entity, level);
+        long payout = orchestrator.onMobKilled(killer, entity, level);
+        jobsService.onGameplayEvent(
+            killer,
+            JobEventContext.forMobKill(killer, level, entity.getType(), payout > 0L, true)
+        );
     }
 
     /** Direct player entity on the damage source (not indirect / environmental). */

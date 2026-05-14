@@ -1,61 +1,97 @@
 package com.fpsmod.jobs;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.Block;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 /**
- * MVP fixed set: miner / lumberjack / farmer / fighter.
- * Each job is tied to a tag id under the {@code otters_civ_revived:job/...} namespace.
- * Block-jobs use the BLOCK tag key; FIGHTER uses the ENTITY_TYPE tag key.
+ * Fully data-driven job definition loaded from {@code jobs.json}.
  */
-public enum Job {
-    MINER("miner", "otters_civ_revived:job/miner_blocks", Kind.BLOCK),
-    LUMBERJACK("lumberjack", "otters_civ_revived:job/lumberjack_blocks", Kind.BLOCK),
-    FARMER("farmer", "otters_civ_revived:job/farmer_blocks", Kind.BLOCK),
-    FIGHTER("fighter", "otters_civ_revived:job/fighter_mobs", Kind.ENTITY);
+public final class Job {
+    public String id = "";
+    public String displayName = "";
+    public String shortLabel = "";
+    public String description = "";
+    public boolean enabled = true;
+    public boolean joinable = true;
+    public boolean hidden = false;
+    public int sortOrder = 0;
+    public String iconGlyph = "";
+    public String iconKey = "";
+    public List<JobTrigger> triggers = new ArrayList<>();
+    public JobProgression progression = new JobProgression();
+    public JobBoosts boosts = new JobBoosts();
 
-    public enum Kind { BLOCK, ENTITY }
-
-    private final String slug;
-    private final String tagId;
-    private final Kind kind;
-
-    Job(String slug, String tagId, Kind kind) {
-        this.slug = slug;
-        this.tagId = tagId;
-        this.kind = kind;
+    public void sanitize(JobsConfig.GlobalSettings global) {
+        id = normalizeId(id);
+        if (displayName == null || displayName.trim().isEmpty()) {
+            displayName = humanizeId(id);
+        } else {
+            displayName = displayName.trim();
+        }
+        shortLabel = shortLabel == null ? "" : shortLabel.trim();
+        description = description == null ? "" : description.trim();
+        iconGlyph = iconGlyph == null ? "" : iconGlyph.trim();
+        iconKey = normalizeId(iconKey);
+        if (sortOrder < 0) {
+            sortOrder = 0;
+        }
+        if (triggers == null) {
+            triggers = new ArrayList<>();
+        }
+        for (JobTrigger trigger : triggers) {
+            if (trigger != null) {
+                trigger.sanitize();
+            }
+        }
+        if (progression == null) {
+            progression = new JobProgression();
+        }
+        progression.sanitize(global == null ? null : global.defaultProgression);
+        if (boosts == null) {
+            boosts = new JobBoosts();
+        }
+        boosts.sanitize(global == null ? null : global.defaultBoosts);
     }
 
-    public String slug() { return slug; }
-    public Kind kind() { return kind; }
-    public String tagId() { return tagId; }
-
-    public TagKey<Block> blockTagKey() {
-        if (kind != Kind.BLOCK) {
-            return null;
-        }
-        return TagKey.create(Registries.BLOCK, Identifier.tryParse(tagId));
+    public boolean visibleInUi() {
+        return enabled && !hidden;
     }
 
-    public TagKey<EntityType<?>> entityTagKey() {
-        if (kind != Kind.ENTITY) {
-            return null;
-        }
-        return TagKey.create(Registries.ENTITY_TYPE, Identifier.tryParse(tagId));
+    public boolean canJoin() {
+        return enabled && joinable;
     }
 
-    public static Optional<Job> bySlug(String raw) {
-        if (raw == null) return Optional.empty();
-        String norm = raw.trim().toLowerCase(Locale.ROOT);
-        for (Job j : values()) {
-            if (j.slug.equals(norm)) return Optional.of(j);
+    public String labelForUi() {
+        return shortLabel == null || shortLabel.isEmpty() ? displayName : shortLabel;
+    }
+
+    public static String normalizeId(String raw) {
+        if (raw == null) {
+            return "";
         }
-        return Optional.empty();
+        return raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public static String humanizeId(String raw) {
+        String normalized = normalizeId(raw);
+        if (normalized.isEmpty()) {
+            return "(unnamed job)";
+        }
+        String[] words = normalized.replace(':', ' ').replace('-', ' ').replace('_', ' ').split("\\s+");
+        StringBuilder out = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (!out.isEmpty()) {
+                out.append(' ');
+            }
+            out.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) {
+                out.append(word.substring(1));
+            }
+        }
+        return out.isEmpty() ? normalized : out.toString();
     }
 }

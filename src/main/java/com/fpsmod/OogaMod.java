@@ -94,11 +94,16 @@ public class OogaMod implements ModInitializer {
             if (ottersRewardGameplay != null) {
                 ottersRewardGameplay.replaceRules(finalized);
             }
-            if (jobsService != null) {
-                jobsService.refresh(server);
-            }
         } catch (RuntimeException e) {
             LOGGER.error("[otters_civ_revived] Reward config hydrate failed — mining/kill payouts may be incomplete.", e);
+        }
+        try {
+            if (jobsService != null) {
+                jobsService.refresh(server);
+                JobsNetworking.broadcastCatalogAndStatuses(jobsService, server);
+            }
+        } catch (RuntimeException e) {
+            LOGGER.error("[otters_civ_revived/jobs] Jobs config hydrate failed — job tags/progression may be stale.", e);
         }
     }
 

@@ -8,13 +8,21 @@ class JobsProgressMessageTest {
 
     @Test
     void progressMessageIncludesJobXpAndLevelProgress() {
-        String text = JobsService.progressMessageText(Job.MINER, 0, 5L);
+        JobsConfig config = JobsConfig.defaults();
+        String text = JobsService.progressMessageText(Job.MINER, 0, 5L, config, 5L);
         assertEquals("[miner] +5 xp · Lvl 0 · 5/100", text);
     }
 
     @Test
     void progressMessageShowsMaxAtLevelCap() {
-        String text = JobsService.progressMessageText(Job.FIGHTER, JobsConfig.MAX_LEVEL, JobsConfig.xpForLevel(JobsConfig.MAX_LEVEL));
+        JobsConfig config = JobsConfig.defaults();
+        String text = JobsService.progressMessageText(
+            Job.FIGHTER,
+            config.maxLevel(),
+            config.xpForLevel(config.maxLevel()),
+            config,
+            config.xpPerEvent(Job.FIGHTER)
+        );
         assertEquals("[fighter] +5 xp · MAX", text);
     }
 }
