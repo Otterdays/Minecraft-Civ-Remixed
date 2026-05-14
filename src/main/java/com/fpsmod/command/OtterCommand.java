@@ -47,6 +47,7 @@ public final class OtterCommand {
         sendLine(source, "/guild home — teleport to guild home");
         sendLine(source, "/guild info — your guild details");
         sendLine(source, "/guild list — all guilds");
+        sendLine(source, "/ooga db status|migrate — SQLite database management (admin)");
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Wallets: config/otters_civ_revived/wallet.properties (# Name: hints + UUID=balance; auto-migrates legacy fpsmod folder once)");
         sendLine(source, "Mining + combat payouts: config/otters_civ_revived/rewards.json (tags + cooldowns + …)");

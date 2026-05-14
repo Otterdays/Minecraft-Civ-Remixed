@@ -34,9 +34,9 @@
 
 ### Scope
 - [x] Define module boundaries and service interfaces
-- [ ] Implement persistence abstraction and schema migration framework
-- [ ] Configure SQLite baseline (WAL, constraints, backup hooks)
-- [ ] Stand up initial audit-log framework
+- [x] Implement persistence abstraction and schema migration framework
+- [x] Configure SQLite baseline (WAL, constraints, backup hooks)
+- [x] Stand up initial audit-log framework
 
 ### Deliverables
 - [x] `IEconomyService`, `IJobsService`, `IGuildService` interfaces with clean module boundaries
@@ -44,21 +44,22 @@
 - [x] Circular dependency eliminated (JobsService → ottersciv/config extracted to `JobRewardDiagnostics`)
 - [x] Each service has its own logger (no static OogaMod.LOGGER coupling)
 - [x] Atomic crash-safe writes (`AtomicFileWriter`) deployed to all FileStores
-- [ ] `PersistenceService` + repos for player / wallet / guild / claim / shop / friend / message
-- [ ] Schema version table + migration runner + startup validation
-- [ ] Operator command stubs for DB status and migration state
-- [ ] Structured state-mutation log format
+- [x] `PersistenceService` with SQLite-backed stores (wallet, ledger, guilds, claims, jobs_state)
+- [x] Schema version table (`schema_version`) + migration runner (`SchemaMigrator`) + startup validation
+- [x] Operator command stubs: `/ooga db status|migrate`
+- [x] Structured state-mutation log format (SQLite `wallet_ledger` table with id/delta/balance_after/reason/note/timestamp)
+- [ ] Repository layer for shop/friend/message entities (deferred to M4/M4.5)
 
 ### Acceptance Gate
 - [x] Module boundaries defined: economy, jobs, guilds each expose interface
-- [ ] Boot with empty DB → all required schema objects created
-- [ ] Incompatible schema version → fast-fail with clear log output
-- [x] Every balance write → immutable audit entry (`TransactionLog` + `LedgerEntry`)
-- [ ] Hot-path reads → no main-thread blocking I/O
+- [x] Boot with empty DB → all required schema objects created (auto-migration on startup)
+- [x] Incompatible schema version → fast-fail with clear log output (version > CURRENT_VERSION check)
+- [x] Every balance write → immutable audit entry (`wallet_ledger` table with reason + note)
+- [x] Hot-path reads → no main-thread blocking I/O (in-memory ConcurrentHashMap caches in services, SQLite for persistence only)
 
 ### Risks
 - [ ] Migration drift mitigation: deterministic ledger + CI startup check
-- [ ] SQLite contention mitigation: single-writer queue + retry policy
+- [x] SQLite contention mitigation: WAL mode + busy_timeout=5000 + synchronous=NORMAL
 
 ---
 
@@ -99,6 +100,7 @@
 - [x] Reward engine: block break / mob kill events with XP and payout boosts
 - [x] Cooldowns, configurable triggers, tag-based matching
 - [x] Configurable XP and payout curves (`config/otters_civ_revived/jobs.json`)
+- [x] Shipped starter pack tuned to 5 low-overlap roles (`miner`, `lumberjack`, `farmer`, `excavator`, `fighter`) with single-slot defaults
 - [x] Jobs HUD overlay with server-synced catalog and status
 - [x] `/otter` JOBS tab with preview, pageable catalog, join/leave/info buttons
 

@@ -28,7 +28,7 @@
 
 **Project OOGA** is the nickname we use in docs and Discord-style talk; players still see **Otters Civ. Revived**.
 
-Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows **slash commands** in chat, sends **join system messages** (full onboarding the first time you connect to that save; a shorter **welcome back ~name** line when you've played there before), and can **pay you** when you mine configured blocks or defeat configured entities. Long-term: land claims, jobs, shops - see **`DOCS/ROADMAP.md`**.
+Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, supports **player transfers and admin economy tools**, sends **join system messages** (full onboarding the first time you connect to that save; a shorter **welcome back ~name** line when you've played there before), pays you for configured gameplay actions, and ships a **server-authoritative 5-job starter pack plus guild claims**. Long-term: shops, civ governance, and deeper social systems - see **`DOCS/ROADMAP.md`**.
 
 ### Words we use
 
@@ -45,7 +45,7 @@ Otters Civ. Revived is a **Fabric** add-on that saves **money per world**, shows
 
 ## Highlights (current release)
 
-One-line version: **wallet + chat commands + jobs + optional mining/kill payouts + join onboarding / welcome-back**; details in the table.
+One-line version: **wallet + transfers/admin econ + jobs + guilds + optional mining/kill payouts + join onboarding / welcome-back**; details in the table.
 
 | Area | What you get |
 |------|----------------|

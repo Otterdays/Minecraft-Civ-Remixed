@@ -1,17 +1,16 @@
 ## Otters Civ. Revived
 
-A lightweight Fabric civ and economy mod for Minecraft. Adds persistent money, configurable rewards, server-authoritative jobs, and guilds with chunk claims — without burying you in setup.
+A lightweight Fabric civ and economy mod for Minecraft. It gives a world a persistent money system, player transfers, configurable block/mob rewards, server-authoritative jobs progression, guild land control, and an in-game civ menu so players and operators can actually use the systems without digging through code.
 
 ---
 
 ## What it does
 
-- Persistent per-world economy with player-to-player transfers and admin tools
-- Configurable mining + combat coin rewards (tag-driven, every vanilla block/mob covered)
-- Server-authoritative jobs catalog defined in JSON — add your own without touching code
-- Guilds with chunk claims, officer ranks, home teleport, and a chunk-claim map
-- Immutable transaction log so every coin movement is auditable
-- Stylized in-game hub (`/otter`) with live wallet, jobs, rewards, and guild panels
+- **Economy:** persistent per-world balances, `/pay` transfers between players, admin money tools, and an immutable transaction log so every coin movement is auditable
+- **Rewards:** configurable mining and combat payouts driven by tags and per-id overrides, with broad vanilla block/entity coverage out of the box
+- **Jobs:** a server-authoritative JSON jobs catalog with configurable triggers, progression, and boosts; the shipped starter pack is `miner`, `lumberjack`, `farmer`, `excavator`, and `fighter`
+- **Guilds:** player-run groups with officer ranks, chunk claims, protections, home teleport, chat/GUI claim maps, and chunk border visuals
+- **Player UX:** the `/otter` hub surfaces wallet, jobs, rewards, and guild info in one place instead of making players learn the config first
 
 ---
 
@@ -98,6 +97,8 @@ A lightweight Fabric civ and economy mod for Minecraft. Adds persistent money, c
 - Each job defines its own triggers, XP curve, payout multiplier, boosts, and display data
 - Activation policy supports single-active-job or multi-active-job setups
 - Starter pack ships miner / lumberjack / farmer / excavator / fighter in single-slot mode
+- Default starter tuning is fast early, long-tail later, and intentionally modest on boosts
+- `/job validate` now highlights overlap and reward-surface dead zones for operators
 - Jobs HUD shows the server-synced primary job's label, icon, level, and progress bar
 - Level-up announcements fire only on threshold crossings
 
@@ -117,6 +118,7 @@ A lightweight Fabric civ and economy mod for Minecraft. Adds persistent money, c
 - First-join welcome: three onboarding chat lines pointing to `/otter`, `/money`, and rewards
 - Returning players see a shorter welcome-back line
 - `/otter` opens a stylized in-game menu on modded clients with live wallet, job, rewards, and guild panels
+- `/guild map` also drives a temporary top-right claim overlay and chunk border particles
 - Vanilla clients still get a full chat command help list from `/otter`
 
 ---
@@ -190,4 +192,4 @@ If you want to do something outside those boundaries, ask first.
 
 ## Short version
 
-Otters Civ. Revived turns a Fabric world into the start of a real civ server: persistent money, atomic player transfers, an immutable transaction log, configurable mining/combat rewards covering every vanilla block and mob, fully server-authoritative jobs from JSON, and guilds with chunk claims — usable from day one in singleplayer or multiplayer.
+Otters Civ. Revived turns a Fabric world into the start of a real civ server: persistent money, atomic player transfers, an immutable transaction log, configurable mining/combat rewards covering every vanilla block and mob, a fully server-authoritative jobs catalog with a shipped 5-job starter pack, and guilds with chunk claims/protection — usable from day one in singleplayer or multiplayer.

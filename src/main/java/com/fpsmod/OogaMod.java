@@ -3,6 +3,7 @@ package com.fpsmod;
 import com.fpsmod.command.GuildCommand;
 import com.fpsmod.command.JobCommand;
 import com.fpsmod.command.MoneyCommand;
+import com.fpsmod.command.OogaCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.economy.WalletService;
 import com.fpsmod.guilds.GuildConfigLoader;
@@ -91,6 +92,7 @@ public class OogaMod implements ModInitializer {
             MoneyCommand.register(dispatcher, walletService);
             JobCommand.register(dispatcher, jobsService);
             GuildCommand.register(dispatcher, guildService);
+            OogaCommand.register(dispatcher, persistence.database(), persistence.migrator());
         });
 
         // Keep this startup heartbeat obvious so template users can quickly confirm load order.
