@@ -37,6 +37,7 @@ public record GuildStatusPayload(String json) implements CustomPacketPayload {
         info.balance = g.balance;
         info.hasHome = g.homePos != null;
         info.open = g.open;
+        info.guildId = g.id.toString();
         return new GuildStatusPayload(GSON.toJson(info));
     }
 
@@ -62,5 +63,7 @@ public record GuildStatusPayload(String json) implements CustomPacketPayload {
         public long balance;
         public boolean hasHome;
         public boolean open;
+        /** UUID string of the player's guild; null when not in a guild. */
+        public String guildId;
     }
 }

@@ -65,7 +65,8 @@
       "Bash(xargs grep -l \"transaction\\\\|ledger\\\\|transfer\" -i)",
       "Bash(git stash *)",
       "Bash(./gradlew.bat compileJava --console=plain)",
-      "Bash(dir \"C:\\\\Users\\\\home\\\\Desktop\\\\AI\\\\Minecraft-Stuffs\\\\Minecraft-Civ-Remixed\" /s /b)"
+      "Bash(dir \"C:\\\\Users\\\\home\\\\Desktop\\\\AI\\\\Minecraft-Stuffs\\\\Minecraft-Civ-Remixed\" /s /b)",
+      "Bash(./gradlew.bat compileJava -q)"
     ]
   }
 }

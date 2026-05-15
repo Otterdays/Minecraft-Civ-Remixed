@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
 
+@SuppressWarnings("null")
 public final class MoneyCommand {
     private static final Permission BALANCE_MUTATION =
         new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);

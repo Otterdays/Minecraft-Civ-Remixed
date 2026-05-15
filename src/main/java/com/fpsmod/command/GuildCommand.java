@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
 
+@SuppressWarnings("null")
 public final class GuildCommand {
     private static final Permission ADMIN = new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);
 

@@ -12,7 +12,7 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 - **Rewards:** configurable mining and combat payouts driven by tags and per-id overrides, with broad vanilla block and living-entity coverage out of the box
 - **Jobs:** a server-authoritative JSON jobs catalog with configurable triggers, progression, and boosts; the shipped starter pack is `miner`, `lumberjack`, `farmer`, `excavator`, and `fighter`
 - **Guilds:** player-run groups with officer ranks, public or invite-only joining, chunk claims, protections, home teleport, chat/GUI claim maps, and chunk border visuals
-- **Player UX:** the `/otter` hub surfaces wallet, jobs, guilds, rewards, and civ roadmap info in one place, and `/guide` spawns a glinting in-game handbook with the live server's current basics
+- **Player UX:** the `/otter` hub surfaces wallet, jobs, guilds, rewards, and civ roadmap info in one place (optional **four color themes** — Otter, Midnight, Sunset, Mint — cycled from a footer chip and saved to `config/project_ooga/otter_ui.properties`), and `/guide` spawns a glinting in-game handbook with the live server's current basics
 
 ---
 
@@ -55,7 +55,7 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 - `/guild claim` — claim the chunk you stand in ($100 each, max 16 per guild)
 - `/guild unclaim` — release the current chunk
 - `/guild unclaimall` — release every chunk your guild owns
-- `/guild map` — ASCII chunk map in chat plus a 30-second GUI overlay (top-right corner)
+- `/guild map` — ASCII chunk map in chat plus a 30-second GUI overlay (top-right): surface tint per chunk, your guild vs other tint, facing wedge on your cell, and a hotbar hint when you walk into a different claim
 - `/guild sethome` — set guild teleport point (officer+)
 - `/guild home` — teleport to guild home (any member)
 - `/guild open` / `/guild close` — switch between public joining and invite-only mode (owner-only)
@@ -70,7 +70,8 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 
 ### Help
 
-- `/otter` — opens the in-game hub (HOME · WALLET · JOBS · GUILDS · REWARDS · CIV · HELP) on clients with the mod; falls back to a chat command list on vanilla clients
+- `/otter` — opens the in-game hub (HOME · WALLET · JOBS · GUILDS · REWARDS · CIV · HELP) on clients with the mod, with quick actions, config shortcuts, and a **Theme** chip to cycle menu palettes (Otter / Midnight / Sunset / Mint; saved to `config/project_ooga/otter_ui.properties`); if the game window is too small for the full panel, a compact fallback card still exposes money/job/guild shortcuts and the same theme control; on vanilla clients it falls back to a chat command list
+- [AMENDED 2026-05-14] **Home tab readouts:** Minecraft + mod version, local vs multiplayer session hint, current chunk + claim name when claim sync is active, richer wallet/guild summary cards, a `/guide` quick button next to `/money` / `/job list` / `/guild info`, and a **Brief** sidebar tab that condenses `DOCS/whitepaper.md` Phases 0–3 + `DOCS/ROADMAP.md` M0–M3 (two-page toggle); **Civ** tab lists M0–M6 milestone cards. Chat `/otter` also prints short tips for the hub, join messages, and the live handbook.
 
 ---
 
@@ -122,7 +123,7 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 - Guilds can be public or invite-only, with `allowOpenGuilds` controlled by config
 - Chunk claims with configurable cost and per-guild cap ($100 each, max 16 default)
 - Guild home: set a teleport point (officer+) and use it (any member, optional cooldown)
-- `/guild map` paints a 9×9 chunk grid in chat, toggles a temporary GUI overlay, and shows chunk borders with particles
+- `/guild map` paints a 9×9 chunk grid in chat, toggles a temporary GUI overlay (surface map colors + claim tint + facing + claim-crossing hint), and shows chunk borders with particles
 - Block-break, place, container-use, and block-attack protection inside claimed chunks
 - Guild data lives in SQLite; operator tuning lives in `config/otters_civ_revived/guilds.json`
 
@@ -131,7 +132,8 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 - First-join welcome: three onboarding chat lines pointing to `/guide`, `/otter`, `/money`, and rewards
 - Returning players see a shorter welcome-back line
 - `/otter` opens a stylized in-game menu on modded clients with live wallet, job, guild, rewards, and roadmap/help panels
-- `/guild map` also drives a temporary top-right claim overlay and chunk border particles
+- `/otter` menu colors: four client-only themes (footer **Theme** chip); choice persists in `config/project_ooga/otter_ui.properties` (no effect on server economy or guild data)
+- `/guild map` also drives a temporary top-right claim overlay (terrain tint, claim ownership tint, facing line, foot-travel claim hint) and chunk border particles
 - Vanilla clients still get a full chat command help list from `/otter`
 - `/guide` is fully server-side, so even vanilla or server-only players can still spawn the handbook item; they just need a free inventory slot
 
@@ -189,6 +191,7 @@ All files below are auto-generated on first run with sensible defaults. Edit any
 
 - **`config/otters_civ_revived/project_ooga.db`** — SQLite database in WAL mode. Holds wallets, the `wallet_ledger` audit trail, guilds, chunk claims, and jobs state. Auto-created and migrated on startup. Safe to back up while the server is stopped.
 - **`config/project_ooga/jobs_hud.properties`** — client-side HUD position/scale. Only present on clients with the mod. Edit via `/otter` → Jobs tab.
+- **`config/project_ooga/otter_ui.properties`** — client-only `/otter` menu color theme (`OTTER`, `MIDNIGHT`, `SUNSET`, or `MINT`). Written when you use the footer Theme chip in `/otter`.
 
 ---
 
@@ -204,9 +207,10 @@ All files below are auto-generated on first run with sensible defaults. Edit any
 ## Good to know
 
 - Requires Fabric API
+- No external database setup is needed — the release jar bundles its SQLite runtime and auto-creates `config/otters_civ_revived/project_ooga.db` on first start
 - Economy, rewards, jobs, and guild logic all run on the host/server side
 - Dynamic state (wallets, ledger, guilds, claims, jobs) persists in SQLite at `config/otters_civ_revived/project_ooga.db` (WAL mode, auto-migrated on startup)
-- Client install is optional but unlocks the jobs HUD, guild chunk overlay, and the stylized `/otter` menu
+- Client install is optional but unlocks the jobs HUD (`config/project_ooga/jobs_hud.properties`), guild chunk overlay, and the stylized `/otter` menu (optional themes in `config/project_ooga/otter_ui.properties`)
 - `/guide` works even without the client extras, because the handbook is just a server-issued written book item
 - Operator-facing behavior is mostly JSON-driven (`economy.json`, `rewards.json`, `jobs.json`, `guilds.json`)
 - Jobs and guild client views are server-synced, so remote players see the host's live catalog and claim state instead of guessing from local files
@@ -249,4 +253,22 @@ If you want to do something outside those boundaries, ask first.
 
 ## Short version
 
-Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a lightweight civilization server with a persistent SQLite-backed economy, safe player-to-player transfers and audit logs, configurable mining and combat rewards across a broad vanilla surface, a fully server-defined jobs system with a shipped five-job starter pack, guilds with land claims and protections, and in-game menus plus a handbook that make it usable from day one in singleplayer or multiplayer.
+Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a lightweight civilization server with a persistent economy, configurable mining and combat rewards, a five-job starter pack, guild land claims, and in-game menus plus a handbook for easy setup in singleplayer or multiplayer. With the client mod, the `/otter` hub can switch between a few color themes so the civ menu matches your taste without editing JSON.
+
+---
+
+## Auto-generated config README (new)
+
+The mod now drops a beginner-friendly **`README.md`** into `config/otters_civ_revived/` every time it loads. It is written in plain, high-school-readable English for server hosts who do not work with JSON every day.
+
+What the generated README covers:
+
+- A "don't panic" intro and JSON pitfalls (quotes vs. no quotes, commas, lowercase `true`/`false`)
+- Stop-the-server-first / make-a-backup safety steps
+- A table of every file in the folder and what it controls
+- Per-field tables for `economy.json`, `jobs.json`, `guilds.json`, and `rewards.json` — each setting, what it means, and its default
+- How `block_values.json` and `entity_values.json` get auto-prefilled from tags, plus the precedence order (tag default → inline `rewards.json` map → sibling value file)
+- "I broke it, now what?" recovery steps (delete the file, restart, defaults are rewritten)
+- A short reference of in-game commands
+
+The README is regenerated on every mod load, so it always matches the current build. It is documentation, not user data — edits to it are overwritten on next launch. Edit the `.json` files instead.

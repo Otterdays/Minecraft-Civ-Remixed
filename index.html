@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Otters Civ. Revived (Fabric mod project_ooga): /guide handbook, wallet, /money, /otter, /job, /guild (guilds with chunk claims, invites, ranks, home TP), join chat (first-visit onboarding vs welcome-back per world save), configurable mining/combat payouts (tags + rewards.json maps + optional block_values.json / entity_values.json), roadmap, offline reference.">
+  <meta name="description" content="Otters Civ. Revived (Fabric mod project_ooga): /guide handbook, wallet, /money, /otter hub (Brief=whitepaper Ph0–3 + roadmap M0–3, Civ=M0–M6 cards, Home sync), /job, /guild (claims, map overlay), join chat, rewards.json + block_values/entity_values, offline reference.">
   <title>Otters Civ. Revived (project_ooga) — Command &amp; feature reference</title>
   <style>
     :root {
@@ -373,12 +373,13 @@
               <li><a href="#config-block-values"><code>block_values.json</code></a></li>
               <li><a href="#config-entity-values"><code>entity_values.json</code></a></li>
               <li><a href="#add-custom-payouts">Add your own blocks &amp; mobs</a></li>
-              <li><a href="#config-jobs-store"><code>jobs_state.json</code></a></li>
+              <li><a href="#config-jobs-store"><code>jobs_state</code> (SQLite table)</a></li>
               <li><a href="#config-wallet"><code>project_ooga.db</code></a></li>
               <li><a href="#config-hud"><code>jobs_hud.properties</code></a></li>
+              <li><a href="#config-otter-ui"><code>otter_ui.properties</code></a></li>
             </ul>
           </li>
-          <li><a href="#roadmap-milestones">Roadmap (M0–M6)</a></li>
+          <li><a href="#roadmap-milestones">Roadmap (M0–M6 + M4.5)</a></li>
           <li><a href="#client">Client (Jobs HUD)</a></li>
           <li><a href="#limits">Operational limits</a></li>
           <li><a href="#architecture">Architecture</a></li>
@@ -400,8 +401,8 @@
         <tr><th>Stable target (repo)</th><td>Minecraft <code>26.1.2</code>, Fabric Loader <code>0.19.2+</code>, Fabric API <code>0.146.1+26.1.2</code>, Java <code>25+</code></td></tr>
         <tr><th>Build artifact</th><td><code>BUILT/libs/project-ooga-1.0.0.jar</code> (version from Gradle)</td></tr>
         <tr><th>Codename</th><td><strong>Project OOGA</strong> (internal); player-facing name: <strong>Otters Civ. Revived</strong></td></tr>
-        <tr><th>Namespaces</th><td>Otters Civ. economy/jobs/guilds: <code>otters_civ_revived</code> (<code>economy.json</code>, <code>rewards.json</code>, <code>jobs.json</code>, <code>guilds.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>jobs_state.json</code>, <code>project_ooga.db</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>) — deprecated</td></tr>
-        <tr><th>Economy store</th><td><code>config/otters_civ_revived/project_ooga.db</code> (SQLite, WAL mode)</td></tr>
+        <tr><th>Namespaces</th><td>Otters Civ. economy/jobs/guilds: <code>otters_civ_revived</code> (<code>economy.json</code>, <code>rewards.json</code>, <code>jobs.json</code>, <code>guilds.json</code>, optional <code>block_values.json</code> / <code>entity_values.json</code>, <code>project_ooga.db</code>); grandfathered FPS HUD only: <code>fpsmod</code> (<code>hud.properties</code>) — deprecated</td></tr>
+        <tr><th>Economy store</th><td><code>config/otters_civ_revived/project_ooga.db</code> (SQLite, WAL mode, no external DB setup)</td></tr>
         <tr><th>Rewards config</th><td><code>config/otters_civ_revived/rewards.json</code> (tags; optional <code>blockRewards</code> / <code>entityRewards</code> maps)</td></tr>
         <tr><th>Offline reference</th><td>Repo root <code>index.html</code> (this page); open locally or host with the repository</td></tr>
         <tr><th>Source</th><td><a href="https://github.com/Otterdays/Minecraft-Civ-Remixed">GitHub repository</a> · <a href="https://github.com/Otterdays/Minecraft-Civ-Remixed/issues">Issues</a></td></tr>
@@ -436,7 +437,7 @@
       <ul>
         <li>Friendly lines in chat when you join: <strong>first visit on this world save</strong> = three system lines (branding, <code>/guide</code>, <code>/otter</code>, <code>/money</code>, rewards pointer). <strong>Returning</strong> players see a styled <q>welcome back ~</q> display name plus a shorter refresher (persisted per save, not in <code>config/</code>).</li>
         <li><code>/guide</code> — spawns a glinting written handbook item with the live server's current money, jobs, guild, and config basics so players can carry the quick reference in-world.</li>
-        <li><code>/otter</code> — opens a <strong>stylized in-game menu</strong> (sidebar tabs: Home · Wallet · Jobs · Guilds · Rewards · Civ · Help) with quick-action buttons for <code>/money</code>, jobs/HUD controls, guild actions, and one-click links that open the config files (<code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>, <code>guilds.json</code>, <code>project_ooga.db</code>) in your OS file manager. On vanilla clients without the mod, the server-side fallback prints the same info as chat lines.</li>
+        <li><code>/otter</code> — opens a <strong>stylized in-game menu</strong> (sidebar tabs: Home · Wallet · Jobs · Guilds · Rewards · <strong>Brief</strong> · Civ · Help) with quick-action buttons for <code>/money</code>, <code>/guide</code>, jobs/HUD controls, guild actions, and one-click links that open the config files (<code>rewards.json</code>, <code>block_values.json</code>, <code>entity_values.json</code>, <code>guilds.json</code>, <code>project_ooga.db</code>) in your OS file manager. <strong>Brief</strong> summarizes <code>DOCS/whitepaper.md</code> Phases 0–3 and <code>DOCS/ROADMAP.md</code> M0–M3; <strong>Civ</strong> lists milestone cards M0–M6 (incl. M4.5). The <strong>Home</strong> tab surfaces Minecraft + mod version, a local vs multiplayer session hint, your current chunk and claim name when the server has synced claims, richer wallet/guild summary cards, and a live sync snapshot (claims · jobs catalog). A footer <strong>Theme</strong> chip cycles four client-only palettes (saved in <code>config/project_ooga/otter_ui.properties</code>). On vanilla clients without the mod, the server-side fallback prints the same info as chat lines.</li>
         <li><code>/money</code> checks your balance (everyone). <code>/money set|add|take</code> changes someone’s total and requires vanilla <strong>gamemaster-style</strong> command permission (same band as cheat commands / OP)—see <a href="#command-permissions">permissions</a>.</li>
         <li>Economy, jobs, guilds, claims, and the immutable wallet ledger save under <code>config/otters_civ_revived/project_ooga.db</code> in SQLite WAL mode.</li>
         <li>Mining: pay when you break blocks in <code>blockTag</code>, unless that block has its own line in <code>blockRewards</code> (defaults ship with <code>currency_blocks</code>).</li>
@@ -474,7 +475,7 @@
       <h3 id="design-goals-guilds">Guilds &amp; territory (shipped M3)</h3>
       <ul>
         <li><strong>Guilds</strong> — <code>/guild create &lt;name&gt;</code> ($250), invite/join/leave/kick with officer roles (promote/demote), optional public joining (<code>/guild open</code> / <code>/guild close</code>), and guild home teleport (<code>/guild sethome</code> / <code>/guild home</code>).</li>
-        <li><strong>Chunk claims</strong> — <code>/guild claim</code> / <code>/guild unclaim</code> ($100 per claim, max 16 per guild). ASCII map via <code>/guild map</code> + client-side GUI overlay (top-right, 30s auto-hide) + particle chunk borders. Config via <code>config/otters_civ_revived/guilds.json</code>.</li>
+        <li><strong>Chunk claims</strong> — <code>/guild claim</code> / <code>/guild unclaim</code> ($100 per claim, max 16 per guild). ASCII map via <code>/guild map</code> + client-side GUI overlay (top-right, 30s auto-hide): per-chunk surface tint, claim tint by owner, facing wedge on your cell, and a hotbar overlay line when you cross into a claimed chunk (yours or another guild’s). Particle chunk borders. Config via <code>config/otters_civ_revived/guilds.json</code>.</li>
         <li><strong>Protections</strong> — block breaking, block placement, container use (chests, furnaces, shulkers, barrels, hoppers, etc.), and block attacks are blocked for non-guild-members in claimed chunks. Tune via <code>guilds.json</code>: <code>protectBlocks</code>, <code>protectContainers</code>, <code>protectInteractables</code>, <code>allowMemberBuild</code>.</li>
       </ul>
       <h3 id="design-goals-jobs">Jobs, professions &amp; traits</h3>
@@ -484,7 +485,7 @@
         <li><strong>Traits &amp; levels</strong> — per-job progression (levels, perks, or trait lines)—integrates with the mod’s planned <code>JobsHooks</code> pipeline for stacking modifiers on rewards.</li>
       </ul>
     </div>
-    <div class="note">Current releases implement SQLite-backed wallets, <code>/money</code>, <code>/money add|take</code>, <code>/pay</code>, <code>/economy reload|log</code>, join tips, tag-based mining/combat grants, jobs (5 shipped starter jobs plus a custom configurable jobs catalog), and guilds (create/invite/join/leave/kick/ranks, optional public joining, chunk claims, protections, home TP, ASCII + GUI chunk map, border particles). Messaging, friends, and deeper profession trees are not yet in the JAR.</div>
+    <div class="note">Current releases implement SQLite-backed wallets, <code>/money</code>, <code>/money add|take</code>, <code>/pay</code>, <code>/economy reload|log</code>, join tips, tag-based mining/combat grants, jobs (5 shipped starter jobs plus a custom configurable jobs catalog), and guilds (create/invite/join/leave/kick/ranks, optional public joining, chunk claims, protections, home TP, ASCII + GUI chunk map with surface tint / facing / claim-crossing hint, border particles). Messaging, friends, and deeper profession trees are not yet in the JAR.</div>
 
     <nav class="contents" aria-label="Contents">
       <strong>Contents</strong>
@@ -497,7 +498,7 @@
         <li><a href="#economy">Economy &amp; persistence</a></li>
         <li><a href="#rewards">Passive rewards</a> (<a href="#rewards-config">tags &amp; per-id maps</a>, <a href="#bundled-tags">default tags</a>)</li>
         <li><a href="#config-reference">All config files (reference)</a></li>
-        <li><a href="#roadmap-milestones">Roadmap milestones (M0–M6)</a></li>
+        <li><a href="#roadmap-milestones">Roadmap milestones (M0–M6 + M4.5)</a></li>
         <li><a href="#client">Client (detail)</a></li>
         <li><a href="#limits">Operational limits</a></li>
         <li><a href="#architecture">Architecture</a></li>
@@ -523,16 +524,16 @@
         <tr><td>Java runtime</td><td><code>25</code> or newer</td></tr>
       </tbody>
     </table>
-    <p><strong>Install note:</strong> Put the mod on the machine that <strong>hosts the world</strong> (single-player = your own game; multiplayer = the host’s <code>mods</code> folder). Players only need the client JAR if they want the jobs HUD overlay or <code>/otter</code> GUI extras—money and commands still run from the world host.</p>
+    <p><strong>Install note:</strong> Put the mod on the machine that <strong>hosts the world</strong> (single-player = your own game; multiplayer = the host’s <code>mods</code> folder). Players only need the client JAR if they want the jobs HUD overlay or <code>/otter</code> GUI extras—money and commands still run from the world host. No separate database server is required; the jar bundles its SQLite runtime and auto-creates <code>project_ooga.db</code> on first start.</p>
 
     <h2 id="commands">Slash commands (in-game chat)</h2>
     <p><strong>Simple explanation:</strong> Press your <strong>chat</strong> key (often <strong>T</strong>), type a line that starts with <strong><code>/</code></strong> (for example <code>/money</code>), press <strong>Enter</strong>. That works while you are <strong>playing inside a world</strong>—single-player or multiplayer. You are not using a separate “server program” window; “server” in modding just means <q>the part of Minecraft that remembers money and runs the command.</q></p>
-    <p>Try <code>/guide</code> first if you want the in-game handbook item, or <code>/otter</code> if you want the live civ hub menu. On a client with this mod installed, <code>/otter</code> opens a <strong>stylized in-game menu</strong> (tabbed: Home · Wallet · Jobs · Guilds · Rewards · Civ · Help) with one-click buttons to run <code>/money</code>, preview the jobs HUD, join a job, run guild actions, or open config files. On vanilla clients it prints a short chat help list instead.</p>
+    <p>Try <code>/guide</code> first if you want the in-game handbook item, or <code>/otter</code> if you want the live civ hub menu. On a client with this mod installed, <code>/otter</code> opens a <strong>stylized in-game menu</strong> (tabbed: Home · Wallet · Jobs · Guilds · Rewards · Brief · Civ · Help) with one-click buttons to run <code>/money</code>, preview the jobs HUD, join a job, run guild actions, or open config files. <strong>Brief</strong> is the in-game mirror of the whitepaper Phases 0–3 and roadmap M0–M3; <strong>Civ</strong> shows M0–M6 milestone cards. Use the footer <strong>Theme</strong> chip to cycle color palettes (Otter, Midnight, Sunset, Mint); the choice persists in <code>config/project_ooga/otter_ui.properties</code>. On vanilla clients it prints a short chat help list instead.</p>
     <p id="join-messages">Players also see <strong>automatic system messages when they connect</strong> (not a slash command). The <strong>first</strong> time your account is seen on <strong>this world save</strong>, you get three lines: Otters Civ. Revived branding, <code>/guide</code>, <code>/otter</code>, <code>/money</code>, and a pointer to passive rewards / <code>rewards.json</code>. <strong>Later joins</strong> get a gold/aqua <q>welcome back ~</q><em>name</em> line and a condensed command reminder—stored per save as <code>project_ooga:join_attendance</code> (overworld saved data), separate from the main SQLite store and JSON config files.</p>
 
     <dl>
       <dt><span class="cmd">/otter</span></dt>
-      <dd>Shows which commands exist and reminds operators where <code>rewards.json</code> lives. No arguments.</dd>
+      <dd>No arguments. <strong>Vanilla / server-only client:</strong> prints a compact chat command list (same lines as in-game help) plus short tips for the mod hub, join messages, and the live handbook. <strong>Mod client:</strong> opens the tabbed civ hub (Home · Wallet · Jobs · Guilds · Rewards · Brief · Civ · Help) with quick actions, jobs HUD preview, guild buttons, optional config opens, and the footer <strong>Theme</strong> chip. <strong>Brief</strong> condenses <code>DOCS/whitepaper.md</code> Phases 0–3 and <code>DOCS/ROADMAP.md</code> M0–M3; <strong>Civ</strong> lists M0–M6 cards. <strong>Home</strong> adds Minecraft + mod version, local vs multiplayer session hint, your current chunk and claim name (when the server has synced claims), richer wallet/guild cards, a <code>/guide</code> shortcut, and a live sync snapshot (claim count · jobs in catalog).</dd>
 
       <dt><span class="cmd">/guide</span></dt>
       <dd>Gives you a written Otters Civ. handbook item with the current basics for money, jobs, guilds, and config locations. Requires a free inventory slot.</dd>
@@ -583,7 +584,7 @@
       <dd>Claim or unclaim the chunk you stand in ($100 per claim, max 16 per guild). Officer+.</dd>
 
       <dt><span class="cmd">/guild map</span></dt>
-      <dd>Shows an ASCII chunk-claim map in chat (9×9 grid, radius 4). Also toggles a 30-second client GUI overlay in the top-right corner.</dd>
+      <dd>Shows an ASCII chunk-claim map in chat (9×9 grid, radius 4). Also toggles a 30-second client GUI overlay in the top-right: surface tint per chunk, green vs amber for your guild vs others, a yaw-facing wedge on your cell, and a hotbar-style line when you walk into a different claim.</dd>
 
       <dt><span class="cmd">/guild sethome</span>, <span class="cmd">/guild home</span></dt>
       <dd>Set guild teleport point (officer+) and teleport to it (any member). Cooldown is operator-tunable in <code>guilds.json</code>.</dd>
@@ -753,40 +754,44 @@
       </li>
     </ol>
     <p><strong>Precedence (high → low) when a block breaks or mob dies:</strong> sibling value file entry → <code>rewards.json</code> inline map entry → tag membership with flat reward → no payout. So <em>any</em> explicit per-id line in either JSON beats tag-wide fallback.</p>
-    <h3 id="config-jobs-store"><code>config/otters_civ_revived/jobs_state.json</code></h3>
-    <p><strong>Player jobs ledger:</strong> this is the persisted state file, not the tuning file. It stores active job ids plus per-job XP totals in JSON under each player UUID, with optional name hints for operators.</p>
-    <p>Use <code>jobs.json</code> to change the live catalog. Player joins, XP gains, and active-job changes are written to <code>jobs_state.json</code> instead. Older <code>jobs.properties</code> ledgers migrate once on load into <code>jobs_state.json</code>.</p>
+    <h3 id="config-jobs-store"><code>config/otters_civ_revived/project_ooga.db</code> → <code>jobs_state</code> table</h3>
+    <p><strong>Player jobs runtime state:</strong> active job ids and per-job XP totals now persist in the SQLite <code>jobs_state</code> table inside <code>project_ooga.db</code>, not in a separate JSON file.</p>
+    <p>Use <code>jobs.json</code> to change the live catalog. The database table is auto-managed runtime state only. Older <code>jobs.properties</code> and <code>jobs_state.json</code> notes are legacy history and should not be treated as the current storage path.</p>
 
     <h3 id="config-wallet"><code>config/otters_civ_revived/project_ooga.db</code></h3>
     <p><strong>Main runtime store:</strong> this SQLite database holds wallet balances, the immutable <code>wallet_ledger</code> audit table, jobs state, guild records, chunk claims, and schema version metadata. It is auto-created on first startup and migrated in place as schema versions advance.</p>
     <p>The database runs in WAL mode for safer concurrent reads, and admin inspection is surfaced in-game through <code>/economy log</code> plus <code>/ooga db status</code>. Prefer those commands over hand-editing the DB unless you are taking a controlled backup/restore pass.</p>
-    <div class="note">Current runtime split: operator-tunable behavior lives in JSON files under <code>config/otters_civ_revived/</code>; mutable state lives in <code>project_ooga.db</code>; client-only HUD layout lives in <code>config/project_ooga/jobs_hud.properties</code>.</div>
+    <div class="note">Current runtime split: operator-tunable behavior lives in JSON files under <code>config/otters_civ_revived/</code>; mutable state lives in <code>project_ooga.db</code>; client-only HUD layout lives in <code>config/project_ooga/jobs_hud.properties</code>; the <code>/otter</code> menu theme id lives in <code>config/project_ooga/otter_ui.properties</code>.</div>
     <h3 id="config-hud"><code>config/project_ooga/jobs_hud.properties</code></h3>
     <p><strong>Client-only jobs HUD config:</strong> <code>visible=true|false</code>, <code>offsetX</code>, <code>offsetY</code>, and <code>scale</code>. The file is written when you use the <code>/otter</code> → <strong>Jobs</strong> controls. Default behavior: visible, centered, 12 px above the vanilla XP bar, scale <code>1.0</code>.</p>
     <p class="note"><strong>Deprecated:</strong> the old FPS-only config remains at <code>config/fpsmod/hud.properties</code> for the standalone FPS overlay lineage, but Project OOGA no longer registers that overlay.</p>
+    <h3 id="config-otter-ui"><code>config/project_ooga/otter_ui.properties</code></h3>
+    <p><strong>Client-only <code>/otter</code> hub theme:</strong> <code>theme</code> is one of <code>OTTER</code>, <code>MIDNIGHT</code>, <code>SUNSET</code>, or <code>MINT</code> (default <code>OTTER</code>). The file is written when you click the footer <strong>Theme: … ▶</strong> chip in the full menu or the matching control on the small-window fallback card.</p>
 
     <h2 id="roadmap-milestones">Roadmap milestones (execution order)</h2>
-    <p class="lead">Rough delivery spine (M0–M6)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
+    <p class="lead">Rough delivery spine (M0–M6, with <strong>M4.5</strong> social between shops and governance)—not dates. Matches <code>DOCS/ROADMAP.md</code>; pairing read: <a href="#design-goals">target feature set</a>.</p>
     <p>High-level phases from <code>DOCS/ROADMAP.md</code>; the <a href="#design-goals">target feature set</a> section describes intended gameplay, while this table is the delivery spine. The remaining backlog now centers on a richer permission <strong>apparatus</strong> beyond vanilla gamemaster, player shops GUI, friends / PM, diplomacy/governance layers, optional PostgreSQL at scale, and soak testing plus operator playbooks.</p>
     <table class="data-table" aria-label="Milestone overview">
       <thead>
         <tr><th>Milestone</th><th>Theme</th></tr>
       </thead>
       <tbody>
-        <tr><td>M0</td><td>Foundation and data integrity (persistence abstraction, SQLite baseline, migrations, audit framework)</td></tr>
+        <tr><td>M0</td><td>✅ Foundation and data integrity (SQLite baseline, schema migrations, audit ledger — milestone complete; shop/social/second-backend persistence tracked under M4 / M4.5 / M6)</td></tr>
         <tr><td>M1</td><td>Economy MVP (transfers, admin money ops, fees/sinks, full transaction ledger)</td></tr>
         <tr><td>M2</td><td>Jobs &amp; professions MVP (<code>/job …</code>, event rewards, progression)</td></tr>
         <tr><td>M3</td><td>✅ Guilds &amp; claims MVP (<code>/guild</code>, chunk claims, home TP, officer ranks, ASCII + GUI chunk map)</td></tr>
-        <tr><td>M4</td><td>Player shops MVP (listings, escrow, Screen Handler UI, tax)</td></tr>
+        <tr><td>M4</td><td>Player shops MVP (durable listings/stock/escrow persistence, listings, Screen Handler UI, tax)</td></tr>
+        <tr><td>M4.5</td><td>Social layer (friends + private messages; friend/DM persistence)</td></tr>
         <tr><td>M5</td><td>Civ governance (diplomacy states, territory projects, regional bonuses)</td></tr>
-        <tr><td>M6</td><td>Stabilization, balance, PostgreSQL migration path, RC hardening</td></tr>
+        <tr><td>M6</td><td>Stabilization, balance, JDBC dialect + PostgreSQL migration path, RC hardening</td></tr>
       </tbody>
     </table>
     <div class="note">Nothing in this milestone list supersedes the caution above: shipped JAR capability today stops at wallets, passive payouts, bootstrap commands, jobs/HUD slice, and guilds &amp; claims (M3). M4+ remain planned.</div>
 
     <h2 id="client">Client features (detail)</h2>
+    <p><strong><code>/otter</code> hub themes:</strong> the civ menu is drawn with flat rectangles (no texture pack dependency). Four built-in palettes change panel, accent, and text colors; cycle them from the menu footer and your choice persists under <code>config/project_ooga/otter_ui.properties</code>.</p>
     <p><strong>Jobs HUD:</strong> Project OOGA draws a compact jobs bar above vanilla XP whenever the local player has an active job and the HUD is enabled. The <code>/otter</code> → <strong>Jobs</strong> tab now includes a preview of that bar, paged join/leave/info controls driven by the synced server catalog, and the usual visibility / offset / scale controls so you can see what the overlay is supposed to look like before closing the menu.</p>
-    <p><strong>Guild chunk map overlay:</strong> Running <code>/guild map</code> toggles a 30-second GUI chunk-map overlay in the top-right corner of the screen. A 9×9 grid shows claimed chunks (green) vs unclaimed (dark gray), with your position highlighted (aqua). Claim data is streamed from the server on join and whenever chunks are claimed/unclaimed.</p>
+    <p><strong>Guild chunk map overlay:</strong> Running <code>/guild map</code> toggles a 30-second GUI chunk-map overlay in the top-right corner of the screen. A 9×9 grid tints each cell from the chunk’s surface block (vanilla map colors), then overlays semi-transparent green for <em>your</em> guild’s claims and amber for other guilds; your cell stays aqua with a short white line showing horizontal facing (yaw). While you move on foot, crossing into a chunk with a different claim shows a hotbar-style line (“your guild” vs named “claimed land”). Claim data (including display names for the hint) is streamed from the server on join and whenever chunks are claimed or unclaimed.</p>
     <p><strong>Chunk border particles:</strong> <code>/guild map</code> also spawns particle columns at claimed chunk corners — green end rods for your guild's claims, orange flame particles for other guilds. Particles persist for 30 seconds.</p>
     <p><strong>Scaling behavior:</strong> the bar width is now content-aware. Longer labels such as <code>LUMBERJACK</code> and larger XP strings no longer overrun the right-hand text at default settings; the HUD expands when it has room, truncates safely only when it must, and clamps back on-screen after offsets are applied.</p>
     <p><strong>Small-window fallback:</strong> if the game window / GUI viewport gets too cramped for the full <code>/otter</code> panel, the client now swaps to a compact prompt instead of trying to cram the full menu on-screen. That prompt tells the player to enlarge the window or lower Minecraft GUI Scale and still exposes quick buttons for <code>/money</code>, <code>/job</code>, and <code>/job list</code>.</p>

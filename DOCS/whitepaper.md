@@ -192,9 +192,11 @@ schema and migration ledger are identical, so the move is a data copy, not a rew
 
 ## Delivery Roadmap
 
-### Phase 0 - Foundation
-- Data schemas, persistence abstraction, SQLite default backend, Postgres dialect stub,
-  migration skeleton, and wallet service.
+### Phase 0 - Foundation (100% complete — repo milestone **M0**)
+- Relational schemas, `schema_version` + forward migration runner, SQLite default backend
+  (`project_ooga.db`, WAL, busy timeout, foreign keys), store-facing interfaces with SQLite
+  implementations (wallets, immutable `wallet_ledger`, guilds/claims, jobs state), operator
+  `/ooga db status|migrate`, and authoritative wallet service wired through persistence.
 
 ### Phase 1 - Economy MVP
 - Wallet commands, transfer logic, transaction logs, and admin controls.
@@ -207,12 +209,22 @@ schema and migration ledger are identical, so the move is a data copy, not a rew
 
 ### Phase 4 - Player Shops MVP
 - Listing, purchase, tax flow, and first market UX.
+- Durable shop persistence (listings, stock, escrow state) in the civ data layer — same
+  migration and backup discipline as economy/guilds.
+
+### Phase 4.5 - Social Layer (Friends + Messages)
+- Friend graph, requests/blocks, private messaging, and rate limits with persistence aligned
+  to the civ data layer (SavedData and/or relational stores).
 
 ### Phase 5 - Civ Layer
 - Diplomacy, faction projects, regional bonuses, and governance tooling.
 
 ### Phase 6 - Polish and Scale
 - Profiling, balancing, anti-abuse hardening, and operator observability.
+- **Scale persistence:** pluggable JDBC backend + dialect layer (PostgreSQL as the primary
+  large-server target; optional MySQL/MariaDB community path per architecture notes), plus
+  SQLite → Postgres migration/export tooling — picks up the portable SQL and repository
+  boundaries shipped in Phase 0 without expanding Phase 0 scope.
 
 ## Success Metrics
 - Server retention and average play-session length.

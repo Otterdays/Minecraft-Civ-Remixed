@@ -28,4 +28,13 @@ public final class GuildClientState {
     public static GuildStatusPayload.ClientGuildInfo guildInfo() {
         return guildInfo;
     }
+
+    public static ClaimedChunk claimAt(String dimension, int chunkX, int chunkZ) {
+        for (ClaimedChunk c : claims) {
+            if (c.dimension().equals(dimension) && c.chunkX() == chunkX && c.chunkZ() == chunkZ) {
+                return c;
+            }
+        }
+        return null;
+    }
 }

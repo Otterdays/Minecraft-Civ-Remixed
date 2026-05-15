@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
  * @deprecated Companion to {@link FpsHudOverlay} — also disabled. The standalone
  * FPS overlay mod provides its own toggle.
  */
+@SuppressWarnings({"removal", "null"})
 @Deprecated(since = "1.0.0", forRemoval = true)
 public final class FpsHudScreenButton {
     private static final int X = 6;

@@ -2,6 +2,8 @@ package com.fpsmod.guilds.net;
 
 import com.fpsmod.OogaMod;
 import com.fpsmod.guilds.ClaimedChunk;
+import com.fpsmod.guilds.Guild;
+import com.fpsmod.guilds.GuildService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
@@ -27,6 +29,19 @@ public record ClaimsPayload(String json) implements CustomPacketPayload {
 
     public static ClaimsPayload fromClaims(Set<ClaimedChunk> claims) {
         List<ClaimedChunk> list = new ArrayList<>(claims);
+        return new ClaimsPayload(GSON.toJson(list));
+    }
+
+    /** Claims for client HUD, with {@link ClaimedChunk#guildDisplayName} filled for chat / map legend. */
+    public static ClaimsPayload forGuildSync(GuildService guilds) {
+        Set<ClaimedChunk> claims = guilds.allClaims();
+        List<ClaimedChunk> list = new ArrayList<>(claims.size());
+        for (ClaimedChunk c : claims) {
+            Guild g = guilds.guildById(c.guildId());
+            String label = g != null ? g.name : "unknown guild";
+            list.add(new ClaimedChunk(
+                c.dimension(), c.chunkX(), c.chunkZ(), c.guildId(), c.claimedAt(), label));
+        }
         return new ClaimsPayload(GSON.toJson(list));
     }
 

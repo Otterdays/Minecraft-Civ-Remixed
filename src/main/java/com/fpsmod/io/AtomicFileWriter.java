@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -27,6 +29,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * rename itself fails (ENOSPC, disk failure), the backup is restored.
  */
 public final class AtomicFileWriter {
+    // Same-target writes share one temp path, so serialize them to avoid interleaved output.
+    private static final ConcurrentMap<Path, Object> TARGET_LOCKS = new ConcurrentHashMap<>();
 
     private AtomicFileWriter() {
     }
@@ -57,6 +61,14 @@ public final class AtomicFileWriter {
     }
 
     private static void doWriteAtomically(Path target, ThrowingWriter writer, boolean keepBackup) throws IOException {
+        Path lockKey = lockKey(target);
+        Object lock = TARGET_LOCKS.computeIfAbsent(lockKey, ignored -> new Object());
+        synchronized (lock) {
+            doWriteAtomicallyLocked(lockKey, writer, keepBackup);
+        }
+    }
+
+    private static void doWriteAtomicallyLocked(Path target, ThrowingWriter writer, boolean keepBackup) throws IOException {
         Path tmp = siblingTemp(target);
         Path bak = siblingBak(target);
         Files.createDirectories(target.getParent());
@@ -123,14 +135,22 @@ public final class AtomicFileWriter {
      * logging the action. Safe to call even when the file does not exist.
      */
     public static void deleteStaleTemp(Path target) {
-        Path tmp = siblingTemp(target);
-        try {
-            if (Files.deleteIfExists(tmp)) {
-                OogaMod.LOGGER.info("[otters_civ_revived/io] Removed stale temp file {}", tmp);
+        Path lockKey = lockKey(target);
+        Object lock = TARGET_LOCKS.computeIfAbsent(lockKey, ignored -> new Object());
+        synchronized (lock) {
+            Path tmp = siblingTemp(lockKey);
+            try {
+                if (Files.deleteIfExists(tmp)) {
+                    OogaMod.LOGGER.info("[otters_civ_revived/io] Removed stale temp file {}", tmp);
+                }
+            } catch (IOException e) {
+                OogaMod.LOGGER.warn("[otters_civ_revived/io] Could not delete stale temp {} — {}", tmp, e.toString());
             }
-        } catch (IOException e) {
-            OogaMod.LOGGER.warn("[otters_civ_revived/io] Could not delete stale temp {} — {}", tmp, e.toString());
         }
+    }
+
+    private static Path lockKey(Path target) {
+        return target.toAbsolutePath().normalize();
     }
 
     static Path siblingTemp(Path target) {

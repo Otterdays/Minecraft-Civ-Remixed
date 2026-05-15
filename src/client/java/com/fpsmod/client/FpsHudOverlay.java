@@ -17,6 +17,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  * FPS overlay mod. Kept only as reference; do not re-enable without verifying
  * no other mod in the pack uses the same {@code fpsmod} mod ID.
  */
+@SuppressWarnings({"removal", "null"})
 @Deprecated(since = "1.0.0", forRemoval = true)
 public final class FpsHudOverlay {
     private static final Identifier OVERLAY_ID = Identifier.fromNamespaceAndPath(OogaMod.MOD_ID, "fps_overlay");

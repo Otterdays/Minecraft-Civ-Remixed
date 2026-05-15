@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -255,15 +256,28 @@ public final class CompiledJobCatalog {
         private static Set<String> resolveBlockTags(List<String> tagIds, List<String> diagnostics, String jobId) {
             Set<String> out = new LinkedHashSet<>();
             for (String tagId : tagIds) {
+                if (tagId == null) {
+                    continue;
+                }
                 Identifier parsed = Identifier.tryParse(tagId);
                 if (parsed == null) {
                     diagnostics.add("Job '" + jobId + "' has invalid block tag '" + tagId + "'.");
                     continue;
                 }
-                TagKey<Block> tag = TagKey.create(net.minecraft.core.registries.Registries.BLOCK, parsed);
+                Identifier parsedId = Objects.requireNonNull(parsed);
+                TagKey<Block> tag = TagKey.create(net.minecraft.core.registries.Registries.BLOCK, parsedId);
                 int before = out.size();
-                for (Holder<Block> holder : BuiltInRegistries.BLOCK.getTagOrEmpty(tag)) {
-                    out.add(BuiltInRegistries.BLOCK.getKey(holder.value()).toString());
+                try {
+                    for (Holder<Block> holder : BuiltInRegistries.BLOCK.getTagOrEmpty(tag)) {
+                        Block block = Objects.requireNonNull(holder.value());
+                        out.add(BuiltInRegistries.BLOCK.getKey(block).toString());
+                    }
+                } catch (IllegalStateException e) {
+                    diagnostics.add(
+                        "Job '" + jobId + "' block tag '" + tagId
+                            + "' is not bound yet during early startup; it will retry on server refresh."
+                    );
+                    continue;
                 }
                 if (out.size() == before) {
                     diagnostics.add("Job '" + jobId + "' block tag '" + tagId + "' resolved 0 entries.");
@@ -275,15 +289,28 @@ public final class CompiledJobCatalog {
         private static Set<String> resolveEntityTags(List<String> tagIds, List<String> diagnostics, String jobId) {
             Set<String> out = new LinkedHashSet<>();
             for (String tagId : tagIds) {
+                if (tagId == null) {
+                    continue;
+                }
                 Identifier parsed = Identifier.tryParse(tagId);
                 if (parsed == null) {
                     diagnostics.add("Job '" + jobId + "' has invalid entity tag '" + tagId + "'.");
                     continue;
                 }
-                TagKey<EntityType<?>> tag = TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, parsed);
+                Identifier parsedId = Objects.requireNonNull(parsed);
+                TagKey<EntityType<?>> tag = TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, parsedId);
                 int before = out.size();
-                for (Holder<EntityType<?>> holder : BuiltInRegistries.ENTITY_TYPE.getTagOrEmpty(tag)) {
-                    out.add(BuiltInRegistries.ENTITY_TYPE.getKey(holder.value()).toString());
+                try {
+                    for (Holder<EntityType<?>> holder : BuiltInRegistries.ENTITY_TYPE.getTagOrEmpty(tag)) {
+                        EntityType<?> entityType = Objects.requireNonNull(holder.value());
+                        out.add(BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
+                    }
+                } catch (IllegalStateException e) {
+                    diagnostics.add(
+                        "Job '" + jobId + "' entity tag '" + tagId
+                            + "' is not bound yet during early startup; it will retry on server refresh."
+                    );
+                    continue;
                 }
                 if (out.size() == before) {
                     diagnostics.add("Job '" + jobId + "' entity tag '" + tagId + "' resolved 0 entries.");
@@ -295,15 +322,28 @@ public final class CompiledJobCatalog {
         private static Set<String> resolveItemTags(List<String> tagIds, List<String> diagnostics, String jobId) {
             Set<String> out = new LinkedHashSet<>();
             for (String tagId : tagIds) {
+                if (tagId == null) {
+                    continue;
+                }
                 Identifier parsed = Identifier.tryParse(tagId);
                 if (parsed == null) {
                     diagnostics.add("Job '" + jobId + "' has invalid item tag '" + tagId + "'.");
                     continue;
                 }
-                TagKey<Item> tag = TagKey.create(net.minecraft.core.registries.Registries.ITEM, parsed);
+                Identifier parsedId = Objects.requireNonNull(parsed);
+                TagKey<Item> tag = TagKey.create(net.minecraft.core.registries.Registries.ITEM, parsedId);
                 int before = out.size();
-                for (Holder<Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(tag)) {
-                    out.add(BuiltInRegistries.ITEM.getKey(holder.value()).toString());
+                try {
+                    for (Holder<Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(tag)) {
+                        Item item = Objects.requireNonNull(holder.value());
+                        out.add(BuiltInRegistries.ITEM.getKey(item).toString());
+                    }
+                } catch (IllegalStateException e) {
+                    diagnostics.add(
+                        "Job '" + jobId + "' item tag '" + tagId
+                            + "' is not bound yet during early startup; it will retry on server refresh."
+                    );
+                    continue;
                 }
                 if (out.size() == before) {
                     diagnostics.add("Job '" + jobId + "' item tag '" + tagId + "' resolved 0 entries.");
@@ -323,12 +363,15 @@ public final class CompiledJobCatalog {
                 return out;
             }
             for (String id : ids) {
+                if (id == null) {
+                    continue;
+                }
                 Identifier parsed = Identifier.tryParse(id);
                 if (parsed == null) {
                     diagnostics.add("Job '" + jobId + "' has invalid id '" + id + "' in " + field + ".");
                     continue;
                 }
-                out.add(parsed.toString());
+                out.add(Objects.requireNonNull(parsed).toString());
             }
             return out;
         }

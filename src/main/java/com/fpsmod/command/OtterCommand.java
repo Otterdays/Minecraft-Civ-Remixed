@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Lists Otters Civ. Revived / fpsmod commands (helps players and ops discover the surface). */
+@SuppressWarnings("null")
 public final class OtterCommand {
     private OtterCommand() {
     }
@@ -18,7 +19,11 @@ public final class OtterCommand {
     private static int runHelp(CommandSourceStack source) {
         sendLine(source, "Otters Civ. Revived (technical mod id: project_ooga)");
         sendLine(source, "--- Commands ---");
-        sendLine(source, "/otter — show this list");
+        sendLine(source, "/otter — this chat list; with the mod client, opens the hub (HOME·WALLET·… + footer Theme chip)");
+        sendLine(source, "Hub tip: Home shows MC + mod version, local vs remote session, and your current chunk claim when sync is active.");
+        sendLine(source, "Join chat repeats /guide · /otter · /money — toggle with showJoinWelcome in economy.json.");
+        sendLine(source, "/guide book text is rebuilt from live economy, jobs, and guild caps when you spawn it.");
+        sendLine(source, "Tip: /otter → Brief (mod client) = whitepaper Ph 0–3 + roadmap M0–M3; CIV tab = full M0–M6 cards.");
         sendLine(source, "/guide — spawn the in-game Otters Civ. handbook");
         sendLine(source, "/guide give <player> — admin give the handbook to a player (gamemaster-only)");
         sendLine(source, "/money — show your wallet balance");
@@ -37,6 +42,7 @@ public final class OtterCommand {
         sendLine(source, "/guild disband — disband your guild");
         sendLine(source, "/guild invite <player> — invite a player");
         sendLine(source, "/guild join — accept pending invite");
+        sendLine(source, "/guild join <name> — join a public guild by name (when enabled in guilds.json)");
         sendLine(source, "/guild leave — leave your guild");
         sendLine(source, "/guild kick <player> — kick a member");
         sendLine(source, "/guild transfer <player> — transfer ownership to another member");
@@ -44,12 +50,13 @@ public final class OtterCommand {
         sendLine(source, "/guild claim — claim the chunk you stand in ($100)");
         sendLine(source, "/guild unclaim — unclaim current chunk");
         sendLine(source, "/guild unclaimall — unclaim all your guild's chunks");
-        sendLine(source, "/guild map — ASCII chunk claim map");
+        sendLine(source, "/guild map — ASCII chunk map + overlay (terrain tint, claim tint, facing, hotbar hint on claim border)");
         sendLine(source, "/guild sethome — set guild teleport point");
         sendLine(source, "/guild home — teleport to guild home");
         sendLine(source, "/guild open | /guild close — toggle public joining (owner-only)");
         sendLine(source, "/guild info — your guild details");
         sendLine(source, "/guild list — all guilds");
+        sendLine(source, "/guild reload — re-read guilds.json (gamemaster-only)");
         sendLine(source, "/ooga db status|migrate — SQLite database management (admin)");
         sendLine(source, "--- Passive rewards ---");
         sendLine(source, "Economy/guild/jobs state: config/otters_civ_revived/project_ooga.db (SQLite, WAL mode).");

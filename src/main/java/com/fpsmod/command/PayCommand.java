@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("null")
 public final class PayCommand {
     private static final Map<UUID, Long> LAST_SUCCESSFUL_PAY_MS = new ConcurrentHashMap<>();
 

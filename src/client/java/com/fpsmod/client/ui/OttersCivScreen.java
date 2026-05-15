@@ -1,6 +1,7 @@
 package com.fpsmod.client.ui;
 
 import com.fpsmod.OogaMod;
+import com.fpsmod.client.guilds.GuildClientState;
 import com.fpsmod.client.jobs.JobsClientCatalog;
 import com.fpsmod.client.jobs.JobsHudOverlay;
 import com.fpsmod.client.jobs.JobsClientState;
@@ -23,6 +24,10 @@ import java.util.List;
 /**
  * Otters Civ. Revived — stylized in-game hub. Opens from client-side {@code /otter}.
  * Pure-geometry rendering (no asset textures) so it stays asset-pipeline-free for v1.
+ * Four client-only color themes (Otter, Midnight, Sunset, Mint); click the footer
+ * <q>Theme</q> chip to cycle — persisted in {@code config/project_ooga/otter_ui.properties}.
+ * The Brief tab mirrors DOCS/whitepaper.md Phases 0–3 and DOCS/ROADMAP.md M0–M3;
+ * the CIV tab lists milestone cards M0–M6.
  *
  * <p>26.1 Screen API: vanilla calls {@link #extractRenderState} every frame to record
  * draw commands into the render graph. We render the panel directly here; mouse input
@@ -36,7 +41,8 @@ public final class OttersCivScreen extends Screen {
         JOBS("Jobs", "Profession & HUD bar"),
         GUILDS("Guilds", "Groups & claims"),
         REWARDS("Rewards", "Payouts & tuning"),
-        CIV("Civ", "Shops · gov · future"),
+        BRIEF("Brief", "WP Ph 0–3 · M0–M3"),
+        CIV("Civ", "Roadmap M0–M6"),
         HELP("Help", "Commands & docs");
 
         final String label;
@@ -64,20 +70,8 @@ public final class OttersCivScreen extends Screen {
         }
     }
 
-    private static final int PANEL_BG       = 0xFF111827;
-    private static final int PANEL_BG_ALT   = 0xFF0B1220;
-    private static final int PANEL_BORDER   = 0xFF1F2937;
-    private static final int ACCENT_GOLD    = 0xFFE9B949;
-    private static final int ACCENT_AQUA    = 0xFF67E8F9;
-    private static final int TEXT_PRIMARY   = 0xFFE5E7EB;
-    private static final int TEXT_MUTED     = 0xFF9CA3AF;
-    private static final int TEXT_DIM       = 0xFF6B7280;
-    private static final int HOVER_BG       = 0xFF1E293B;
-    private static final int BTN_BG         = 0xFF1F2937;
-    private static final int BTN_BG_HOVER   = 0xFF334155;
-
     private static final int PANEL_W = 520;
-    private static final int PANEL_H = 300;
+    private static final int PANEL_H = 352;
     private static final int SIDEBAR_W = 128;
     private static final int TAB_H = 28;
     private static final int COMFORT_MIN_W = PANEL_W + 120;
@@ -88,6 +82,12 @@ public final class OttersCivScreen extends Screen {
     private Tab active = Tab.HOME;
     private final List<Rect> hotspots = new ArrayList<>();
     private int jobsPage = 0;
+    /** Brief tab: 0 = whitepaper-style spec, 1 = roadmap M0–M3 checklist. */
+    private int briefPage;
+
+    private OtterUiPalette pal() {
+        return OtterUiThemeConfig.instance().palette();
+    }
 
     public OttersCivScreen() {
         super(Component.literal("Otters Civ. Revived"));
@@ -98,7 +98,7 @@ public final class OttersCivScreen extends Screen {
         float t = Mth.clamp((System.currentTimeMillis() - openedAt) / (float) ANIM_MS, 0f, 1f);
         float eased = easeOutCubic(t);
         int dimAlpha = (int) (0xCC * eased) & 0xFF;
-        g.fill(0, 0, this.width, this.height, (dimAlpha << 24) | 0x0A0E1A);
+        g.fill(0, 0, this.width, this.height, (dimAlpha << 24) | (pal().scrimRgb() & 0x00FFFFFF));
     }
 
     @Override
@@ -122,15 +122,15 @@ public final class OttersCivScreen extends Screen {
         // Drop shadow.
         g.fill(px + 3, py + 6, px + PANEL_W + 3, py + PANEL_H + 6, 0x66000000);
         // Panel body with shaved corners.
-        roundedFill(g, px, py, px + PANEL_W, py + PANEL_H, PANEL_BG);
+        roundedFill(g, px, py, px + PANEL_W, py + PANEL_H, pal().panelBg());
         // Top accent stripe.
-        g.fill(px + 1, py + 1, px + PANEL_W - 1, py + 2, ACCENT_GOLD);
+        g.fill(px + 1, py + 1, px + PANEL_W - 1, py + 2, pal().accentPrimary());
         // Sidebar background.
-        g.fill(px + 1, py + 2, px + SIDEBAR_W, py + PANEL_H - 1, PANEL_BG_ALT);
+        g.fill(px + 1, py + 2, px + SIDEBAR_W, py + PANEL_H - 1, pal().panelBgAlt());
         // Sidebar divider.
-        g.fill(px + SIDEBAR_W, py + 2, px + SIDEBAR_W + 1, py + PANEL_H - 1, PANEL_BORDER);
+        g.fill(px + SIDEBAR_W, py + 2, px + SIDEBAR_W + 1, py + PANEL_H - 1, pal().panelBorder());
         // Outer border.
-        outlineRect(g, px, py, px + PANEL_W, py + PANEL_H, PANEL_BORDER);
+        outlineRect(g, px, py, px + PANEL_W, py + PANEL_H, pal().panelBorder());
 
         drawTitle(g, px + 8, py + 8);
 
@@ -155,18 +155,24 @@ public final class OttersCivScreen extends Screen {
 
         // Footer band — separates content from chrome and prevents overlap with tab content.
         int footerY = py + PANEL_H - 14;
-        g.fill(px + SIDEBAR_W + 1, footerY, px + PANEL_W - 1, footerY + 1, PANEL_BORDER);
-        String left = "Mod id: project_ooga · /otter · /guide";
+        g.fill(px + SIDEBAR_W + 1, footerY, px + PANEL_W - 1, footerY + 1, pal().panelBorder());
+        String left = "Mod id: project_ooga · " + buildCompactFooterLeft();
         String hint = "ESC to close";
-        g.text(this.font, left, px + SIDEBAR_W + 10, footerY + 4, TEXT_DIM, false);
-        g.text(this.font, hint, px + PANEL_W - 6 - this.font.width(hint), footerY + 4, TEXT_DIM, false);
+        String themeBtn = "Theme: " + OtterUiThemeConfig.instance().theme().displayName() + " \u25B6";
+        int themeW = Math.max(72, this.font.width(themeBtn) + 10);
+        int hintW = this.font.width(hint);
+        int rightPad = 6;
+        int themeX = px + PANEL_W - rightPad - hintW - 8 - themeW;
+        g.text(this.font, left, px + SIDEBAR_W + 10, footerY + 4, pal().textDim(), false);
+        renderButton(g, themeX, footerY + 2, themeW, 11, themeBtn, "ui:theme_cycle", mouseX, mouseY);
+        g.text(this.font, hint, px + PANEL_W - rightPad - hintW, footerY + 4, pal().textDim(), false);
     }
 
     private void drawTitle(GuiGraphicsExtractor g, int x, int y) {
         Font f = this.font;
-        g.text(f, "OTTERS CIV.", x, y, ACCENT_GOLD, false);
-        g.text(f, "REVIVED", x, y + 10, ACCENT_AQUA, false);
-        g.fill(x + 62, y + 5, x + 66, y + 9, ACCENT_GOLD);
+        g.text(f, "OTTERS CIV.", x, y, pal().accentPrimary(), false);
+        g.text(f, "REVIVED", x, y + 10, pal().accentSecondary(), false);
+        g.fill(x + 62, y + 5, x + 66, y + 9, pal().accentPrimary());
     }
 
     private boolean isCompactFallbackNeeded() {
@@ -180,15 +186,15 @@ public final class OttersCivScreen extends Screen {
         int py = (this.height - cardH) / 2 + yOffset;
 
         g.fill(px + 3, py + 6, px + cardW + 3, py + cardH + 6, 0x66000000);
-        roundedFill(g, px, py, px + cardW, py + cardH, PANEL_BG);
-        g.fill(px + 1, py + 1, px + cardW - 1, py + 2, ACCENT_GOLD);
-        outlineRect(g, px, py, px + cardW, py + cardH, PANEL_BORDER);
+        roundedFill(g, px, py, px + cardW, py + cardH, pal().panelBg());
+        g.fill(px + 1, py + 1, px + cardW - 1, py + 2, pal().accentPrimary());
+        outlineRect(g, px, py, px + cardW, py + cardH, pal().panelBorder());
 
         sectionHeading(g, px + 12, py + 12, "Window Too Small");
-        body(g, px + 12, py + 28, "/otter needs more room to stay usable.", TEXT_PRIMARY);
-        body(g, px + 12, py + 42, "Current GUI: " + this.width + " x " + this.height, TEXT_MUTED);
-        body(g, px + 12, py + 56, "Recommended: at least " + COMFORT_MIN_W + " x " + COMFORT_MIN_H, TEXT_MUTED);
-        body(g, px + 12, py + 76, "Try one of these:", TEXT_PRIMARY);
+        body(g, px + 12, py + 28, "/otter needs more room to stay usable.", pal().textPrimary());
+        body(g, px + 12, py + 42, "Current GUI: " + this.width + " x " + this.height, pal().textMuted());
+        body(g, px + 12, py + 56, "Recommended: at least " + COMFORT_MIN_W + " x " + COMFORT_MIN_H, pal().textMuted());
+        body(g, px + 12, py + 76, "Try one of these:", pal().textPrimary());
 
         int btnY = py + 90;
         int gap = 6;
@@ -207,22 +213,25 @@ public final class OttersCivScreen extends Screen {
         }
 
         String hint = "ESC to close";
-        g.text(this.font, hint, px + cardW - 12 - this.font.width(hint), py + cardH - 14, TEXT_DIM, false);
+        String themeBtn = "Theme: " + OtterUiThemeConfig.instance().theme().displayName() + " \u25B6";
+        int tw = Math.min(140, Math.max(88, this.font.width(themeBtn) + 8));
+        renderButton(g, px + 12, py + cardH - 26, tw, 12, themeBtn, "ui:theme_cycle", mouseX, mouseY);
+        g.text(this.font, hint, px + cardW - 12 - this.font.width(hint), py + cardH - 14, pal().textDim(), false);
     }
 
     private void renderTab(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, Tab tab, boolean selected, boolean hover) {
-        int bg = selected ? HOVER_BG : (hover ? 0xFF182334 : 0);
+        int bg = selected ? pal().hoverBg() : (hover ? pal().tabHoverBg() : 0);
         if (bg != 0) {
             g.fill(x0, y0, x1, y1, bg);
         }
         if (selected) {
-            g.fill(x0, y0, x0 + 2, y1, ACCENT_GOLD);
+            g.fill(x0, y0, x0 + 2, y1, pal().accentPrimary());
         }
-        int color = selected || hover ? TEXT_PRIMARY : TEXT_MUTED;
+        int color = selected || hover ? pal().textPrimary() : pal().textMuted();
         int textX = x0 + 8;
         int maxW = (x1 - 2) - textX;
         g.text(this.font, fit(tab.label, maxW),    textX, y0 + 6,  color, false);
-        g.text(this.font, fit(tab.subtitle, maxW), textX, y0 + 17, selected ? ACCENT_AQUA : TEXT_DIM, false);
+        g.text(this.font, fit(tab.subtitle, maxW), textX, y0 + 17, selected ? pal().accentSecondary() : pal().textDim(), false);
     }
 
     /** Truncates with ellipsis so labels never bleed past the sidebar. */
@@ -245,6 +254,7 @@ public final class OttersCivScreen extends Screen {
             case HOME -> renderHome(g, x, y, w, h, mouseX, mouseY);
             case WALLET -> renderWallet(g, x, y, w, h, mouseX, mouseY);
             case REWARDS -> renderRewards(g, x, y, w, h, mouseX, mouseY);
+            case BRIEF -> renderBrief(g, x, y, w, h, mouseX, mouseY);
             case JOBS -> renderJobs(g, x, y, w, h, mouseX, mouseY);
             case GUILDS -> renderGuilds(g, x, y, w, h, mouseX, mouseY);
             case CIV -> renderCiv(g, x, y, w, h, mouseX, mouseY);
@@ -254,61 +264,73 @@ public final class OttersCivScreen extends Screen {
 
     private void renderHome(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         // Live status cards row
-        var guildInfo = com.fpsmod.client.guilds.GuildClientState.guildInfo();
+        var guildInfo = GuildClientState.guildInfo();
         var jobStatus = JobsClientState.primaryActiveJob();
 
         int cardW = (w - 6) / 3;
-        int cardH = 36;
+        int cardH = 44;
 
         // Wallet card
-        g.fill(x, y, x + cardW, y + cardH, PANEL_BG_ALT);
-        outlineRect(g, x, y, x + cardW, y + cardH, PANEL_BORDER);
-        g.fill(x, y, x + 2, y + cardH, ACCENT_GOLD);
-        g.text(this.font, "WALLET", x + 6, y + 4, ACCENT_GOLD, false);
-        g.text(this.font, "/money to check balance", x + 6, y + 16, TEXT_MUTED, false);
+        g.fill(x, y, x + cardW, y + cardH, pal().panelBgAlt());
+        outlineRect(g, x, y, x + cardW, y + cardH, pal().panelBorder());
+        g.fill(x, y, x + 2, y + cardH, pal().accentPrimary());
+        g.text(this.font, "WALLET", x + 6, y + 3, pal().accentPrimary(), false);
+        g.text(this.font, fit("/money · /pay", cardW - 10), x + 6, y + 14, pal().textPrimary(), false);
+        g.text(this.font, fit("Ledger on host (SQLite)", cardW - 10), x + 6, y + 26, pal().textMuted(), false);
         hotspots.add(new Rect(x, y, x + cardW, y + cardH, "action:wallet"));
 
         // Jobs card
         int cx2 = x + cardW + 3;
-        g.fill(cx2, y, cx2 + cardW, y + cardH, PANEL_BG_ALT);
-        outlineRect(g, cx2, y, cx2 + cardW, y + cardH, PANEL_BORDER);
-        g.fill(cx2, y, cx2 + 2, y + cardH, 0xFF22C55E);
-        g.text(this.font, "JOBS", cx2 + 6, y + 4, 0xFF22C55E, false);
+        g.fill(cx2, y, cx2 + cardW, y + cardH, pal().panelBgAlt());
+        outlineRect(g, cx2, y, cx2 + cardW, y + cardH, pal().panelBorder());
+        g.fill(cx2, y, cx2 + 2, y + cardH, pal().stripeJobs());
+        g.text(this.font, "JOBS", cx2 + 6, y + 3, pal().stripeJobs(), false);
         if (jobStatus != null) {
-            g.text(this.font, jobStatus.shortLabel + " Lv" + jobStatus.level, cx2 + 6, y + 16, TEXT_PRIMARY, false);
+            g.text(this.font, fit(jobStatus.shortLabel + " Lv" + jobStatus.level, cardW - 10), cx2 + 6, y + 14, pal().textPrimary(), false);
+            g.text(this.font, fit("HUD + catalog in Jobs tab", cardW - 10), cx2 + 6, y + 26, pal().textMuted(), false);
         } else {
-            g.text(this.font, "No active job", cx2 + 6, y + 16, TEXT_MUTED, false);
+            g.text(this.font, fit("No active job", cardW - 10), cx2 + 6, y + 14, pal().textMuted(), false);
+            g.text(this.font, fit("/job list · /job join", cardW - 10), cx2 + 6, y + 26, pal().textMuted(), false);
         }
         hotspots.add(new Rect(cx2, y, cx2 + cardW, y + cardH, "tab:JOBS"));
 
         // Guild card
         int cx3 = cx2 + cardW + 3;
-        g.fill(cx3, y, cx3 + cardW, y + cardH, PANEL_BG_ALT);
-        outlineRect(g, cx3, y, cx3 + cardW, y + cardH, PANEL_BORDER);
-        g.fill(cx3, y, cx3 + 2, y + cardH, 0xFF67E8F9);
-        g.text(this.font, "GUILD", cx3 + 6, y + 4, 0xFF67E8F9, false);
+        g.fill(cx3, y, cx3 + cardW, y + cardH, pal().panelBgAlt());
+        outlineRect(g, cx3, y, cx3 + cardW, y + cardH, pal().panelBorder());
+        g.fill(cx3, y, cx3 + 2, y + cardH, pal().stripeGuild());
+        g.text(this.font, "GUILD", cx3 + 6, y + 3, pal().stripeGuild(), false);
         if (guildInfo != null) {
-            g.text(this.font, guildInfo.name + " · " + guildInfo.memberCount + " members", cx3 + 6, y + 16, TEXT_PRIMARY, false);
+            g.text(this.font, fit(guildInfo.name + " · " + guildInfo.memberCount + " mbrs", cardW - 10), cx3 + 6, y + 14, pal().textPrimary(), false);
+            g.text(this.font, fit(guildInfo.role + " · $" + guildInfo.balance + " treasury", cardW - 10), cx3 + 6, y + 26, pal().textMuted(), false);
         } else {
-            g.text(this.font, "Not in a guild", cx3 + 6, y + 16, TEXT_MUTED, false);
+            g.text(this.font, fit("Not in a guild", cardW - 10), cx3 + 6, y + 14, pal().textMuted(), false);
+            g.text(this.font, fit("/guild create · invites", cardW - 10), cx3 + 6, y + 26, pal().textMuted(), false);
         }
         hotspots.add(new Rect(cx3, y, cx3 + cardW, y + cardH, "tab:GUILDS"));
 
         // Quick action bar
         int btnY = y + cardH + 8;
-        int bw = (w - 12) / 3;
-        int bh = 20;
         int gap = 6;
-        renderButton(g, x,           btnY, bw, bh, "/money",           "action:money",       mouseX, mouseY);
-        renderButton(g, x + bw + gap, btnY, bw, bh, "/job list",       "jobs:cmd_list",      mouseX, mouseY);
-        renderButton(g, x + (bw + gap)*2, btnY, bw, bh, "/guild info", "guild:info",         mouseX, mouseY);
+        int nBtns = 4;
+        int totalGaps = gap * (nBtns - 1);
+        int bw = (w - totalGaps) / nBtns;
+        int bh = 20;
+        renderButton(g, x,                        btnY, bw, bh, "/money",      "action:money",  mouseX, mouseY);
+        renderButton(g, x + bw + gap,             btnY, bw, bh, "/guide",      "action:guide",  mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 2,      btnY, bw, bh, "/job list",   "jobs:cmd_list", mouseX, mouseY);
+        renderButton(g, x + (bw + gap) * 3,      btnY, bw, bh, "/guild info", "guild:info",    mouseX, mouseY);
+
+        int envY = btnY + bh + 6;
+        body(g, x, envY, fit(buildClientVersionLine(), w), pal().textDim());
+        body(g, x, envY + 11, fit(buildSessionKindLine(), w), pal().textDim());
+        body(g, x, envY + 22, fit(buildStandingChunkLine(), w), pal().textDim());
 
         // Milestone strip
-        int stripY = btnY + 28;
+        int stripY = envY + 36;
         int segW = (w - 6) / 7;
         Status[] miles = {
-            Status.PARTIAL, Status.PARTIAL,
-            Status.SHIPPED, Status.SHIPPED,
+            Status.SHIPPED, Status.SHIPPED, Status.SHIPPED, Status.SHIPPED,
             Status.PLANNED, Status.FUTURE, Status.FUTURE
         };
         String[] labels = {"M0","M1","M2","M3","M4","M5","M6"};
@@ -319,7 +341,7 @@ public final class OttersCivScreen extends Screen {
             int sy1 = stripY + 8;
             g.fill(sx0, sy0, sx1, sy1, miles[i].color & 0x99FFFFFF | (miles[i].color & 0xFF000000));
             int tw = this.font.width(labels[i]);
-            g.text(this.font, labels[i], sx0 + (segW - 2 - tw) / 2, sy1 + 2, TEXT_MUTED, false);
+            g.text(this.font, labels[i], sx0 + (segW - 2 - tw) / 2, sy1 + 2, pal().textMuted(), false);
         }
 
         // Badge legend
@@ -329,7 +351,10 @@ public final class OttersCivScreen extends Screen {
         drawBadge(g, x + 84, legY, "SOON",    Status.PLANNED.color);
         drawBadge(g, x +124, legY, "FUTURE",  Status.FUTURE.color);
 
-        body(g, x, legY + 16, "Click any card above to jump to its panel. Full roadmap in CIV tab.", TEXT_DIM);
+        body(g, x, legY + 16, "Cards jump to tabs. Brief = whitepaper + M0–M3 · CIV = full M0–M6 · HELP = commands.", pal().textDim());
+        int nClaims = GuildClientState.claims().size();
+        int nJobs = JobsClientCatalog.visibleJobs().size();
+        body(g, x, legY + 28, fit("Client sync snapshot: " + nClaims + " claim chunks · " + nJobs + " visible jobs in catalog", w), pal().textDim());
     }
 
     /** Small colored chip with label — used for milestone badges. */
@@ -344,7 +369,7 @@ public final class OttersCivScreen extends Screen {
 
     private void renderWallet(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Wallet  ·  M1 Economy");
-        body(g, x, y + 14, "Host data: config/otters_civ_revived/project_ooga.db (SQLite).", TEXT_MUTED);
+        body(g, x, y + 14, "Host data: config/otters_civ_revived/project_ooga.db (SQLite).", pal().textMuted());
 
         // Command catalog with badges.
         int row = y + 28;
@@ -353,11 +378,12 @@ public final class OttersCivScreen extends Screen {
         drawCommandRow(g, x, row + 24, "/pay <player> <amount>",          "player transfer",               Status.SHIPPED);
         drawCommandRow(g, x, row + 36, "/economy reload",                 "re-read economy.json",          Status.SHIPPED);
         drawCommandRow(g, x, row + 48, "/economy log [count]",            "wallet audit view",             Status.SHIPPED);
-        drawCommandRow(g, x, row + 60, "Caps · cooldowns · fees",         "live from economy.json",        Status.SHIPPED);
+        drawCommandRow(g, x, row + 60, "/economy log player <p> [n]",      "audit one player (gamemaster)", Status.SHIPPED);
+        drawCommandRow(g, x, row + 72, "Caps · cooldowns · fees",         "live from economy.json",        Status.SHIPPED);
 
         // Actions.
-        renderButton(g, x,        y + 110, 130, 22, "Run /money",       "action:money",       mouseX, mouseY);
-        renderButton(g, x + 138,  y + 110, 130, 22,
+        renderButton(g, x,        y + 122, 130, 22, "Run /money",       "action:money",       mouseX, mouseY);
+        renderButton(g, x + 138,  y + 122, 130, 22,
             canOpenServerJobsConfig() ? "Open Host DB" : "Ask Host",
             "action:open_database",
             mouseX,
@@ -369,28 +395,29 @@ public final class OttersCivScreen extends Screen {
         drawBadge(g, x, y, status.label, status.color);
         // Badge width up to ~38 px. Leave 44 px lane.
         int textX = x + 44;
-        g.text(this.font, cmd, textX, y + 2, TEXT_PRIMARY, false);
+        g.text(this.font, cmd, textX, y + 2, pal().textPrimary(), false);
         int cw = this.font.width(cmd);
-        g.text(this.font, "·  " + note, textX + cw + 6, y + 2, TEXT_DIM, false);
+        g.text(this.font, "·  " + note, textX + cw + 6, y + 2, pal().textDim(), false);
     }
 
     private void renderRewards(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         sectionHeading(g, x, y, "Rewards  ·  M2 Engine");
-        body(g, x, y + 14, "Block tag: otters_civ_revived:currency_blocks", TEXT_PRIMARY);
-        body(g, x, y + 26, "Mob tag:   otters_civ_revived:currency_mobs",   TEXT_PRIMARY);
+        body(g, x, y + 14, "Block tag: otters_civ_revived:currency_blocks", pal().textPrimary());
+        body(g, x, y + 26, "Mob tag:   otters_civ_revived:currency_mobs",   pal().textPrimary());
+        body(g, x, y + 38, "After edits: /reload (or restart host). Precedence: sibling values > maps > tag.", pal().textDim());
 
         // Feature catalog with badges.
-        int row = y + 44;
+        int row = y + 52;
         drawCommandRow(g, x, row,      "Tag-driven payouts",              "core mining + combat",         Status.SHIPPED);
         drawCommandRow(g, x, row + 12, "Per-id overrides",                "block_values · entity_values", Status.SHIPPED);
         drawCommandRow(g, x, row + 24, "Cooldowns + dim-blacklist",       "in rewards.json",              Status.SHIPPED);
         drawCommandRow(g, x, row + 36, "Diminishing returns + anti-farm", "M2 acceptance gate",           Status.PLANNED);
         drawCommandRow(g, x, row + 48, "Farming + crafting reward loops", "5 balanced tracks target",     Status.PLANNED);
 
-        renderButton(g, x,         y + 112, 132, 22, "Open rewards.json",  "action:open_rewards",       mouseX, mouseY);
-        renderButton(g, x + 140,   y + 112, 132, 22, "Open block_values",  "action:open_block_values",  mouseX, mouseY);
-        renderButton(g, x,         y + 138, 132, 22, "Open entity_values", "action:open_entity_values", mouseX, mouseY);
-        renderButton(g, x + 140,   y + 138, 132, 22, "Configs Folder",     "action:open_config",        mouseX, mouseY);
+        renderButton(g, x,         y + 120, 132, 22, "Open rewards.json",  "action:open_rewards",       mouseX, mouseY);
+        renderButton(g, x + 140,   y + 120, 132, 22, "Open block_values",  "action:open_block_values",  mouseX, mouseY);
+        renderButton(g, x,         y + 146, 132, 22, "Open entity_values", "action:open_entity_values", mouseX, mouseY);
+        renderButton(g, x + 140,   y + 146, 132, 22, "Configs Folder",     "action:open_config",        mouseX, mouseY);
     }
 
 
@@ -422,8 +449,8 @@ public final class OttersCivScreen extends Screen {
                 levelLine = "Primary HUD job unavailable.";
             }
         }
-        body(g, x, y + 14, activeLine, TEXT_PRIMARY);
-        body(g, x, y + 26, levelLine,  TEXT_MUTED);
+        body(g, x, y + 14, activeLine, pal().textPrimary());
+        body(g, x, y + 26, levelLine,  pal().textMuted());
 
         // HUD preview + config row.
         sectionHeading(g, x, y + 44, "HUD Bar");
@@ -431,7 +458,7 @@ public final class OttersCivScreen extends Screen {
             primary == null
                 ? "Preview below. Live bar appears above vanilla XP after /job join <id>."
                 : "Preview mirrors the live bar drawn above vanilla XP when this menu is closed.",
-            TEXT_MUTED);
+            pal().textMuted());
         if (preview != null) {
             JobsHudOverlay.renderPreview(g, this.font, x, y + 72, Math.min(250, w - 4), hud.scale(), preview);
         }
@@ -440,7 +467,7 @@ public final class OttersCivScreen extends Screen {
                 + "   X: " + hud.offsetX()
                 + "   Y: " + hud.offsetY()
                 + "   Scale: " + String.format(java.util.Locale.ROOT, "%.2f", hud.scale()),
-            TEXT_PRIMARY);
+            pal().textPrimary());
 
         int row1Y = y + 118;
         int row2Y = y + 144;
@@ -460,17 +487,17 @@ public final class OttersCivScreen extends Screen {
         int nb = 28;
         int nbgap = 4;
         int rx = x;
-        g.text(this.font, "X", rx, row2Y + 7, TEXT_MUTED, false);
+        g.text(this.font, "X", rx, row2Y + 7, pal().textMuted(), false);
         renderButton(g, rx + 12,                 row2Y, nb, bh, "−",  "jobs:x-", mouseX, mouseY);
         renderButton(g, rx + 12 + nb + nbgap,    row2Y, nb, bh, "+",  "jobs:x+", mouseX, mouseY);
 
         rx = x + 80;
-        g.text(this.font, "Y", rx, row2Y + 7, TEXT_MUTED, false);
+        g.text(this.font, "Y", rx, row2Y + 7, pal().textMuted(), false);
         renderButton(g, rx + 12,                 row2Y, nb, bh, "−",  "jobs:y-", mouseX, mouseY);
         renderButton(g, rx + 12 + nb + nbgap,    row2Y, nb, bh, "+",  "jobs:y+", mouseX, mouseY);
 
         rx = x + 160;
-        g.text(this.font, "Scale", rx, row2Y + 7, TEXT_MUTED, false);
+        g.text(this.font, "Scale", rx, row2Y + 7, pal().textMuted(), false);
         renderButton(g, rx + 32,                 row2Y, nb, bh, "−",  "jobs:s-", mouseX, mouseY);
         renderButton(g, rx + 32 + nb + nbgap,    row2Y, nb, bh, "+",  "jobs:s+", mouseX, mouseY);
 
@@ -479,16 +506,16 @@ public final class OttersCivScreen extends Screen {
             canOpenServerJobsConfig()
                 ? "Jobs cfg opens host-side jobs.json on this machine."
                 : "Remote server: jobs.json lives on server host. Local opener disabled.",
-            TEXT_MUTED);
+            pal().textMuted());
         int navY = row3Y + 28;
         renderButton(g, x, navY, 46, 18, "< Prev", "jobs:page_prev", mouseX, mouseY);
         renderButton(g, x + 52, navY, 46, 18, "Next >", "jobs:page_next", mouseX, mouseY);
         body(g, x + 106, navY + 5, "Page " + (jobsPage + 1) + "/" + (maxPage + 1)
-            + "  ·  slots " + activeCount(status) + "/" + maxActiveSlots(catalog), TEXT_PRIMARY);
+            + "  ·  slots " + activeCount(status) + "/" + maxActiveSlots(catalog), pal().textPrimary());
 
         int listY = row3Y + 50;
         if (visibleJobs.isEmpty()) {
-            body(g, x, listY, "No jobs synced yet. Try /job list after server join.", TEXT_MUTED);
+            body(g, x, listY, "No jobs synced yet. Try /job list after server join.", pal().textMuted());
             return;
         }
         int start = jobsPage * pageSize;
@@ -502,8 +529,8 @@ public final class OttersCivScreen extends Screen {
                 ? job.description
                 : "Lvl " + progress.level + "/" + progress.maxLevel + " · xp " + progress.xp;
             int rowY = listY + (i - start) * 18;
-            g.text(this.font, fit(title, 170), x, rowY, activeJob ? ACCENT_GOLD : TEXT_PRIMARY, false);
-            g.text(this.font, fit(note, 170), x + 76, rowY, TEXT_MUTED, false);
+            g.text(this.font, fit(title, 170), x, rowY, activeJob ? pal().accentPrimary() : pal().textPrimary(), false);
+            g.text(this.font, fit(note, 170), x + 76, rowY, pal().textMuted(), false);
             if (job.joinable && job.enabled) {
                 renderButton(
                     g,
@@ -525,9 +552,9 @@ public final class OttersCivScreen extends Screen {
         var info = com.fpsmod.client.guilds.GuildClientState.guildInfo();
         if (info == null) {
             sectionHeading(g, x, y, "Guilds");
-            body(g, x, y + 14, "You are not in a guild.", TEXT_MUTED);
-            body(g, x, y + 28, "Create one with /guild create <name> ($250).", TEXT_PRIMARY);
-            body(g, x, y + 40, "Or accept an invite with /guild join.", TEXT_PRIMARY);
+            body(g, x, y + 14, "You are not in a guild.", pal().textMuted());
+            body(g, x, y + 28, "Create one with /guild create <name> ($250).", pal().textPrimary());
+            body(g, x, y + 40, "Or accept an invite with /guild join.", pal().textPrimary());
             renderButton(g, x, y + 58, w - 2, 20, "Create guild (costs $250)", "guild:quick_create", mouseX, mouseY);
             return;
         }
@@ -537,14 +564,14 @@ public final class OttersCivScreen extends Screen {
         yy += 14;
 
         // Status chips
-        drawBadge(g, x, yy, info.open ? "OPEN" : "INVITE", info.open ? 0xFF22C55E : 0xFFE9B949);
-        drawBadge(g, x + 56, yy, info.role.toUpperCase(), 0xFF67E8F9);
+        drawBadge(g, x, yy, info.open ? "OPEN" : "INVITE", info.open ? pal().stripeJobs() : pal().accentPrimary());
+        drawBadge(g, x + 56, yy, info.role.toUpperCase(), pal().stripeGuild());
         yy += 12;
 
         // Stat line
         body(g, x, yy, info.memberCount + "/" + info.maxMembers + " members  ·  "
             + info.claimCount + "/" + info.maxClaims + " claims  ·  $" + info.balance
-            + "  ·  Home " + (info.hasHome ? "set" : "not set"), TEXT_PRIMARY);
+            + "  ·  Home " + (info.hasHome ? "set" : "not set"), pal().textPrimary());
         yy += 14;
 
         // Action buttons — 2-column grouped layout
@@ -581,20 +608,25 @@ public final class OttersCivScreen extends Screen {
 
         // Bottom bar — info + config
         int bottomY = y + h - 14;
-        g.fill(x, bottomY, x + w, bottomY + 1, PANEL_BORDER);
-        body(g, x, bottomY + 4, "Chunks: green on overlay. Rep: /guild map.", TEXT_DIM);
+        g.fill(x, bottomY, x + w, bottomY + 1, pal().panelBorder());
+        body(g, x, bottomY + 4, "Map: surface tint, own vs other claim tint, facing wedge; walking into a claim shows a hotbar hint.", pal().textDim());
         renderButton(g, x + w - 76, bottomY + 2, 76, 12, "Open config", "guild:config", mouseX, mouseY);
     }
 
     private void renderCiv(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
-        sectionHeading(g, x, y, "Roadmap");
-        int yy = y + 14;
+        sectionHeading(g, x, y, "Roadmap  ·  DOCS/ROADMAP.md");
+        body(g, x, y + 14, fit("Milestone order: M0–M3 shipped in-repo; M4–M6 + M4.5 ahead (see Brief tab for whitepaper Ph 0–3).", w), pal().textDim());
+        int yy = y + 28;
 
         String[][] milestones = {
-            {"M3  Guilds & Claims", "SHIPPED", "Create, invite, claim chunks, home TP, protections, map"},
-            {"M4  Player Shops",    "PLANNED", "Market UI, escrow, listing caps, tax"},
-            {"M5  Governance",      "FUTURE",  "Diplomacy, territory projects, regional bonuses"},
-            {"M6  Scale",           "FUTURE",  "SQLite → PostgreSQL, soak testing, RC hardening"}
+            {"M0  Foundation", "SHIPPED", "SQLite WAL; schema_version + migrations; wallet_ledger; guilds/claims/jobs_state; AtomicFileWriter; /ooga db"},
+            {"M1  Economy MVP", "SHIPPED", "/money /pay; economy.json caps·fee·cooldown; /economy log + per-player filter; join starting balance"},
+            {"M2  Jobs MVP", "SHIPPED", "jobs.json triggers; /job validate; 5-role starter; HUD + /otter Jobs; payouts via wallet service"},
+            {"M3  Guilds & Claims", "SHIPPED", "Invites/ranks; chunk claim $; protections; /guild map ASCII + overlay + particles + walk-in notifier"},
+            {"M4  Player Shops", "PLANNED", "Market UI, escrow, listing caps, tax"},
+            {"M4.5 Social", "PLANNED", "Friends + PMs (roadmap)"},
+            {"M5  Governance", "FUTURE", "Diplomacy, territory projects, regional bonuses"},
+            {"M6  Scale", "FUTURE", "PostgreSQL dialect; soak; RC — whitepaper scale path"}
         };
         for (String[] m : milestones) {
             Status s = switch (m[1]) {
@@ -602,68 +634,150 @@ public final class OttersCivScreen extends Screen {
                 case "PLANNED" -> Status.PLANNED;
                 default -> Status.FUTURE;
             };
-            g.fill(x, yy, x + w, yy + 24, PANEL_BG_ALT);
-            outlineRect(g, x, yy, x + w, yy + 24, PANEL_BORDER);
-            g.fill(x, yy, x + 2, yy + 24, s.color);
-            g.text(this.font, m[0], x + 6, yy + 3, TEXT_PRIMARY, false);
-            drawBadge(g, x + 6 + this.font.width(m[0]) + 4, yy + 3, s.label, s.color);
-            g.text(this.font, fit(m[2], w - 16), x + 6, yy + 14, TEXT_MUTED, false);
-            yy += 27;
+            g.fill(x, yy, x + w, yy + 22, pal().panelBgAlt());
+            outlineRect(g, x, yy, x + w, yy + 22, pal().panelBorder());
+            g.fill(x, yy, x + 2, yy + 22, s.color);
+            g.text(this.font, m[0], x + 6, yy + 2, pal().textPrimary(), false);
+            drawBadge(g, x + 6 + this.font.width(m[0]) + 4, yy + 2, s.label, s.color);
+            g.text(this.font, fit(m[2], w - 16), x + 6, yy + 12, pal().textMuted(), false);
+            yy += 24;
         }
 
-        renderButton(g, x, yy + 4, (w - 3) / 2, 18, "Guilds panel", "tab:GUILDS", mouseX, mouseY);
-        renderButton(g, x + (w + 3) / 2, yy + 4, (w - 3) / 2, 18, "Open guilds.json", "guild:config", mouseX, mouseY);
+        int btnY = Math.min(yy + 4, y + h - 40);
+        renderButton(g, x, btnY, (w - 3) / 2, 18, "Brief (spec)", "tab:BRIEF", mouseX, mouseY);
+        renderButton(g, x + (w + 3) / 2, btnY, (w - 3) / 2, 18, "Guilds panel", "tab:GUILDS", mouseX, mouseY);
+        renderButton(g, x, btnY + 22, w - 2, 14, "Open guilds.json", "guild:config", mouseX, mouseY);
+    }
+
+    private void renderBrief(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
+        sectionHeading(g, x, y, "Project OOGA  ·  Phases 0–3");
+        body(g, x, y + 14, fit("Condensed from DOCS/whitepaper.md + DOCS/ROADMAP.md — not a legal contract; shipped behavior wins.", w), pal().textDim());
+
+        int tw = (w - 10) / 2;
+        boolean p0 = briefPage == 0;
+        renderButton(g, x, y + 26, tw, 14, p0 ? "· Spec ·" : "1  Whitepaper", "brief:p0", mouseX, mouseY);
+        renderButton(g, x + tw + 10, y + 26, tw, 14, !p0 ? "· M0–M3 ·" : "2  Roadmap", "brief:p1", mouseX, mouseY);
+
+        int ty = y + 44;
+        int lh = 10;
+        int mid = x + tw + 10;
+        if (p0) {
+            sectionHeading(g, x, ty, "Vision & pillars");
+            int u = ty + 14;
+            body(g, x, u, fit("One civ stack: economy, jobs, land, future shops — native Fabric, less plugin friction.", tw), pal().textPrimary()); u += lh;
+            body(g, x, u, fit("Pillars: wallet + audit; professions; claims; commerce later; fail-fast integrity.", tw), pal().textMuted()); u += lh;
+            body(g, x, u, fit("Architecture: typed services → persistence; events validated before state writes.", tw), pal().textMuted()); u += lh;
+            body(g, x, u, fit("Anti-exploit: server-authoritative money; no trusting client balance.", tw), pal().textMuted()); u += lh + 4;
+
+            sectionHeading(g, mid, ty, "Data strategy (WP)");
+            int v = ty + 14;
+            body(g, mid, v, fit("Default: SQLite embedded, WAL, busy_timeout, forward-only migrations.", tw), pal().textPrimary()); v += lh;
+            body(g, mid, v, fit("Authoritative wallets/ledger/claims/jobs live in project_ooga.db — not flat JSON.", tw), pal().textMuted()); v += lh;
+            body(g, mid, v, fit("Scale path (M6): same schema → Postgres / JDBC dialect — whitepaper § Phase 6.", tw), pal().textMuted()); v += lh;
+            body(g, mid, v, fit("Avoid: NoSQL/doc primary; custom binary; JSON wallets (corruption + no ACID).", tw), pal().textMuted()); v += lh + 4;
+
+            sectionHeading(g, x, u, "Delivery Phases 0–3 (WP)");
+            u += 14;
+            body(g, x, u, fit("P0 ✓ Relational schema + schema_version + SQLite + wallet_ledger + /ooga db status|migrate.", w), pal().textPrimary()); u += lh;
+            body(g, x, u, fit("P1 ✓ Wallet cmds, transfers, reasons, admin ops, transaction visibility.", w), pal().textMuted()); u += lh;
+            body(g, x, u, fit("P2 ✓ Jobs/professions, reward hooks, progression + HUD (diminishing returns = later gate).", w), pal().textMuted()); u += lh;
+            body(g, x, u, fit("P3 ✓ Factions model = guilds; chunk claims; role checks; treasury field; map UX.", w), pal().textMuted()); u += lh;
+            body(g, x, u, fit("Progression loop: Nomad → Specialist → Settler → Founder → Governor → Civilizer (WP).", w), pal().textMuted()); u += lh;
+            body(g, x, u, fit("Non-goals (current): cross-server economy sync; MMO quest trees — see whitepaper.", w), pal().textDim());
+        } else {
+            sectionHeading(g, x, ty, "M0 Foundation");
+            int u = ty + 14;
+            body(g, x, u, fit("Interfaces IEconomy/IJobs/IGuild; PersistenceService; SchemaMigrator; SqlitePersistenceIntegrationTest.", tw), pal().textPrimary()); u += lh;
+            body(g, x, u, fit("Risks ✓ WAL + busy_timeout; migration drift mitigated by tests + rollback notes.", tw), pal().textMuted()); u += lh + 4;
+
+            sectionHeading(g, mid, ty, "M1 Economy");
+            int v = ty + 14;
+            body(g, mid, v, fit("Shipped: /pay atomic; economy.json policy; /economy log player; wallet_ledger reasons.", tw), pal().textPrimary()); v += lh;
+            body(g, mid, v, fit("Open: inflation/sink tuning; race hardening under command spam (roadmap risks).", tw), Status.PARTIAL.color); v += lh + 4;
+
+            sectionHeading(g, x, u, "M2 Jobs");
+            u += 14;
+            body(g, x, u, fit("Shipped: /job join|leave|info|list|stats|reload|validate; event rewards; starter 5-pack; HUD.", tw), pal().textPrimary()); u += lh;
+            body(g, x, u, fit("Open: diminishing returns; TPS throttling for reward storms (roadmap).", tw), Status.PARTIAL.color); u += lh + 4;
+
+            sectionHeading(g, mid, v, "M3 Guilds");
+            v += 14;
+            body(g, mid, v, fit("Shipped: claims; protections break/place/container; home TP; map+particles+client notifier.", tw), pal().textPrimary()); v += lh;
+            body(g, mid, v, fit("Open: treasury audit depth; false-positive denial tooling (roadmap).", tw), Status.PARTIAL.color); v += lh;
+
+            int foot = Math.max(u, v) + 6;
+            body(g, x, foot, fit("Next milestones (panel): M4 shops · M4.5 social · M5 gov · M6 Postgres scale — CIV tab.", w), pal().textDim());
+            renderButton(g, x, foot + 12, w - 2, 16, "Open full roadmap tab", "tab:CIV", mouseX, mouseY);
+        }
     }
 
     private void drawMilestone(GuiGraphicsExtractor g, int x, int y, int w, int h, String title, String detail, Status status) {
-        g.fill(x, y, x + w, y + h, PANEL_BG_ALT);
-        outlineRect(g, x, y, x + w, y + h, PANEL_BORDER);
+        g.fill(x, y, x + w, y + h, pal().panelBgAlt());
+        outlineRect(g, x, y, x + w, y + h, pal().panelBorder());
         // Left accent stripe in status color.
         g.fill(x, y, x + 2, y + h, status.color);
-        g.text(this.font, title, x + 8, y + 5, TEXT_PRIMARY, false);
+        g.text(this.font, title, x + 8, y + 5, pal().textPrimary(), false);
         int titleW = this.font.width(title);
         drawBadge(g, x + 8 + titleW + 8, y + 5, status.label, status.color);
-        g.text(this.font, fit(detail, w - 16), x + 8, y + 20, TEXT_MUTED, false);
+        g.text(this.font, fit(detail, w - 16), x + 8, y + 20, pal().textMuted(), false);
     }
 
     private void renderHelp(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         sectionHeading(g, x, y, "All Commands");
 
         int row = y + 16;
-        // Shipped commands.
-        drawCommandRow(g, x, row,      "/otter",                          "opens this menu",                 Status.SHIPPED);
-        drawCommandRow(g, x, row + 12, "/guide",                          "spawn the handbook",              Status.SHIPPED);
-        drawCommandRow(g, x, row + 24, "/money",                          "balance",                         Status.SHIPPED);
-        drawCommandRow(g, x, row + 36, "/money set <p> <amt>",            "op-tier set",                     Status.SHIPPED);
-        drawCommandRow(g, x, row + 48, "/job",                            "active job + progression",        Status.SHIPPED);
-        drawCommandRow(g, x, row + 60, "/job list",                       "jobs catalog",                    Status.SHIPPED);
-        drawCommandRow(g, x, row + 72, "/job join <slug> · /job leave",   "pick or clear a job",            Status.SHIPPED);
+        int s = 10;
+        int r = row;
+        drawCommandRow(g, x, r, "/otter", "chat list · mod client = hub + Theme", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guide · /guide give", "handbook · admin give", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/money · /pay", "balance + player transfers", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/money set|add|take …", "op-tier admin edits", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/economy reload|log …", "op ledger (SQLite)", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/economy log player …", "filter audit to one player", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/job …", "list · join · leave · info · validate", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/job reload", "op refresh jobs.json", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild invite|join|leave|kick", "membership · join <name> if public", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild transfer · unclaimall", "owner lead move · wipe claims", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild claim|unclaim|map", "claims; map = tint + facing + walk hint", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild promote|demote|home|sethome", "ranks · TP anchors", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild open|close · info|list", "public gate · lookups", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/guild reload", "op re-read guilds.json", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "/ooga db …", "SQLite status / migrate", Status.SHIPPED);
+        r += s;
+        drawCommandRow(g, x, r, "Market UI · /shop", "M4 player shops", Status.PLANNED);
 
-        // Shipped M3 guilds.
-        drawCommandRow(g, x, row + 88, "/guild create <name>",            "M3 create ($250)",                Status.SHIPPED);
-        drawCommandRow(g, x, row +100, "/guild invite|join|leave|kick",   "M3 membership",                   Status.SHIPPED);
-        drawCommandRow(g, x, row +112, "/guild claim|unclaim|map",        "M3 chunk claims ($100)",          Status.SHIPPED);
-        drawCommandRow(g, x, row +124, "/guild promote|demote",           "M3 officer ranks",                Status.SHIPPED);
-        drawCommandRow(g, x, row +136, "/guild sethome|home",             "M3 guild teleport",               Status.SHIPPED);
-        drawCommandRow(g, x, row +148, "/pay <player> <amount>",          "M1 transfer",                     Status.SHIPPED);
-        drawCommandRow(g, x, row +160, "Market UI · /shop",               "M4 player shops",                 Status.PLANNED);
-
-        body(g, x, row + 174, "Docs: README.md · index.html · DOCS/ROADMAP.md", TEXT_DIM);
+        body(g, x, r + s + 4, "Docs: README.md · index.html · DOCS/ROADMAP.md · DOCS/whitepaper.md", pal().textDim());
+        body(g, x, r + s + 16, fit("Join chat: showJoinWelcome + starting balance in economy.json", w), pal().textDim());
+        body(g, x, r + s + 28, fit("Brief tab (sidebar): condensed whitepaper Ph 0–3 + roadmap M0–M3 checklist.", w), pal().textDim());
     }
 
     private void renderButton(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, String actionKey, int mouseX, int mouseY) {
         boolean hover = inside(mouseX, mouseY, x, y, x + w, y + h);
-        int bg = hover ? BTN_BG_HOVER : BTN_BG;
+        int bg = hover ? pal().btnBgHover() : pal().btnBg();
         g.fill(x, y, x + w, y + h, bg);
-        outlineRect(g, x, y, x + w, y + h, hover ? ACCENT_AQUA : PANEL_BORDER);
+        outlineRect(g, x, y, x + w, y + h, hover ? pal().accentSecondary() : pal().panelBorder());
         int tw = this.font.width(label);
-        g.text(this.font, label, x + (w - tw) / 2, y + (h - 8) / 2, hover ? ACCENT_GOLD : TEXT_PRIMARY, false);
+        g.text(this.font, label, x + (w - tw) / 2, y + (h - 8) / 2, hover ? pal().accentPrimary() : pal().textPrimary(), false);
         hotspots.add(new Rect(x, y, x + w, y + h, actionKey));
     }
 
     private void sectionHeading(GuiGraphicsExtractor g, int x, int y, String title) {
-        g.text(this.font, title, x, y, ACCENT_GOLD, false);
-        g.fill(x, y + 10, x + 18, y + 11, ACCENT_AQUA);
+        g.text(this.font, title, x, y, pal().accentPrimary(), false);
+        g.fill(x, y + 10, x + 18, y + 11, pal().accentSecondary());
     }
 
     private void body(GuiGraphicsExtractor g, int x, int y, String s, int color) {
@@ -720,11 +834,20 @@ public final class OttersCivScreen extends Screen {
             handleGuildAction(key.substring(6));
             return;
         }
+        if (key.startsWith("brief:")) {
+            switch (key.substring(6)) {
+                case "p0" -> briefPage = 0;
+                case "p1" -> briefPage = 1;
+                default -> { /* no-op */ }
+            }
+            return;
+        }
         switch (key) {
             case "action:wallet"             -> active = Tab.WALLET;
             case "action:jobs"               -> active = Tab.JOBS;
             case "action:rewards"            -> active = Tab.REWARDS;
             case "action:money"              -> runCommand("money");
+            case "action:guide"              -> runCommand("guide");
             case "action:open_config"        -> openClientConfigDir("otters_civ_revived");
             case "action:open_database"      -> {
                 if (canOpenServerJobsConfig()) {
@@ -736,6 +859,7 @@ public final class OttersCivScreen extends Screen {
             case "action:open_rewards"       -> openClientConfigFile("otters_civ_revived", "rewards.json");
             case "action:open_block_values"  -> openClientConfigFile("otters_civ_revived", "block_values.json");
             case "action:open_entity_values" -> openClientConfigFile("otters_civ_revived", "entity_values.json");
+            case "ui:theme_cycle"             -> OtterUiThemeConfig.instance().cycleTheme();
             default -> { /* no-op */ }
         }
     }
@@ -846,6 +970,62 @@ public final class OttersCivScreen extends Screen {
         if (mc != null && mc.player != null) {
             mc.player.sendSystemMessage(Component.literal(message));
         }
+    }
+
+    private static String buildCompactFooterLeft() {
+        var L = net.fabricmc.loader.api.FabricLoader.getInstance();
+        String mc = L.getModContainer("minecraft").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
+        String ver = L.getModContainer(OogaMod.MOD_ID).map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("dev");
+        return "MC " + mc + " · v" + ver + " · /guide";
+    }
+
+    private static String buildClientVersionLine() {
+        var L = net.fabricmc.loader.api.FabricLoader.getInstance();
+        String mc = L.getModContainer("minecraft").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
+        String ver = L.getModContainer(OogaMod.MOD_ID).map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("dev");
+        return "Minecraft " + mc + " · Otters Civ. " + ver + " (" + OogaMod.MOD_ID + ")";
+    }
+
+    private static String buildSessionKindLine() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.hasSingleplayerServer()) {
+            return "Session: local world — JSON + SQLite under your .minecraft/config";
+        }
+        if (mc.player != null && mc.player.connection != null) {
+            return "Session: multiplayer — civ data runs on the server host";
+        }
+        return "Session: title / loading";
+    }
+
+    private static String buildStandingChunkLine() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) {
+            return "Chunk: join a world to see claim status here.";
+        }
+        var p = mc.player;
+        String dim = mc.level.dimension().identifier().toString();
+        int cx = p.blockPosition().getX() >> 4;
+        int cz = p.blockPosition().getZ() >> 4;
+        var claim = GuildClientState.claimAt(dim, cx, cz);
+        String base = "Standing: [" + cx + ", " + cz + "] in " + abbrev(dim, 44);
+        if (claim == null) {
+            return base + " — unclaimed";
+        }
+        String gName = claim.guildDisplayName();
+        if (gName == null || gName.isEmpty()) {
+            gName = "guild";
+        }
+        gName = abbrev(gName, 26);
+        var gi = GuildClientState.guildInfo();
+        boolean own = gi != null && gi.guildId != null && gi.guildId.equals(claim.guildId().toString());
+        return base + " — " + (own ? "your guild (" : "claimed: ") + gName + (own ? ")" : "");
+    }
+
+    private static String abbrev(String s, int max) {
+        if (s == null || s.length() <= max) {
+            return s == null ? "" : s;
+        }
+        return s.substring(0, max - 1) + "\u2026";
     }
 
     private static String joinIds(List<String> ids) {

@@ -18,6 +18,7 @@ import net.minecraft.server.permissions.PermissionLevel;
 import java.time.Duration;
 import java.time.Instant;
 
+@SuppressWarnings("null")
 public final class EconomyCommand {
     private static final Permission ADMIN = new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);
     private static final int DEFAULT_LOG_COUNT = 10;

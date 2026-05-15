@@ -5,7 +5,8 @@ import java.util.UUID;
 
 /**
  * Audit log for every balance mutation. Append-only by contract.
- * Backed today by {@link FileTransactionLog} (CSV); future impls may use SQLite.
+ * Runtime now uses a SQLite-backed implementation ({@code SqliteTransactionLog});
+ * file-backed variants remain only for older tests and legacy paths.
  */
 public interface TransactionLog {
     /** Persist a single entry. Must be idempotent on best effort — never throw. */

@@ -35,12 +35,12 @@ public final class GuildNetworking {
 
     public static void sendClaimsTo(GuildService guilds, ServerPlayer player) {
         if (player == null) return;
-        ServerPlayNetworking.send(player, ClaimsPayload.fromClaims(guilds.allClaims()));
+        ServerPlayNetworking.send(player, ClaimsPayload.forGuildSync(guilds));
     }
 
     public static void broadcastClaims(GuildService guilds, MinecraftServer server) {
         if (server == null) return;
-        var payload = ClaimsPayload.fromClaims(guilds.allClaims());
+        var payload = ClaimsPayload.forGuildSync(guilds);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }

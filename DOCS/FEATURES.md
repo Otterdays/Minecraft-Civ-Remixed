@@ -1,5 +1,8 @@
 <!-- PRESERVATION RULE: Never delete or replace content. Append or annotate only. -->
 
+[AMENDED 2026-05-14 — SQLite runtime correction]:
+- **Current jobs runtime state lives in SQLite, not `jobs_state.json`.** Treat `config/otters_civ_revived/project_ooga.db` as the live store for wallets, ledger, jobs state, guilds, and claims. Older `jobs_state.json` references below are legacy history from the intermediate file-backed jobs pass and should not be repeated on current player-facing surfaces.
+
 [AMENDED 2026-05-14]:
 - **Jobs are now fully configurable and server-authoritative.** The current Otters Civ. release no longer stops at a fixed starter set for runtime behavior. `config/otters_civ_revived/jobs.json` now defines the live jobs catalog itself: arbitrary job ids, display metadata, triggers, progression, boosts, and activation policy (`single` or `multi` active slots). Client HUD/UI surfaces render the server-synced catalog; player state persists in `config/otters_civ_revived/jobs_state.json` with one-time migration from legacy `jobs.properties`.
 

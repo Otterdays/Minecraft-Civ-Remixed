@@ -68,6 +68,8 @@ For full mechanics, defaults, and operator notes, open **`index.html`** in the r
 
 Development stack (build / run from source): **Java 25+**. Runtime for the game follows Minecraft's launcher requirements.
 
+No extra database setup is required. The release jar bundles its SQLite runtime and auto-creates **`config/otters_civ_revived/project_ooga.db`** on first start.
+
 <details>
 <summary><strong>Expand: build locally</strong></summary>
 

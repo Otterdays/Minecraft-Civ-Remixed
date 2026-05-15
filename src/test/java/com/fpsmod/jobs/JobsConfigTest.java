@@ -1,5 +1,7 @@
 package com.fpsmod.jobs;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -116,5 +118,49 @@ public class JobsConfigTest {
         Assertions.assertEquals("Custom Miner", config.jobs.get(0).displayName);
         Assertions.assertEquals(5L, config.jobs.get(0).progression.xpPerEvent);
         Assertions.assertEquals(40, config.jobs.get(0).progression.maxLevel);
+    }
+
+    @Test
+    void parseConfigMigratesLegacyKeyedJobsObject() {
+        JsonObject root = JsonParser.parseString("""
+            {
+              "activationPolicy": "multi",
+              "maxActiveJobs": 2,
+              "xpPerEvent": 9,
+              "maxLevel": 50,
+              "xpBase": 100.0,
+              "xpExponent": 1.5,
+              "jobs": {
+                "miner": {
+                  "tagId": "otters_civ_revived:job/miner_blocks",
+                  "xpPerEvent": 7
+                },
+                "fighter": {
+                  "tagId": "otters_civ_revived:job/fighter_mobs",
+                  "xpPerEvent": 11
+                }
+              }
+            }
+            """).getAsJsonObject();
+
+        JobsConfig config = JobsConfigLoader.parseConfig(root, JobsConfig.defaults());
+
+        Assertions.assertEquals("multi", config.global.activationPolicy);
+        Assertions.assertEquals(2, config.global.maxActiveJobs);
+        Assertions.assertEquals(5, config.jobs.size(), "legacy overlay should keep the shipped starter pack");
+        Assertions.assertEquals(9L, config.jobById("lumberjack").progression.xpPerEvent);
+        Assertions.assertEquals(7L, config.jobById("miner").progression.xpPerEvent);
+        Assertions.assertEquals(11L, config.jobById("fighter").progression.xpPerEvent);
+        Assertions.assertEquals(50, config.jobById("miner").progression.maxLevel);
+        Assertions.assertTrue(config.jobById("miner").progression.levelThresholds.isEmpty(),
+            "legacy curve config should clear threshold tables");
+        Assertions.assertEquals(
+            "otters_civ_revived:job/miner_blocks",
+            config.jobById("miner").triggers.get(0).tagIds.get(0)
+        );
+        Assertions.assertEquals(
+            JobEventType.MOB_KILL.id(),
+            config.jobById("fighter").triggers.get(0).eventType
+        );
     }
 }

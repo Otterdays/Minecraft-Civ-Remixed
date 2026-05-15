@@ -83,6 +83,9 @@ Use this as the first stop for quick discovery.
 [AMENDED 2026-05-12 — `/otter` all-inclusive UI]:
 - **`OttersCivScreen` (client)** carries every roadmap surface. Tab enum: `HOME / WALLET / JOBS / REWARDS / CIV / HELP`. Panel 480×268, sidebar 132. `Status` enum (LIVE/PARTIAL/SOON/FUTURE) + `drawBadge` + `drawCommandRow` + `drawMilestone` helpers. HOME paints a 7-segment M0–M6 strip; CIV stacks M3–M6 cards; WALLET/REWARDS/HELP enumerate shipped + roadmap commands with chips. Quick-action key `action:jobs` jumps to the JOBS tab from HOME.
 
+[AMENDED 2026-05-14 — `/otter` Brief tab + CIV M0–M6]:
+- **`OttersCivScreen`:** Tab enum `HOME / WALLET / JOBS / GUILDS / REWARDS / BRIEF / CIV / HELP`; panel `520×352`, sidebar `128`. **BRIEF** — `renderBrief`: page 0 = whitepaper-style pillars, architecture, data strategy, Phases 0–3 delivery + progression loop; page 1 = roadmap M0–M3 shipped vs open risks; actions `brief:p0` / `brief:p1`. **CIV** — `renderCiv`: eight milestone cards (M0–M6 + M4.5), buttons `tab:BRIEF`, `tab:GUILDS`, `guild:config`. **HOME** — sync snapshot line uses `GuildClientState.claims().size()` and `JobsClientCatalog.visibleJobs().size()`.
+
 [AMENDED 2026-05-12 — jobs HUD bar]:
 - **Server→client sync:** `src/main/java/com/fpsmod/jobs/net/JobStatusPayload.java` (record, `CustomPacketPayload.createType("fpsmod:job_status")`, `StreamCodec.composite` codec), `JobsNetworking.java` (registers on `PayloadTypeRegistry.clientboundPlay()`, hooks `ServerPlayConnectionEvents.JOIN`, exposes `sendStatusFor`). `JobsService.setStatusListener(Consumer<ServerPlayer>)` keeps the service module networking-agnostic — `FpsMod.onInitialize` wires the listener after building both.
 - **Client side:** `src/client/java/com/fpsmod/client/jobs/` — `JobsClientState` (volatile latest payload), `JobsClientNetworking` (registers payload + receiver), `JobsHudConfig` (`config/fpsmod/jobs_hud.properties`: visible/offsetX/offsetY/scale; clamps 0.75–2.0 scale, ±400 px offsets), `JobsHudOverlay` (attaches after `VanillaHudElements.EXPERIENCE_LEVEL` — `EXPERIENCE_BAR` field does NOT exist in fabric-rendering-v1 of this release; available ids: HOTBAR, EXPERIENCE_LEVEL, INFO_BAR, etc.).
@@ -172,9 +175,10 @@ For fast agent discovery — the files you need for any reward/economy task:
 | **Guild persistence** | `src/main/java/com/fpsmod/guilds/FileGuildStore.java` (`config/otters_civ_revived/guilds_data.json`) |
 | **Guild config (operator tuning)** | `src/main/java/com/fpsmod/guilds/GuildConfig.java` (`config/otters_civ_revived/guilds.json`) |
 | **`/guild` command** | `src/main/java/com/fpsmod/command/GuildCommand.java` |
-| **Guild networking (server)** | `src/main/java/com/fpsmod/guilds/net/GuildNetworking.java`, `ClaimsPayload.java`, `MapTogglePayload.java` |
+| **Guild networking (server)** | `src/main/java/com/fpsmod/guilds/net/GuildNetworking.java`, `ClaimsPayload.java` (`forGuildSync` enriches display names for clients), `MapTogglePayload.java` |
 | **Guild networking (client)** | `src/client/java/com/fpsmod/client/guilds/GuildClientNetworking.java` |
 | **Chunk map overlay (client)** | `src/client/java/com/fpsmod/client/guilds/GuildChunkOverlay.java` |
+| **Claim boundary hint (client tick)** | `src/client/java/com/fpsmod/client/guilds/GuildClaimNotifier.java` |
 | **Guild client state** | `src/client/java/com/fpsmod/client/guilds/GuildClientState.java` |
 | **Runtime config dir** | `config/otters_civ_revived/` (rewards.json, block_values.json, entity_values.json, wallet.properties, guilds.json, guilds_data.json) |
 

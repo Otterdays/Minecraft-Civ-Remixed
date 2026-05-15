@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 /** `/job` surface for fully configurable jobs. */
+@SuppressWarnings("null")
 public final class JobCommand {
     private static final Permission ADMIN = new Permission.HasCommandLevel(PermissionLevel.GAMEMASTERS);
 

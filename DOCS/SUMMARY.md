@@ -39,6 +39,9 @@
 [AMENDED 2026-05-14 — runtime jobs storage clarification]:
 - **Public docs should treat live jobs state as part of SQLite runtime persistence.** The shipped runtime path is `PersistenceService -> SqliteJobsStore`, so player job state in normal play lives in `config/otters_civ_revived/project_ooga.db` alongside wallets/guilds/claims. The older `jobs_state.json` notes describe the prior JSON store and should not be repeated on player-facing surfaces unless explicitly called out as legacy/history.
 
+[AMENDED 2026-05-14 — SQLite audit]:
+- **SQLite claims are now explicitly verified by tests and public docs.** `SqlitePersistenceIntegrationTest` covers schema creation, WAL/busy-timeout/foreign-key pragmas, wallet + ledger round-trip, jobs/guild persistence, and close/reopen durability against `project_ooga.db`. Public docs (`README`, `index.html`, `DOCS/modrinth-description.md`) now also say plainly that the release jar bundles its SQLite runtime and needs no separate database setup.
+
 [AMENDED 2026-05-12 — jobs HUD]:
 - **In-game job bar.** Compact bar above vanilla XP showing icon + slug + level + XP fill (gold gradient). Server pushes `JobStatusPayload` on join/job-change/reward. Client mirror + HUD overlay. Operator-tunable via `/otter` → Jobs tab (visible toggle, X/Y nudge, scale ±, reset, `/job` shortcuts). Persistence `config/fpsmod/jobs_hud.properties`. BMP-only icons (⛏▲✿⚔) for unifont compatibility.
 

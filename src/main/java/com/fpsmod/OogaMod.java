@@ -8,6 +8,7 @@ import com.fpsmod.command.MoneyCommand;
 import com.fpsmod.command.OogaCommand;
 import com.fpsmod.command.OtterCommand;
 import com.fpsmod.command.PayCommand;
+import com.fpsmod.config.ConfigReadmeWriter;
 import com.fpsmod.economy.EconomyConfig;
 import com.fpsmod.economy.EconomyConfigLoader;
 import com.fpsmod.economy.WalletService;
@@ -69,6 +70,7 @@ public class OogaMod implements ModInitializer {
 
         persistence = new PersistenceService();
         persistence.initialize();
+        ConfigReadmeWriter.writeOrUpdate();
         economyConfig = EconomyConfigLoader.loadOrCreate();
         walletService = new WalletService(persistence.walletStore(), persistence.transactionLog(), economyConfig);
         jobsService = new JobsService(persistence.jobsStore(), JobsConfigLoader.loadOrCreate());

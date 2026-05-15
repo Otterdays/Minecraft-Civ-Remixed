@@ -1,8 +1,16 @@
 # ROADMAP — Project OOGA
 
+**Completion gauges:** Under each major `##` heading, the blockquote line counts every `- [x]`
+/ `- [ ]` bullet in that section’s **Scope**, **Deliverables** (including `Deliverables — …`
+blocks), **Acceptance Gate**, and **Risks** only (prose like `[AMENDED …]` does not count).
+Percent = `round(100 × done / total)`. **Milestone Order** is scored as shipped milestones
+checked ÷ 8.
+
 ---
 
 ## Milestone Order
+
+> **~50%** · shipped milestones **4 / 8** (M0–M3 ✓ · M4–M6 + M4.5 open)
 
 - [x] M0 — Foundation and Data Integrity
 - [x] M1 — Economy MVP
@@ -16,6 +24,8 @@
 ---
 
 ## ASAP Sprint — `/money` Bootstrap (shipped 2026-05-07)
+
+> **100%** · checklist **10 / 10**
 
 - [x] Set mod environment to `*` (enable server-side commands)
 - [x] Add `WalletStore` / `FileWalletStore` persistence layer
@@ -31,6 +41,12 @@
 ---
 
 ## M0 — Foundation and Data Integrity (shipped 2026-05-14)
+
+> **100%** · checklist **20 / 20** (Scope 4/4 · Deliverables 9/9 · Acceptance 5/5 · Risks 2/2)
+
+[AMENDED 2026-05-14]: **Whitepaper Phase 0** and this milestone are **100% complete** for their
+defined scope. Follow-on persistence (shop/social repos → **M4** / **M4.5**; Postgres/dialect → **M6**)
+lives only in those milestones.
 
 ### Scope
 - [x] Define module boundaries and service interfaces
@@ -48,7 +64,6 @@
 - [x] Schema version table (`schema_version`) + migration runner (`SchemaMigrator`) + startup validation
 - [x] Operator command stubs: `/ooga db status|migrate`
 - [x] Structured state-mutation log format (SQLite `wallet_ledger` table with id/delta/balance_after/reason/note/timestamp)
-- [ ] Repository layer for shop/friend/message entities (deferred to M4/M4.5)
 
 ### Acceptance Gate
 - [x] Module boundaries defined: economy, jobs, guilds each expose interface
@@ -58,12 +73,17 @@
 - [x] Hot-path reads → no main-thread blocking I/O (in-memory ConcurrentHashMap caches in services, SQLite for persistence only)
 
 ### Risks
-- [ ] Migration drift mitigation: deterministic ledger + CI startup check
+- [x] Migration drift mitigation (bounded): `gradlew test` runs `SqlitePersistenceIntegrationTest`
+  (fresh DB migrations, PRAGMAs, wallet/ledger/guild/jobs round-trips). Optional hardening: widen
+  CI matrix + publish operator rollback notes (restore prior `project_ooga.db` + pinned jar;
+  SQL migrations remain forward-only).
 - [x] SQLite contention mitigation: WAL mode + busy_timeout=5000 + synchronous=NORMAL
 
 ---
 
 ## M1 — Economy MVP (shipped 2026-05-07)
+
+> **~64%** · checklist **9 / 14** (Scope 3/3 · Deliverables 4/4 · Acceptance 2/5 · Risks 0/2)
 
 ### Scope
 - [x] Authoritative wallet + transaction lifecycle
@@ -89,6 +109,8 @@
 ---
 
 ## M2 — Jobs and Professions MVP (shipped 2026-05-12)
+
+> **~88%** · checklist **14 / 16** (Scope 3/3 · Deliverables 7/7 · Acceptance 3/4 · Risks 1/2)
 
 ### Scope
 - [x] Job enrollment and profession progression lifecycle
@@ -117,6 +139,8 @@
 ---
 
 ## M3 — Guilds and Claims MVP (shipped 2026-05-14)
+
+> **~81%** · checklist **17 / 21** (Scope 3/3 · Deliverables 11/11 · Acceptance 3/5 · Risks 0/2)
 
 ### Scope
 - [x] Guild lifecycle: create, membership, officer ranks
@@ -151,12 +175,16 @@
 
 ## M4 — Player Shops MVP
 
+> **0%** · checklist **0 / 16** (Scope 0/3 · Deliverables 0/5 · Acceptance 0/4 · Risks 0/2)
+
 ### Scope
 - [ ] Listing, purchase, and stock-management flow
 - [ ] Tax and anti-manipulation controls
 - [ ] First GUI-centric market workflow
 
 ### Deliverables
+- [ ] Persistence layer for shop entities (listings, stock, escrow / purchase records) —
+  relational or shared-store pattern consistent with `PersistenceService` / schema migrations
 - [ ] Shop primitives: create listing / buy item / close listing / restock
 - [ ] Escrow + rollback-safe purchase flow
 - [ ] Screen Handler market UI
@@ -176,6 +204,8 @@
 
 ## M4.5 — Social Layer (Friends + Private Messages)
 
+> **0%** · checklist **0 / 34** (Scope 0/3 · Friends 0/9 · Private Messages 0/11 · UX 0/4 · Acceptance 0/5 · Risks 0/2)
+
 ### Scope
 - [ ] Friends list: add / accept / remove / block
 - [ ] Private messaging: send / reply / ignore
@@ -183,7 +213,8 @@
 
 ### Deliverables — Friends
 - [ ] `FriendService` + `FriendRecord` (per-player: uuid → list\<uuid\>, status: pending/accepted/blocked)
-- [ ] Persist to `SavedData` (same pattern as `JoinAttendanceSavedData`) or new repo
+- [ ] Friend persistence for graph + requests + blocks — `SavedData` (same pattern as
+  `JoinAttendanceSavedData`) and/or SQLite tables with the same migration discipline as M0/M4
 - [ ] `/friend add <name>` — sends request
 - [ ] `/friend accept <name>` — confirm pending request
 - [ ] `/friend remove <name>` — remove accepted friend
@@ -193,6 +224,8 @@
 - [ ] Online presence indicator in `/friend list`
 
 ### Deliverables — Private Messages
+- [ ] Persistence layer for DM sessions / ignore state / optional offline inbox (same stores
+  as friends where practical)
 - [ ] `MessageService` — direct send via `ServerPlayerEntity.sendMessage`
 - [ ] Last-sender tracking per session (for `/r` reply)
 - [ ] `/msg <player> <text>` — send private message
@@ -224,6 +257,8 @@
 
 ## M5 — Civ Governance Layer
 
+> **0%** · checklist **0 / 12** (Scope 0/3 · Deliverables 0/4 · Acceptance 0/3 · Risks 0/2)
+
 ### Scope
 - [ ] Diplomacy state system
 - [ ] Territory projects and regional bonuses
@@ -248,14 +283,18 @@
 
 ## M6 — Stabilization, Balance, and Scale
 
+> **0%** · checklist **0 / 14** (Scope 0/3 · Deliverables 0/5 · Acceptance 0/4 · Risks 0/2)
+
 ### Scope
 - [ ] Load testing and exploit hardening
-- [ ] PostgreSQL backend + migration tooling
+- [ ] Scale persistence (second JDBC backend, SQL dialects, SQLite → Postgres move — see Deliverables)
 - [ ] Release candidate hardening
 
 ### Deliverables
 - [ ] Performance harness + synthetic scenario scripts
 - [ ] Telemetry dashboards (latency / errors / throughput)
+- [ ] Pluggable JDBC backend + SQL dialect layer (PostgreSQL primary scale target; optional
+  MySQL/MariaDB community path per `DOCS/whitepaper.md` persistence architecture)
 - [ ] SQLite → PostgreSQL migration tooling + verification checks
 - [ ] Release checklist and operator upgrade notes
 
@@ -273,6 +312,8 @@
 
 ## Cross-Cutting
 
+> **~67%** · checklist **4 / 6**
+
 - [x] Testing: unit-heavy logic + targeted integration + smoke E2E
 - [x] Security: server-authoritative writes + strict input validation
 - [x] UX: actionable error messages + compact HUD signals + clear command help
@@ -284,8 +325,13 @@
 
 ## Definition of Done (per milestone)
 
+> **~80%** · checklist **4 / 5** (global template; migration line still open for later milestones)
+
 - [x] Feature complete against scope
 - [x] Acceptance criteria verified
 - [x] No blocker-severity defects open
 - [x] Operator/config docs updated
-- [ ] Migration and rollback path validated (where applicable)
+- [ ] Migration and rollback path validated (where applicable) — **M0 satisfied 2026-05-14:**
+  forward-only SQL migrations + startup fast-fail on newer DB than code; operator rollback =
+  restore backed-up `project_ooga.db` + matching mod version. Later milestones (e.g. M6
+  Postgres) carry their own migration/rollback requirements.
