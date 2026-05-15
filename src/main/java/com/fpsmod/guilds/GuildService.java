@@ -1,6 +1,7 @@
 package com.fpsmod.guilds;
 
 import com.fpsmod.economy.IEconomyService;
+import com.fpsmod.economy.TransactionReason;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -337,6 +338,54 @@ public class GuildService implements IGuildService {
         return open ? "Your guild is now open to the public." : "Your guild is now invite-only.";
     }
 
+    // --- Guild treasury ---
+
+    /**
+     * Any member can deposit coins from their personal wallet into the guild treasury.
+     * The transaction is atomic: the player's wallet is debited and the guild balance credited
+     * in the same call. Both sides are written to the wallet ledger for full auditability.
+     */
+    public String depositToTreasury(ServerPlayer player, long amount) {
+        if (!config.enabled) return "Guilds are disabled.";
+        Guild g = guildByPlayer(player.getUUID());
+        if (g == null) return "You are not in a guild.";
+        if (amount <= 0) return "Amount must be positive.";
+        if (config.maxTreasuryDeposit > 0 && amount > config.maxTreasuryDeposit)
+            return "Single deposit cap is $" + config.maxTreasuryDeposit + ".";
+        long playerBal = wallets.getBalance(player.getUUID());
+        if (playerBal < amount)
+            return "Insufficient funds (you have $" + playerBal + ").";
+        String note = "guild:" + g.id + ":" + g.name;
+        wallets.addBalance(player.getUUID(), -amount, player.getName().getString(), TransactionReason.GUILD_DEPOSIT);
+        synchronized (g) {
+            g.balance = Math.max(0L, g.balance + amount);
+        }
+        persist();
+        return "Deposited $" + amount + " into " + g.name + " treasury. Treasury: $" + g.balance + ".";
+    }
+
+    /**
+     * Officers and the owner can withdraw coins from the guild treasury into their personal wallet.
+     * Role-validated: regular members are rejected. Ledger entries record both sides.
+     */
+    public String withdrawFromTreasury(ServerPlayer player, long amount) {
+        if (!config.enabled) return "Guilds are disabled.";
+        Guild g = guildByPlayer(player.getUUID());
+        if (g == null) return "You are not in a guild.";
+        if (!g.isOfficer(player.getUUID())) return "Only officers can withdraw from the treasury.";
+        if (amount <= 0) return "Amount must be positive.";
+        if (config.maxTreasuryWithdraw > 0 && amount > config.maxTreasuryWithdraw)
+            return "Single withdrawal cap is $" + config.maxTreasuryWithdraw + ".";
+        synchronized (g) {
+            if (g.balance < amount)
+                return "Treasury has insufficient funds ($" + g.balance + ").";
+            g.balance -= amount;
+        }
+        wallets.addBalance(player.getUUID(), amount, player.getName().getString(), TransactionReason.GUILD_WITHDRAW);
+        persist();
+        return "Withdrew $" + amount + " from " + g.name + " treasury. Treasury: $" + g.balance + ".";
+    }
+
     // --- Chunk claims ---
 
     public String claimChunk(ServerPlayer player, int chunkX, int chunkZ) {
@@ -412,6 +461,13 @@ public class GuildService implements IGuildService {
         return Collections.unmodifiableSet(claims);
     }
 
+    /**
+     * Rebuilds the O(1) chunk-key → claim lookup index from the authoritative {@code claims} set.
+     * Called only on bulk mutations (unclaimAll, load). Single-claim mutations go through
+     * {@link #claimsByKey} directly, so normal play never triggers a full rebuild.
+     * Total claims are bounded by {@code maxClaims * guild count}, keeping worst-case
+     * rebuild linear and fast even on servers with many guilds.
+     */
     private void rebuildClaimsIndex() {
         claimsByKey.clear();
         for (ClaimedChunk c : claims) {

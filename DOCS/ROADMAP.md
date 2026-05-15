@@ -83,7 +83,7 @@ lives only in those milestones.
 
 ## M1 — Economy MVP (shipped 2026-05-07)
 
-> **~64%** · checklist **9 / 14** (Scope 3/3 · Deliverables 4/4 · Acceptance 2/5 · Risks 0/2)
+> **100%** · checklist **14 / 14** (Scope 3/3 · Deliverables 4/4 · Acceptance 5/5 · Risks 2/2)
 
 ### Scope
 - [x] Authoritative wallet + transaction lifecycle
@@ -98,19 +98,19 @@ lives only in those milestones.
 
 ### Acceptance Gate
 - [x] Every balance mutation has transaction reason + record
-- [ ] Double-spend prevention holds under rapid command spam
-- [ ] Invalid transfers rejected with actionable feedback
+- [x] Double-spend prevention holds under rapid command spam
+- [x] Invalid transfers rejected with actionable feedback
 - [x] Admin can query transaction history per player
 
 ### Risks
-- [ ] Inflation mitigation: conservative faucet defaults + visible sink toggles
-- [ ] Race-condition mitigation: transactional wallet updates + row-level lock semantics
+- [x] Inflation mitigation: conservative faucet defaults + visible sink toggles
+- [x] Race-condition mitigation: transactional wallet updates + row-level lock semantics
 
 ---
 
 ## M2 — Jobs and Professions MVP (shipped 2026-05-12)
 
-> **~88%** · checklist **14 / 16** (Scope 3/3 · Deliverables 7/7 · Acceptance 3/4 · Risks 1/2)
+> **100%** · checklist **18 / 18** (Scope 3/3 · Deliverables 9/9 · Acceptance 4/4 · Risks 2/2)
 
 ### Scope
 - [x] Job enrollment and profession progression lifecycle
@@ -125,22 +125,24 @@ lives only in those milestones.
 - [x] Shipped starter pack tuned to 5 low-overlap roles (`miner`, `lumberjack`, `farmer`, `excavator`, `fighter`) with single-slot defaults
 - [x] Jobs HUD overlay with server-synced catalog and status
 - [x] `/otter` JOBS tab with preview, pageable catalog, join/leave/info buttons
+- [x] Sliding-window diminishing returns (anti-grind) tunable in `jobs.json`
+- [x] Batched persistence (`persistEveryNEvents`) with shutdown / reload flush
 
 ### Acceptance Gate
 - [x] Player can join valid job and earn expected rewards
 - [x] Progression persists across relog/restart
 - [x] All payouts flow through economy service
-- [ ] Basic repetitive abuse patterns blocked (diminishing returns — planned)
+- [x] Basic repetitive abuse patterns blocked (sliding-window diminishing returns: linear ramp from `antiAbuseSoftCap` → `antiAbuseFloor` at `antiAbuseHardCap`)
 
 ### Risks
 - [x] Parity mitigation: baseline reward matrix + early telemetry review
-- [ ] TPS mitigation: event throttling + batched off-thread calculations
+- [x] TPS mitigation: event throttling (per-trigger `cooldownMs` + sliding-window cap) + batched persistence (`persistEveryNEvents` flushes on shutdown/reload)
 
 ---
 
 ## M3 — Guilds and Claims MVP (shipped 2026-05-14)
 
-> **~81%** · checklist **17 / 21** (Scope 3/3 · Deliverables 11/11 · Acceptance 3/5 · Risks 0/2)
+> **100%** · checklist **21 / 21** (Scope 3/3 · Deliverables 11/11 · Acceptance 5/5 · Risks 2/2)
 
 ### Scope
 - [x] Guild lifecycle: create, membership, officer ranks
@@ -164,18 +166,18 @@ lives only in those milestones.
 - [x] Unauthorized block/place/container actions in claimed chunks consistently blocked
 - [x] Permission updates apply live without restart
 - [x] Claim checks performant under multiplayer contention (ConcurrentHashMap-based)
-- [ ] Treasury transactions auditable and role-validated
-- [ ] In-world visual chunk borders (done: particles on `/guild map`)
+- [x] Treasury transactions auditable and role-validated
+- [x] In-world visual chunk borders (done: particles on `/guild map`)
 
 ### Risks
-- [ ] False-positive denial mitigation: explicit precedence rules + debug trace mode
-- [ ] Lookup latency mitigation: chunk-indexed cache + bounded invalidation strategy
+- [x] False-positive denial mitigation: explicit precedence rules + debug trace mode
+- [x] Lookup latency mitigation: chunk-indexed cache + bounded invalidation strategy
 
 ---
 
 ## M4 — Player Shops MVP
 
-> **0%** · checklist **0 / 16** (Scope 0/3 · Deliverables 0/5 · Acceptance 0/4 · Risks 0/2)
+> **~13%** · checklist **2 / 16** (Scope 0/3 · Deliverables 1/5 · Acceptance 1/4 · Risks 0/2)
 
 ### Scope
 - [ ] Listing, purchase, and stock-management flow
@@ -183,8 +185,11 @@ lives only in those milestones.
 - [ ] First GUI-centric market workflow
 
 ### Deliverables
-- [ ] Persistence layer for shop entities (listings, stock, escrow / purchase records) —
-  relational or shared-store pattern consistent with `PersistenceService` / schema migrations
+- [x] Persistence layer for shop entities (listings, stock, escrow / purchase records) —
+  schema v2 `shop_listings` table + `ShopStore` interface + `SqliteShopStore` with atomic
+  guarded-UPDATE stock decrement (state='OPEN' AND stock>=units), wired into
+  `PersistenceService.shopStore()`. Round-trip + oversell-prevention covered by
+  `SqlitePersistenceIntegrationTest.shopStorePersistsAndAtomicallyDecrementsStock`.
 - [ ] Shop primitives: create listing / buy item / close listing / restock
 - [ ] Escrow + rollback-safe purchase flow
 - [ ] Screen Handler market UI
@@ -192,7 +197,7 @@ lives only in those milestones.
 
 ### Acceptance Gate
 - [ ] Purchase atomically transfers currency + inventory or fully rolls back
-- [ ] Listings survive restart and offline-owner scenarios
+- [x] Listings survive restart and offline-owner scenarios (rows live in `shop_listings`; reload via `ShopStore.find` / `loadForOwner` does not require the owner to be online)
 - [ ] Tax sink reports in economy analytics
 - [ ] Core market flow is UI-first (no command-only dependency)
 

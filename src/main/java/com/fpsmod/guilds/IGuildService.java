@@ -24,6 +24,8 @@ public interface IGuildService {
     String demote(ServerPlayer sender, ServerPlayer target);
     String setHome(ServerPlayer player);
     String teleportHome(ServerPlayer player);
+    String depositToTreasury(ServerPlayer player, long amount);
+    String withdrawFromTreasury(ServerPlayer player, long amount);
     String claimChunk(ServerPlayer player, int chunkX, int chunkZ);
     String unclaimChunk(ServerPlayer player, int chunkX, int chunkZ);
     String unclaimAll(ServerPlayer player);

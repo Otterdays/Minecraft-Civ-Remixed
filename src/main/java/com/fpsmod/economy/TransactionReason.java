@@ -10,5 +10,7 @@ public enum TransactionReason {
     JOIN_STARTING_BALANCE,
     REWARD_BLOCK,
     REWARD_ENTITY,
-    JOB_REWARD
+    JOB_REWARD,
+    GUILD_DEPOSIT,
+    GUILD_WITHDRAW
 }

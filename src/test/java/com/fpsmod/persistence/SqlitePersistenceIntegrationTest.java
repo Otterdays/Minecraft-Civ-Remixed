@@ -9,6 +9,7 @@ import com.fpsmod.guilds.Guild;
 import com.fpsmod.guilds.GuildLedger;
 import com.fpsmod.jobs.JobState;
 import com.fpsmod.jobs.JobsLedger;
+import com.fpsmod.shops.ShopListing;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -43,7 +44,7 @@ class SqlitePersistenceIntegrationTest {
                 assertEquals(1, queryInt(stmt, "PRAGMA synchronous"));
                 assertEquals(5000, queryInt(stmt, "PRAGMA busy_timeout"));
                 assertEquals(1, queryInt(stmt, "PRAGMA foreign_keys"));
-                assertEquals(1, queryInt(stmt, "SELECT max(version) FROM schema_version"));
+                assertEquals(2, queryInt(stmt, "SELECT max(version) FROM schema_version"));
 
                 assertTrue(tableExists(stmt, "wallets"));
                 assertTrue(tableExists(stmt, "wallet_ledger"));
@@ -51,6 +52,7 @@ class SqlitePersistenceIntegrationTest {
                 assertTrue(tableExists(stmt, "guild_members"));
                 assertTrue(tableExists(stmt, "claims"));
                 assertTrue(tableExists(stmt, "jobs_state"));
+                assertTrue(tableExists(stmt, "shop_listings"));
             }
         }
     }
@@ -195,6 +197,43 @@ class SqlitePersistenceIntegrationTest {
         try (ResultSet rs = stmt.executeQuery(sql)) {
             assertTrue(rs.next(), "expected a row for: " + sql);
             return rs.getInt(1);
+        }
+    }
+
+    @Test
+    void shopStorePersistsAndAtomicallyDecrementsStock() throws Exception {
+        try (SqliteDatabase db = migratedDb()) {
+            SqliteShopStore shops = new SqliteShopStore(db);
+
+            ShopListing listing = ShopListing.fresh(PLAYER, "minecraft:diamond", 1, 100L, 5);
+            shops.upsert(listing);
+
+            ShopListing reloaded = shops.find(listing.id);
+            assertTrue(reloaded != null, "listing should round-trip");
+            assertEquals("minecraft:diamond", reloaded.itemId);
+            assertEquals(5, reloaded.stock);
+            assertEquals(ShopListing.State.OPEN, reloaded.state);
+
+            // Atomic decrement: 3 of 5 → 2 remaining, still OPEN
+            assertTrue(shops.decrementStock(listing.id, 3));
+            assertEquals(2, shops.find(listing.id).stock);
+            assertEquals(ShopListing.State.OPEN, shops.find(listing.id).state);
+
+            // Cannot oversell — 5 requested vs 2 available → no row updated
+            assertTrue(!shops.decrementStock(listing.id, 5));
+            assertEquals(2, shops.find(listing.id).stock);
+
+            // Drain to 0 → SOLD_OUT auto-transition
+            assertTrue(shops.decrementStock(listing.id, 2));
+            assertEquals(0, shops.find(listing.id).stock);
+            assertEquals(ShopListing.State.SOLD_OUT, shops.find(listing.id).state);
+
+            // SOLD_OUT row rejects further decrement
+            assertTrue(!shops.decrementStock(listing.id, 1));
+
+            // Owner index works
+            assertEquals(1, shops.loadForOwner(PLAYER).size());
+            assertEquals(0, shops.loadForOwner(OTHER_PLAYER).size());
         }
     }
 

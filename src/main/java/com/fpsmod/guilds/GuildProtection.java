@@ -15,6 +15,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
+import com.fpsmod.OogaMod;
 import java.util.Objects;
 import java.util.Set;
 
@@ -93,29 +94,70 @@ public final class GuildProtection {
         });
     }
 
+    /**
+     * Returns true if {@code player} is allowed to break/place blocks at {@code pos}.
+     *
+     * Precedence:
+     *  1. Chunk not claimed → allow (unclaimed land is unprotected).
+     *  2. Owning guild missing (orphan claim) → allow (defensive: stale data shouldn't hard-block players).
+     *  3. Player is a guild member → honour {@code allowMemberBuild} config flag.
+     *  4. Player is not a member → deny.
+     *
+     * Enable {@code guilds.json debugProtection:true} to log every decision.
+     */
     public static boolean canModifyBlock(ServerPlayer player, Level level, BlockPos pos, GuildService guilds) {
         int cx = pos.getX() >> 4;
         int cz = pos.getZ() >> 4;
         String dim = level.dimension().identifier().toString();
         ClaimedChunk claim = guilds.claimAt(cx, cz, dim);
-        if (claim == null) return true;
-
+        boolean debug = guilds.config().debugProtection;
+        if (claim == null) {
+            if (debug) OogaMod.LOGGER.info("[guild-protect] canModify ALLOW unclaimed {},{} dim={} player={}", cx, cz, dim, player.getName().getString());
+            return true;
+        }
         Guild g = guilds.guildById(claim.guildId());
-        if (g == null) return true;
-        if (g.isMember(player.getUUID())) return guilds.config().allowMemberBuild;
+        if (g == null) {
+            if (debug) OogaMod.LOGGER.info("[guild-protect] canModify ALLOW orphan claim {},{} dim={} player={}", cx, cz, dim, player.getName().getString());
+            return true;
+        }
+        if (g.isMember(player.getUUID())) {
+            boolean allowed = guilds.config().allowMemberBuild;
+            if (debug) OogaMod.LOGGER.info("[guild-protect] canModify {} (member,allowMemberBuild={}) {},{} guild={} player={}", allowed ? "ALLOW" : "DENY", allowed, cx, cz, g.name, player.getName().getString());
+            return allowed;
+        }
+        if (debug) OogaMod.LOGGER.info("[guild-protect] canModify DENY non-member {},{} guild={} player={}", cx, cz, g.name, player.getName().getString());
         return false;
     }
 
+    /**
+     * Returns true if {@code player} may interact with containers/interactables at {@code pos}.
+     *
+     * Precedence:
+     *  1. Chunk not claimed → allow.
+     *  2. Owning guild missing → allow.
+     *  3. Player is a guild member → allow.
+     *  4. Non-member → deny.
+     *
+     * Enable {@code guilds.json debugProtection:true} to log every decision.
+     */
     public static boolean canAccess(ServerPlayer player, Level level, BlockPos pos, GuildService guilds) {
         int cx = pos.getX() >> 4;
         int cz = pos.getZ() >> 4;
         String dim = level.dimension().identifier().toString();
         ClaimedChunk claim = guilds.claimAt(cx, cz, dim);
-        if (claim == null) return true;
-
+        boolean debug = guilds.config().debugProtection;
+        if (claim == null) {
+            if (debug) OogaMod.LOGGER.info("[guild-protect] canAccess ALLOW unclaimed {},{} dim={} player={}", cx, cz, dim, player.getName().getString());
+            return true;
+        }
         Guild g = guilds.guildById(claim.guildId());
-        if (g == null) return true;
-        return g.isMember(player.getUUID());
+        if (g == null) {
+            if (debug) OogaMod.LOGGER.info("[guild-protect] canAccess ALLOW orphan claim {},{} dim={} player={}", cx, cz, dim, player.getName().getString());
+            return true;
+        }
+        boolean allowed = g.isMember(player.getUUID());
+        if (debug) OogaMod.LOGGER.info("[guild-protect] canAccess {} {},{} guild={} player={}", allowed ? "ALLOW" : "DENY", cx, cz, g.name, player.getName().getString());
+        return allowed;
     }
 
     public static void showChunkBorders(ServerPlayer player, int chunkX, int chunkZ, int radius, String dimension, GuildService guilds) {

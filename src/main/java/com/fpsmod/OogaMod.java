@@ -95,6 +95,15 @@ public class OogaMod implements ModInitializer {
                 }
             }
         );
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            try {
+                if (jobsService != null) {
+                    jobsService.flushNow();
+                }
+            } catch (RuntimeException e) {
+                LOGGER.error("[otters_civ_revived/jobs] flushNow on shutdown failed", e);
+            }
+        });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             OtterCommand.register(dispatcher);

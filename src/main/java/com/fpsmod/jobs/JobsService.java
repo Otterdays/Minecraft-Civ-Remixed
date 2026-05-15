@@ -26,6 +26,10 @@ public class JobsService implements IJobsService {
     private final Map<UUID, JobState> states;
     private final Map<UUID, String> displayHints;
     private final Map<String, Long> lastTriggerEventMs = new ConcurrentHashMap<>();
+    /** Sliding event-time deque per (player|job). Bounded by hardCap to keep memory predictable. */
+    private final Map<String, java.util.Deque<Long>> recentEventsByKey = new ConcurrentHashMap<>();
+    /** Batched-persist counter — flushes every {@code persistEveryNEvents} mutations. */
+    private final java.util.concurrent.atomic.AtomicInteger pendingPersistCount = new java.util.concurrent.atomic.AtomicInteger(0);
     private volatile JobsConfig config;
     private volatile CompiledJobCatalog catalog;
 
@@ -102,6 +106,7 @@ public class JobsService implements IJobsService {
     }
 
     public void refresh() {
+        flushNow();
         this.config = JobsConfigLoader.loadOrCreate();
         this.catalog = CompiledJobCatalog.compile(this.config);
         pruneStatesToCatalog();
@@ -152,6 +157,31 @@ public class JobsService implements IJobsService {
 
     private synchronized void persist() {
         store.save(Map.copyOf(states), Map.copyOf(displayHints));
+        pendingPersistCount.set(0);
+    }
+
+    /**
+     * Increments the dirty counter and only writes to disk after {@code persistEveryNEvents}
+     * mutations. Cuts gameplay-event disk I/O by an order of magnitude on busy servers.
+     * Call {@link #flushNow} on shutdown / reload / explicit save to drain.
+     */
+    private void markDirtyAndMaybePersist() {
+        int batch = config.global.persistEveryNEvents;
+        if (batch <= 0) {
+            persist();
+            return;
+        }
+        int n = pendingPersistCount.incrementAndGet();
+        if (n >= batch) {
+            persist();
+        }
+    }
+
+    /** Force-flush any pending state changes. Safe to call any time. */
+    public synchronized void flushNow() {
+        if (pendingPersistCount.get() > 0) {
+            persist();
+        }
     }
 
     public long modifyPayout(ServerPlayer player, JobEventContext context, long basePayout) {
@@ -164,19 +194,60 @@ public class JobsService implements IJobsService {
         }
         double multiplier = 1.0D;
         long flatBonus = 0L;
+        double abuseScale = 1.0D;
         boolean matched = false;
         for (CompiledJobCatalog.Match match : matchingActiveJobs(state, context)) {
             Job job = match.job();
             int level = state.levelOf(job.id, job.progression);
             multiplier *= job.boosts.moneyMultiplierForLevel(level);
             flatBonus += job.boosts.moneyFlatBonusForLevel(level);
+            // Use the worst (lowest) anti-abuse scale across matched jobs so spam on any one tag drags payout down.
+            double s = currentAbuseScale(player.getUUID(), job.id);
+            if (s < abuseScale) abuseScale = s;
             matched = true;
         }
         if (!matched) {
             return basePayout;
         }
-        long scaled = (long) Math.floor(basePayout * multiplier) + flatBonus;
+        long scaled = (long) Math.floor(basePayout * multiplier * abuseScale) + flatBonus;
         return Math.max(0L, scaled);
+    }
+
+    /**
+     * Returns multiplier in [floor, 1.0]. Linear ramp from 1.0 at softCap → floor at hardCap.
+     * Read-only — does not record the current event. Recording happens in {@link #onGameplayEvent}.
+     */
+    private double currentAbuseScale(UUID playerId, String jobId) {
+        JobsConfig.GlobalSettings g = config.global;
+        if (!g.antiAbuseEnabled) return 1.0D;
+        long windowMs = g.antiAbuseWindowSeconds * 1000L;
+        long now = System.currentTimeMillis();
+        java.util.Deque<Long> deque = recentEventsByKey.get(playerId + "|" + jobId);
+        if (deque == null) return 1.0D;
+        int count;
+        synchronized (deque) {
+            while (!deque.isEmpty() && now - deque.peekFirst() > windowMs) deque.pollFirst();
+            count = deque.size();
+        }
+        if (count <= g.antiAbuseSoftCap) return 1.0D;
+        if (count >= g.antiAbuseHardCap) return g.antiAbuseFloor;
+        double t = (double) (count - g.antiAbuseSoftCap) / (double) (g.antiAbuseHardCap - g.antiAbuseSoftCap);
+        return 1.0D - t * (1.0D - g.antiAbuseFloor);
+    }
+
+    /** Records this event into the sliding window. Bounded length = hardCap to cap memory. */
+    private void recordAbuseEvent(UUID playerId, String jobId) {
+        JobsConfig.GlobalSettings g = config.global;
+        if (!g.antiAbuseEnabled) return;
+        long now = System.currentTimeMillis();
+        long windowMs = g.antiAbuseWindowSeconds * 1000L;
+        java.util.Deque<Long> deque = recentEventsByKey.computeIfAbsent(
+            playerId + "|" + jobId, k -> new java.util.ArrayDeque<>());
+        synchronized (deque) {
+            while (!deque.isEmpty() && now - deque.peekFirst() > windowMs) deque.pollFirst();
+            deque.addLast(now);
+            while (deque.size() > g.antiAbuseHardCap) deque.pollFirst();
+        }
     }
 
     public void onGameplayEvent(ServerPlayer player, JobEventContext context) {
@@ -196,7 +267,9 @@ public class JobsService implements IJobsService {
             }
             Job job = match.job();
             int prevLevel = state.levelOf(job.id, job.progression);
-            long xpAward = resolvedXpAward(job, prevLevel);
+            double abuseScale = currentAbuseScale(player.getUUID(), job.id);
+            long xpAward = (long) Math.floor(resolvedXpAward(job, prevLevel) * abuseScale);
+            recordAbuseEvent(player.getUUID(), job.id);
             if (xpAward <= 0L) {
                 continue;
             }
@@ -211,7 +284,7 @@ public class JobsService implements IJobsService {
         if (!changed) {
             return;
         }
-        persist();
+        markDirtyAndMaybePersist();
         statusListener.accept(player);
         for (String line : lines) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal(line));

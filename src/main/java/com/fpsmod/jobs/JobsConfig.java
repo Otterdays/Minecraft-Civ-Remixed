@@ -248,6 +248,22 @@ public final class JobsConfig {
         public JobProgression defaultProgression = JobProgression.defaults();
         public JobBoosts defaultBoosts = JobBoosts.defaults();
 
+        // --- Anti-abuse (diminishing returns) ---
+        /** Master switch. False = no throttling, full XP/payout always. */
+        public boolean antiAbuseEnabled = true;
+        /** Sliding window length in seconds. */
+        public int antiAbuseWindowSeconds = 60;
+        /** Events per window allowed at full reward. Beyond this, multiplier ramps down linearly. */
+        public int antiAbuseSoftCap = 60;
+        /** Events per window where multiplier hits {@link #antiAbuseFloor}. */
+        public int antiAbuseHardCap = 240;
+        /** Lowest multiplier (0.0–1.0) once hard cap reached. */
+        public double antiAbuseFloor = 0.1D;
+
+        // --- Persistence batching (TPS protection) ---
+        /** Persist gameplay-event state changes after this many events. 0 = persist every event. */
+        public int persistEveryNEvents = 25;
+
         public void sanitize() {
             String normalizedPolicy = activationPolicy == null
                 ? "single"
@@ -268,6 +284,12 @@ public final class JobsConfig {
                 defaultBoosts = JobBoosts.defaults();
             }
             defaultBoosts.sanitize(null);
+            if (antiAbuseWindowSeconds < 1) antiAbuseWindowSeconds = 1;
+            if (antiAbuseSoftCap < 1) antiAbuseSoftCap = 1;
+            if (antiAbuseHardCap < antiAbuseSoftCap) antiAbuseHardCap = antiAbuseSoftCap;
+            if (antiAbuseFloor < 0.0D) antiAbuseFloor = 0.0D;
+            if (antiAbuseFloor > 1.0D) antiAbuseFloor = 1.0D;
+            if (persistEveryNEvents < 0) persistEveryNEvents = 0;
         }
     }
 }

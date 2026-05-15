@@ -198,11 +198,28 @@ schema and migration ledger are identical, so the move is a data copy, not a rew
   implementations (wallets, immutable `wallet_ledger`, guilds/claims, jobs state), operator
   `/ooga db status|migrate`, and authoritative wallet service wired through persistence.
 
-### Phase 1 - Economy MVP
-- Wallet commands, transfer logic, transaction logs, and admin controls.
+### Phase 1 - Economy MVP (100% complete — repo milestone **M1**)
+- Authoritative wallet with `ConcurrentHashMap`-backed in-memory balances and SQLite-persisted
+  `wallet_ledger` audit trail. Player `/pay` transfers are atomic under `synchronized` lock with
+  typed `TransferResult` feedback (insufficient funds, receiver cap, self-pay, cooldown, overflow).
+  Admin `/money set|add|take` + `/economy log [player]` with bounded ring-buffer read. Transfer
+  caps, per-sender cooldown, optional flat fee, and starting balance all configurable in
+  `economy.json`. Conservative faucet defaults (1 coin/block, 5 coins/mob) with visible sink
+  toggles (`transferFlatFee`, `claimCost`, `creationCost`). Race-condition mitigated by
+  `synchronized transfer()` + `persist()` + SQLite WAL.
 
-### Phase 2 - Jobs/Professions MVP
-- Core professions, reward hooks, anti-farm heuristics, and progression UI.
+### Phase 2 - Jobs/Professions MVP (100% complete — repo milestone **M2**)
+- Server-authoritative `jobs.json` catalog with arbitrary operator-defined jobs, triggers,
+  XP curves, and per-level money/XP boosts. Five-job starter pack (`miner`, `lumberjack`,
+  `farmer`, `excavator`, `fighter`) with low overlap and modest long-tail boosts. Block-break
+  + mob-kill reward engine wired through the economy service. `/job` UX (`join|leave|info|
+  list|stats|reload|validate`) plus a `/otter` JOBS tab with pageable catalog and a
+  server-synced HUD overlay (icon, label, level, progress bar). Sliding-window diminishing
+  returns (`antiAbuseSoftCap` → `antiAbuseFloor` linear ramp over `antiAbuseWindowSeconds`)
+  blocks farm-loop abuse without punishing normal play. Per-trigger `cooldownMs` throttles
+  individual events; `persistEveryNEvents` batches disk writes (default 25), flushed on
+  shutdown and `/job reload` so no progression is lost. State persists in SQLite via the
+  jobs store; relog and restart preserve XP/level.
 
 ### Phase 3 - Factions and Claims MVP
 - Factions, chunk claims, permission checks, treasury integration.

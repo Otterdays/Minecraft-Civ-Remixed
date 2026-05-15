@@ -779,8 +779,8 @@
         <tr><td>M0</td><td>✅ Foundation and data integrity (SQLite baseline, schema migrations, audit ledger — milestone complete; shop/social/second-backend persistence tracked under M4 / M4.5 / M6)</td></tr>
         <tr><td>M1</td><td>Economy MVP (transfers, admin money ops, fees/sinks, full transaction ledger)</td></tr>
         <tr><td>M2</td><td>Jobs &amp; professions MVP (<code>/job …</code>, event rewards, progression)</td></tr>
-        <tr><td>M3</td><td>✅ Guilds &amp; claims MVP (<code>/guild</code>, chunk claims, home TP, officer ranks, ASCII + GUI chunk map)</td></tr>
-        <tr><td>M4</td><td>Player shops MVP (durable listings/stock/escrow persistence, listings, Screen Handler UI, tax)</td></tr>
+        <tr><td>M3</td><td>✅ Guilds &amp; claims MVP (<code>/guild</code>, chunk claims, home TP, officer ranks, ASCII + GUI chunk map, treasury <code>/guild deposit|withdraw</code>)</td></tr>
+        <tr><td>M4</td><td>Player shops MVP — 🟡 in progress: persistence foundation landed (schema v2 <code>shop_listings</code> table, <code>ShopStore</code> + <code>SqliteShopStore</code> with atomic guarded-UPDATE stock decrement, oversell-prevention covered by integration test). Next slices: shop primitives, escrow/rollback purchase, Screen Handler UI, listing caps + tax.</td></tr>
         <tr><td>M4.5</td><td>Social layer (friends + private messages; friend/DM persistence)</td></tr>
         <tr><td>M5</td><td>Civ governance (diplomacy states, territory projects, regional bonuses)</td></tr>
         <tr><td>M6</td><td>Stabilization, balance, JDBC dialect + PostgreSQL migration path, RC hardening</td></tr>

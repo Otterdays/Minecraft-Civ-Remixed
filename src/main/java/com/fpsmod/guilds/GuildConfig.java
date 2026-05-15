@@ -25,4 +25,17 @@ public final class GuildConfig {
     // Map / overlay
     public int mapRadius = 4;
     public int overlayDurationSeconds = 30;
+
+    // Treasury
+    /** Max coins any single /guild deposit can move. 0 = no cap. */
+    public long maxTreasuryDeposit = 0L;
+    /** Max coins any single /guild withdraw can move. 0 = no cap. */
+    public long maxTreasuryWithdraw = 0L;
+
+    // Debug
+    /**
+     * When true, every protection decision (canModifyBlock / canAccess) is logged at INFO
+     * with the player, chunk, claim owner, and precedence path used. Disable in production.
+     */
+    public boolean debugProtection = false;
 }

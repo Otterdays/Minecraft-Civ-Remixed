@@ -4,6 +4,7 @@ import com.fpsmod.economy.TransactionLog;
 import com.fpsmod.economy.WalletStore;
 import com.fpsmod.guilds.GuildStore;
 import com.fpsmod.jobs.JobsStore;
+import com.fpsmod.shops.ShopStore;
 
 public class PersistenceService implements AutoCloseable {
     private final SqliteDatabase database;
@@ -12,6 +13,7 @@ public class PersistenceService implements AutoCloseable {
     private final TransactionLog transactionLog;
     private final JobsStore jobsStore;
     private final GuildStore guildStore;
+    private final ShopStore shopStore;
 
     public PersistenceService() {
         this.database = new SqliteDatabase();
@@ -20,6 +22,7 @@ public class PersistenceService implements AutoCloseable {
         this.transactionLog = new SqliteTransactionLog(database);
         this.jobsStore = new SqliteJobsStore(database);
         this.guildStore = new SqliteGuildStore(database);
+        this.shopStore = new SqliteShopStore(database);
     }
 
     public void initialize() {
@@ -45,6 +48,10 @@ public class PersistenceService implements AutoCloseable {
 
     public GuildStore guildStore() {
         return guildStore;
+    }
+
+    public ShopStore shopStore() {
+        return shopStore;
     }
 
     public SqliteDatabase database() {

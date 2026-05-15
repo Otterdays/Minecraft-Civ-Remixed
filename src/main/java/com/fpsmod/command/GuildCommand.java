@@ -8,6 +8,7 @@ import com.fpsmod.guilds.net.GuildNetworking;
 import com.fpsmod.guilds.net.MapTogglePayload;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -75,6 +76,12 @@ public final class GuildCommand {
                 .executes(ctx -> runUnclaimAll(ctx.getSource(), guilds)))
             .then(Commands.literal("map")
                 .executes(ctx -> runMap(ctx.getSource(), guilds)))
+            .then(Commands.literal("deposit")
+                .then(Commands.argument("amount", LongArgumentType.longArg(1))
+                    .executes(ctx -> runDeposit(ctx.getSource(), guilds, LongArgumentType.getLong(ctx, "amount")))))
+            .then(Commands.literal("withdraw")
+                .then(Commands.argument("amount", LongArgumentType.longArg(1))
+                    .executes(ctx -> runWithdraw(ctx.getSource(), guilds, LongArgumentType.getLong(ctx, "amount")))))
             .then(Commands.literal("reload")
                 .requires(source -> source.permissions().hasPermission(ADMIN))
                 .executes(ctx -> runReload(ctx.getSource(), guilds)))
@@ -283,6 +290,24 @@ public final class GuildCommand {
         GuildProtection.showChunkBorders(p, cx, cz, radius, p.level().dimension().identifier().toString(), guilds);
         ServerPlayNetworking.send(p, new MapTogglePayload(guilds.config().overlayDurationSeconds));
         return 1;
+    }
+
+    private static int runDeposit(CommandSourceStack source, GuildService guilds, long amount) {
+        ServerPlayer p = source.getPlayer();
+        if (p == null) return 0;
+        String result = guilds.depositToTreasury(p, amount);
+        send(source, result);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        return result.startsWith("Deposited") ? 1 : 0;
+    }
+
+    private static int runWithdraw(CommandSourceStack source, GuildService guilds, long amount) {
+        ServerPlayer p = source.getPlayer();
+        if (p == null) return 0;
+        String result = guilds.withdrawFromTreasury(p, amount);
+        send(source, result);
+        GuildNetworking.sendGuildStatusTo(guilds, p);
+        return result.startsWith("Withdrew") ? 1 : 0;
     }
 
     private static int runReload(CommandSourceStack source, GuildService guilds) {

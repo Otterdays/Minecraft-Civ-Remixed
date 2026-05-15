@@ -61,6 +61,8 @@ Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a s
 - `/guild open` / `/guild close` — switch between public joining and invite-only mode (owner-only)
 - `/guild info` — your guild's details
 - `/guild list` — every guild on the server
+- `/guild deposit <amount>` — move coins from your personal wallet into the guild treasury (any member)
+- `/guild withdraw <amount>` — move coins from the guild treasury into your wallet (officer+ only; role-validated and ledger-audited)
 - `/guild reload` — reload `guilds.json` (gamemaster / OP only)
 
 ### Database
@@ -254,6 +256,21 @@ If you want to do something outside those boundaries, ask first.
 ## Short version
 
 Otters Civ. Revived is a Fabric mod that turns a normal Minecraft world into a lightweight civilization server with a persistent economy, configurable mining and combat rewards, a five-job starter pack, guild land claims, and in-game menus plus a handbook for easy setup in singleplayer or multiplayer. With the client mod, the `/otter` hub can switch between a few color themes so the civ menu matches your taste without editing JSON.
+
+---
+
+## Player Shops — persistence foundation landed (M4 in progress)
+
+The first slice of M4 (Player Shops MVP) is now in: a relational persistence layer for shop listings, ready for the upcoming command/UI work.
+
+**What shipped:**
+- New SQLite table `shop_listings` (schema v2, auto-migrated on first start) with id, owner UUID, item id + canonical NBT, unit count, unit price, stock, optional in-world anchor (dimension/x/y/z), state, and timestamps.
+- New `ShopStore` interface and `SqliteShopStore` implementation, accessible via `PersistenceService.shopStore()`.
+- Atomic stock decrement primitive (`decrementStock(id, units)`) — uses a guarded SQL `UPDATE` (`WHERE state='OPEN' AND stock >= units`) so two buyers racing on the same listing cannot oversell. The same statement auto-flips state to `SOLD_OUT` when stock hits zero.
+- Indexes by owner, state, and item id for fast `/shop list` views (coming in the next M4 slice).
+- Round-trip + oversell-prevention covered by `SqlitePersistenceIntegrationTest.shopStorePersistsAndAtomicallyDecrementsStock`.
+
+No player-facing commands or GUI yet — those land in the next M4 milestones (shop primitives → escrow flow → Screen Handler market UI → caps/taxes). Existing worlds are upgraded automatically: schema v1 → v2 runs on the next server start, no data loss.
 
 ---
 
