@@ -10,12 +10,13 @@ checked ÷ 8.
 
 ## Milestone Order
 
-> **~50%** · shipped milestones **4 / 8** (M0–M3 ✓ · M4–M6 + M4.5 open)
+> **~44%** · shipped milestones **4 / 9** (M0–M3 ✓ · M3.5–M6 + M4.5 open)
 
 - [x] M0 — Foundation and Data Integrity
 - [x] M1 — Economy MVP
 - [x] M2 — Jobs and Professions MVP
 - [x] M3 — Guilds and Claims MVP
+- [ ] M3.5 — Job Loot Layer (Bonus Drops + Exclusive Yields)
 - [ ] M4 — Player Shops MVP
 - [ ] M4.5 — Social Layer (Friends + Private Messages)
 - [ ] M5 — Civ Governance Layer
@@ -175,6 +176,58 @@ lives only in those milestones.
 
 ---
 
+## M3.5 — Job Loot Layer (Bonus Drops + Exclusive Yields)
+
+> **0%** · checklist **0 / 16** (Scope 0/3 · Deliverables 0/7 · Acceptance 0/4 · Risks 0/2)
+
+The classic Jobs Reborn / mcMMO mechanic: members of a job get extra or exclusive drops from
+their job-relevant blocks and mobs. Higher job level = higher drop chance or quantity. Some
+items are **job-gated** — unattainable without the right job. Creates real demand for
+specialized labor and feeds directly into the player shop economy.
+
+### Scope
+- [ ] Bonus drop engine: job members get additional loot rolls on relevant block-break / mob-kill
+- [ ] Exclusive drop table: certain items only fall for players actively enrolled in the matching job
+- [ ] Level-scaled rates: drop chance and quantity scale with the player's job level
+
+### Deliverables
+- [ ] `bonusDrops` block in each job entry in `jobs.json`: list of `{trigger, item, minQty,
+  maxQty, basChance, levelScaling}` entries — same trigger format already used by the reward
+  engine, zero new event hooks needed
+- [ ] `exclusiveDrops` block: same schema but items are suppressed entirely for non-job players
+  (server-side item spawn; never touches the normal loot table)
+- [ ] Level-scaling formula: `finalChance = baseChance + (jobLevel × levelScaling)` capped
+  at `maxChance` — all values operator-tunable
+- [ ] Starter exclusive drops wired into the shipped 5-job pack:
+  - `miner` → chance for raw ore double-drop + exclusive **Rich Ore Fragment** (craft into
+    bonus ingots)
+  - `lumberjack` → chance for extra sapling/apple + exclusive **Hardwood Plank** (better
+    fuel / crafting material)
+  - `farmer` → chance for double crop yield + exclusive **Plump Seeds** (faster-growing
+    plant variant)
+  - `excavator` → extra gravel/sand drops + exclusive **Packed Silt** (compactable
+    building block)
+  - `fighter` → extra mob loot rolls + exclusive **Predator's Trophy** (mob-specific token
+    redeemable at NPC shops for bonus coins)
+- [ ] Chat/action-bar pop on exclusive drop: `§6[Job Perk] You found a Rich Ore Fragment!`
+- [ ] `/job info` updated to list bonus and exclusive drops for the player's active job
+
+### Acceptance Gate
+- [ ] Non-job player breaks a job-gated block → zero exclusive drops, normal vanilla loot only
+- [ ] Job member at level 1 vs level 50 → measurably different drop rate (log output in debug
+  mode confirms formula)
+- [ ] All drops route through economy/loot service — no direct inventory injection bypassing
+  audit trail
+- [ ] `jobs.json` reload (`/job reload`) picks up drop table changes without restart
+
+### Risks
+- [ ] Inflation mitigation: exclusive items must feed into sinks (shop fees, crafting recipes,
+  NPC redemption) — default rates conservative, operator-tunable
+- [ ] Abuse mitigation: bonus drops share the existing sliding-window anti-grind cap; a
+  dedicated `bonusDropCooldownMs` per trigger prevents clock-tick spam
+
+---
+
 ## M4 — Player Shops MVP
 
 > **~13%** · checklist **2 / 16** (Scope 0/3 · Deliverables 1/5 · Acceptance 1/4 · Risks 0/2)
@@ -194,6 +247,16 @@ lives only in those milestones.
 - [ ] Escrow + rollback-safe purchase flow
 - [ ] Screen Handler market UI
 - [ ] Server-configurable listing caps and tax rates
+- [ ] Guild service NPC framework: hire Quartermaster / Armorer / Skill Trainer via guild
+  treasury; persistent spawn tied to guild home chunk; per-NPC upkeep ticks against treasury
+- [ ] Daily player earnings cap (`maxDailyCoinsFromRewards` in `economy.json`) tracked in
+  SQLite per-UUID with midnight reset — chokes botting + farm-loop inflation
+- [ ] Recycler station: convert N×rotten-flesh / bones into crafting catalysts with a small
+  fee (soft money sink + cleans up inventories)
+- [ ] Damage-gated loot for shared bosses ("5% rule"): per-fight damage map per UUID;
+  rewards only granted to contributors at/above the threshold
+- [ ] Instanced loot delivery: server spawns drops visible only to the eligible player UUID
+  via packet filtering — prevents loot-stealing on shared boss kills
 
 ### Acceptance Gate
 - [ ] Purchase atomically transfers currency + inventory or fully rolls back
@@ -240,6 +303,11 @@ lives only in those milestones.
 - [ ] Respect friend block list: blocked player cannot msg you
 - [ ] Server-side audit log toggle for moderators
 - [ ] Optional: persist offline inbox; deliver on login (configurable)
+- [ ] Fame/reputation system: `/fame <player> [up|down]` once per real-world day; persisted
+  on the player row (`fame_score`, `last_fame_timestamp`). Negative fame can lock premium
+  NPC shop access; positive fame unlocks prestige cosmetics (configurable thresholds)
+- [ ] Guild chat channel + officer-only channel routed through the same message service
+  (respects ignore/block lists)
 
 ### Deliverables — UX
 - [ ] New FRIENDS tab in `OttersCivScreen` (status chips: LIVE/PENDING/BLOCKED)
@@ -274,6 +342,36 @@ lives only in those milestones.
 - [ ] Treasury-funded guild projects with staged unlocks
 - [ ] Optional regional buffs with upkeep tie-in
 - [ ] Governance policy commands and role checks
+- [ ] **Guild upgrade tree** (`upgrades.json`): `logistics` (Quartermaster discounts, Runic
+  Waypoint home-cooldown removal) and `warfare` (Throne fortification, Hall Sentry golems)
+  categories; level-gated by new `guild_level` column on `guilds` table
+- [ ] **Guild Lord protector NPC**: spawn on `/guild sethome` (extends Villager/Iron Golem);
+  invulnerable normally; vulnerable during declared-war siege window. Defeat = 1h claim lock
+  for defender + auto-plunder 10% of defender treasury to attacker. Tracked in new
+  `guild_protectors` table (uuid, hp, last spawn pos, is_under_attack)
+- [ ] **War declaration system**: `/guild war declare <name>` with treasury cost from
+  `warfare.json` (`declarationCost`, `siegeWindowTicks`, `guildLordHealth`); 24h prep
+  countdown before siege window opens; cooldown to prevent harassment cycles
+- [ ] **Bodyguard / Sentry NPCs**: treasury-spawned in claimed chunks; configurable
+  HP/damage/follow-range; respawn after a configurable cooldown when killed mid-siege
+- [ ] **War Room tab in `/otter`**: live Lord HP, vulnerability-window state, active wars,
+  GvG leaderboard (wins by Lord kills), and a "War Bell" declare button
+- [ ] **Hall tab in `/otter`**: visual grid of hired NPCs + purchased upgrades; current
+  treasury upkeep rate; one-click summon for service NPCs
+- [ ] **Faction allegiance layer**: 2–3 server-wide factions defined in `economy.json`;
+  guilds pledge to one; contested zones tally weekly faction job-XP totals; winning faction
+  gets a 1.2x reward multiplier in that zone the following week
+- [ ] **Faction-specific resource items**: biome-locked materials (e.g., Amber / Jade)
+  required for tier-3+ hall upgrades — forces inter-faction trade or territorial conquest
+- [ ] **Guild contribution points + guild skills**: members generate contribution by earning
+  job XP; guild master spends contribution on temporary server-wide skills
+  (`guild_skills.json`) like mass-Haste, instant member recall to home during sieges
+- [ ] **Hall of Monuments**: milestone trophies (1M coins earned, 50 siege wins, etc.)
+  unlock unique decorative blocks, capes/emblems, and tiny persistent perks (+1% job XP)
+- [ ] **Job family switching**: scaling-cost class change preserving a fraction of XP within
+  a family (Miner ↔ Excavator); cost curve defined in `jobs.json` `families` block
+- [ ] **Victory Emblem cosmetics**: GvG season wins grant a colored name-tag aura or
+  particle trail visible in `/otter` and over the player's head
 
 ### Acceptance Gate
 - [ ] Diplomacy state correctly changes interaction and conflict rules
@@ -302,6 +400,27 @@ lives only in those milestones.
   MySQL/MariaDB community path per `DOCS/whitepaper.md` persistence architecture)
 - [ ] SQLite → PostgreSQL migration tooling + verification checks
 - [ ] Release checklist and operator upgrade notes
+- [ ] **Gear upgrade catalysts** (Sunstone / Moonstone): catalyst items defined in
+  `items.json`; configurable mob-drop chances via `rewards.json`; combine-recipe for
+  high-tier "Shining Oricalkum" (5 Sunstones + 5 Moonstones) gating +11..+20 tier upgrades
+- [ ] **"Star Force" gear upgrading**: `/otter` Upgrade tab; +1..+3 safe, +4..+10 declining
+  success, +11+ "Boom" risk → equipment-trace record. Scroll of Protection consumable
+  mitigates destruction. Tracked in `item_upgrades` table to avoid NBT bloat
+- [ ] **Piercing / sockets**: Moonstone on gear opens up to 4 sockets; Attribute Cards
+  slot in for stat modifiers; pierce-state persisted in `item_upgrades`
+  (`pierce_slots_total`, `pierce_slots_filled`, `socket_N_data`)
+- [ ] **Hidden Potential / Cubing**: drops carry hidden stat lines revealed by Magnifying
+  Glass; tiered Cubes (Rare/Epic/Unique) re-roll the lines using a server-controlled
+  `potentials.json` catalog (no client-trustable rolls)
+- [ ] **Pet system**: monster-egg drops; hatch via off-hand mob-kill incubation; 5-tier
+  evolution (D→S) with hunger upkeep; perma-death at hunger zero; bonuses applied while
+  summoned. New `player_pets` table (owner uuid, type, tier, xp, hunger, bonus_type)
+- [ ] **Pet feed crafting + Beastmaster job**: recycle rotten flesh / bones into pet feed
+  at the Recycler (shared with M4 recycler). New `beastmaster` entry in `jobs.json` reduces
+  pet hunger drain and increases evolution success rate
+- [ ] **Elemental combat layer**: 5-element rock-paper-scissors (Fire / Water / Wind /
+  Earth / Electricity); elemental enchant cards apply to weapons + armor; advantage 1.5x,
+  disadvantage 0.5x defined in `elements.json`; visual particle hints per element
 
 ### Acceptance Gate
 - [ ] No critical dupe/data-loss exploit in adversarial test pass

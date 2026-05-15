@@ -224,17 +224,55 @@ schema and migration ledger are identical, so the move is a data copy, not a rew
 ### Phase 3 - Factions and Claims MVP
 - Factions, chunk claims, permission checks, treasury integration.
 
+### Phase 3.5 - Job Loot Layer
+- Bonus drop engine: extra loot rolls on job-relevant block-break and mob-kill events,
+  scaled by job level (`baseChance + level × levelScaling`).
+- Exclusive drop tables: job-gated items that vanilla loot tables never produce — only
+  enrolled members at the right job can obtain them (Rich Ore Fragment, Hardwood Plank,
+  Plump Seeds, Packed Silt, Predator's Trophy).
+- All drops feed existing money sinks: NPC redemption, crafting recipes, shop listings.
+- Zero new event hooks — reuses existing reward-engine trigger format in `jobs.json`.
+- Anti-abuse: bonus drops share sliding-window diminishing-returns cap + dedicated
+  `bonusDropCooldownMs` per trigger.
+
 ### Phase 4 - Player Shops MVP
 - Listing, purchase, tax flow, and first market UX.
 - Durable shop persistence (listings, stock, escrow state) in the civ data layer — same
   migration and backup discipline as economy/guilds.
+- Guild service NPCs (merchants, armorers, skill trainers) hired via guild treasury with per-NPC upkeep.
+- Regional market bonuses and town-hub incentives via zone tags.
+- Daily player earning caps (anti-bot, anti-inflation) tracked in SQLite per-UUID with midnight reset.
+- "Recycler" station: convert low-tier mob drops to crafting catalysts (small fee per use = soft sink).
+- Instanced vs. shared loot mechanics for group farming (damage-gated 5% rule prevents free-ride looting).
 
 ### Phase 4.5 - Social Layer (Friends + Messages)
 - Friend graph, requests/blocks, private messaging, and rate limits with persistence aligned
   to the civ data layer (SavedData and/or relational stores).
+- Fame/reputation score: daily-capped player-to-player rating; unlocks cosmetic tiers and
+  prestige gating for premium NPC shops.
+- Guild chat channel + officer-only channel layered on top of the same message service.
 
 ### Phase 5 - Civ Layer
 - Diplomacy, faction projects, regional bonuses, and governance tooling.
+- **Guild Hall evolution:** tiered upgrade tree (`upgrades.json`) under `logistics` and `warfare`
+  categories — quartermaster discounts, runic waypoints, throne fortification, sentry golems.
+- **Guild Lord protector:** persistent NPC entity tied to `sethome`; normally invulnerable,
+  becomes vulnerable during declared war's siege window. Defeat = 1h claim lock + 10% treasury
+  plunder for the attacker. Tracked in `guild_protectors` table.
+- **GvG war declarations:** `/guild war declare` with treasury cost + 24h cooldown, scheduled
+  siege windows so defenders can prep, and a War Room tab in `/otter` for live siege state.
+- **Bodyguard NPCs / Hall Sentries:** spawn during sieges, configurable HP/damage in
+  `warfare.json`, respawn after a cooldown.
+- **Faction allegiance layer:** 2–3 server-wide factions guilds can pledge to; contested zones
+  award the dominant faction a job-XP/payout multiplier each week.
+- **Faction-specific resource items:** biome-locked materials required for top-tier hall
+  upgrades — drives territorial trade and conflict.
+- **Guild contribution points + guild skills:** members generate contribution by earning job
+  XP; guild master spends it on temporary server-wide buffs (Haste, mass-recall to home).
+- **Hall of Monuments:** milestone trophies grant tiny persistent perks (e.g., +1% job XP for
+  members) and unlock unique decorative blocks/capes/emblems.
+- **Job family switching:** scaling-cost class changes that preserve a fraction of XP within
+  a family (Miner → Excavator) instead of forcing a reset.
 
 ### Phase 6 - Polish and Scale
 - Profiling, balancing, anti-abuse hardening, and operator observability.
@@ -242,6 +280,22 @@ schema and migration ledger are identical, so the move is a data copy, not a rew
   large-server target; optional MySQL/MariaDB community path per architecture notes), plus
   SQLite → Postgres migration/export tooling — picks up the portable SQL and repository
   boundaries shipped in Phase 0 without expanding Phase 0 scope.
+- **Gear progression layer ("Star Force" upgrading):** coin-sink enchant tiers (+1 to +10
+  safe, +11+ risk of "Boom" → equipment-trace record). Catalysts (Sunstone / Moonstone)
+  are configurable mob drops via `rewards.json`. Item state tracked in `item_upgrades` table
+  to avoid NBT bloat. "Scroll of Protection" item mitigates destruction risk.
+- **Socket / Piercing system:** Moonstones open up to 4 sockets on gear; sockets accept
+  Attribute Cards (stat modifiers) defined in `potentials.json`.
+- **Hidden Potential / Cubing:** drops roll randomized stat lines revealed by a Magnifying
+  Glass; re-rollable via tiered Cubes — repeatable coin sink for endgame chasers.
+- **Pet system:** monster-egg drops; hatch via off-hand mob-kill incubation; 5-tier evolution
+  (D→S) with hunger upkeep that recycles low-tier mob loot into pet feed. Pets grant equipped
+  stat bonuses; perma-death if hunger zero. Tracked in `player_pets` table.
+- **Elemental combat (rock-paper-scissors):** Fire / Water / Wind / Earth / Electricity
+  enchant cards apply to weapons + armor; 1.5x advantage / 0.5x disadvantage multipliers
+  defined in `elements.json`. Integrates with guild-war loadout strategy.
+- **Beastmaster job:** new entry in `jobs.json` reducing pet hunger drain + boosting
+  evolution success — ties pet layer back into the existing jobs progression.
 
 ## Success Metrics
 - Server retention and average play-session length.
